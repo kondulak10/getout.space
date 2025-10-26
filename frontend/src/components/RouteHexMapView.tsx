@@ -1,7 +1,8 @@
 import { useEffect, useRef, useMemo } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { routeToHexagons, sampleRouteCoordinates } from '@/utils/routeToHexagons';
+import { analyzeRouteAndConvertToHexagons, sampleRouteCoordinates } from '@/utils/routeToHexagons';
+import type { RouteType } from '@/utils/routeToHexagons';
 import { h3ToGeoJSON, getViewportHexagons } from '@/utils/hexagonUtils';
 
 interface RouteHexMapViewProps {
@@ -17,12 +18,35 @@ export function RouteHexMapView({ coordinates, className, showBackgroundHexagons
 
 	const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
-	// Convert route to hexagons (memoized)
-	const routeHexagons = useMemo(() => {
-		if (coordinates.length === 0) return [];
-		// Sample coordinates to reduce density
-		const sampled = sampleRouteCoordinates(coordinates, 3);
-		return routeToHexagons(sampled);
+	// Convert route to hexagons with type detection (memoized)
+	const routeData = useMemo(() => {
+		if (coordinates.length === 0) {
+			return { hexagons: [], type: 'line' as RouteType };
+		}
+
+		console.log('🗺️ ========== ROUTE ANALYSIS ==========');
+		console.log(`📍 Total route points: ${coordinates.length}`);
+
+		// Use all GPS points for maximum accuracy
+		// Only sample if route is extremely long (>5000 points)
+		let sampled: [number, number][];
+		if (coordinates.length > 5000) {
+			sampled = sampleRouteCoordinates(coordinates, 2); // Very light sampling
+			console.log(`📍 Large route detected, lightly sampled: ${coordinates.length} → ${sampled.length} points`);
+		} else {
+			sampled = coordinates;
+			console.log(`📍 Using all ${coordinates.length} GPS points for maximum accuracy`);
+		}
+
+		// Analyze and convert
+		const result = analyzeRouteAndConvertToHexagons(sampled);
+
+		console.log(`🔷 Route type: ${result.type.toUpperCase()}`);
+		console.log(`🔷 Total hexagons: ${result.hexagons.length}`);
+		console.log(`🔷 Hexagon list:`, result.hexagons);
+		console.log('=====================================');
+
+		return result;
 	}, [coordinates]);
 
 	useEffect(() => {
@@ -59,14 +83,15 @@ export function RouteHexMapView({ coordinates, className, showBackgroundHexagons
 			isMapLoadedRef.current = true;
 
 			// Create route hexagon features
-			const routeHexSet = new Set(routeHexagons);
-			const routeFeatures = routeHexagons.map((hex) => {
+			const routeHexSet = new Set(routeData.hexagons);
+			const routeFeatures = routeData.hexagons.map((hex) => {
 				const feature = h3ToGeoJSON(hex);
 				return {
 					...feature,
 					properties: {
 						...feature.properties,
 						isRoute: true,
+						routeType: routeData.type,
 					},
 				};
 			});
@@ -81,13 +106,14 @@ export function RouteHexMapView({ coordinates, className, showBackgroundHexagons
 			});
 
 			// Add route hexagon fill layer - highlighted
+			// Different colors for line vs area routes
 			map.addLayer({
 				id: 'route-hexagon-fills',
 				type: 'fill',
 				source: 'route-hexagons',
 				paint: {
-					'fill-color': '#FC4C02', // Strava orange
-					'fill-opacity': 0.6,
+					'fill-color': routeData.type === 'area' ? '#10B981' : '#FC4C02', // Green for area, Orange for line
+					'fill-opacity': routeData.type === 'area' ? 0.5 : 0.6,
 				},
 			});
 
@@ -97,7 +123,7 @@ export function RouteHexMapView({ coordinates, className, showBackgroundHexagons
 				type: 'line',
 				source: 'route-hexagons',
 				paint: {
-					'line-color': '#D93B00',
+					'line-color': routeData.type === 'area' ? '#059669' : '#D93B00',
 					'line-width': 2,
 					'line-opacity': 0.8,
 				},
@@ -190,21 +216,26 @@ export function RouteHexMapView({ coordinates, className, showBackgroundHexagons
 				}
 			);
 
-			// Add info about hexagon count
-			console.log(`📍 Route hexagons: ${routeHexagons.length} unique cells`);
+			// Final map render log
+			console.log(`🗺️ Map rendered with ${routeData.hexagons.length} ${routeData.type} hexagons`);
 		});
 
 		// Cleanup
 		return () => {
 			map.remove();
 		};
-	}, [coordinates, mapboxToken, routeHexagons, showBackgroundHexagons]);
+	}, [coordinates, mapboxToken, routeData, showBackgroundHexagons]);
 
 	return (
 		<div className="relative">
 			<div ref={mapContainerRef} className={className} />
-			<div className="absolute top-2 right-2 bg-white rounded px-2 py-1 text-xs shadow">
-				{routeHexagons.length} hexagons
+			<div className="absolute top-2 right-2 bg-white rounded px-3 py-2 text-xs shadow-lg">
+				<div className="font-semibold">
+					{routeData.type === 'area' ? '🟢' : '🟠'} {routeData.type.toUpperCase()}
+				</div>
+				<div className="text-gray-600">
+					{routeData.hexagons.length} hexagons
+				</div>
 			</div>
 		</div>
 	);
