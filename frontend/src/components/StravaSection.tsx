@@ -2,7 +2,7 @@ import { ActivitiesTable, type StravaActivity } from "@/components/ActivitiesTab
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapView } from "@/components/MapView";
+import { RouteHexMapView } from "@/components/RouteHexMapView";
 import polyline from "@mapbox/polyline";
 import { useEffect, useState } from "react";
 
@@ -196,7 +196,7 @@ export function StravaSection() {
 				</Card>
 			)}
 
-			{/* Map View */}
+			{/* Hexagon Map View */}
 			{selectedActivity && routeCoordinates.length > 0 && (
 				<Card className="w-full">
 					<CardHeader>
@@ -207,7 +207,7 @@ export function StravaSection() {
 						</CardDescription>
 					</CardHeader>
 					<CardContent>
-						<MapView coordinates={routeCoordinates} className="w-full h-[500px] rounded-lg" />
+						<RouteHexMapView coordinates={routeCoordinates} className="w-full h-[500px] rounded-lg" showBackgroundHexagons={true} />
 					</CardContent>
 				</Card>
 			)}

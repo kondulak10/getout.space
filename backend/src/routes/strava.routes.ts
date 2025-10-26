@@ -12,7 +12,7 @@ let userTokens: {
 // Step 1: Redirect to Strava OAuth
 router.get('/api/strava/auth', (req: Request, res: Response) => {
 	const clientId = process.env.STRAVA_CLIENT_ID;
-	const redirectUri = `${process.env.FRONTEND_URL}/strava/callback`;
+	const redirectUri = process.env.FRONTEND_URL; // Redirect to home page where StravaSection handles callback
 	const scope = 'read,activity:read_all';
 
 	const authUrl = `https://www.strava.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&approval_prompt=auto&scope=${scope}`;
