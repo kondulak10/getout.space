@@ -157,4 +157,49 @@ router.get('/api/strava/activities', async (req: Request, res: Response) => {
 	}
 });
 
+// Step 4: Get single activity details
+router.get('/api/strava/activities/:id', async (req: Request, res: Response) => {
+	try {
+		if (!userTokens) {
+			return res.status(401).json({ error: 'Not authenticated. Please login with Strava first.' });
+		}
+
+		const activityId = req.params.id;
+		console.log(`🏃 Fetching Strava activity ${activityId}...`);
+
+		// Get valid access token (auto-refreshes if needed)
+		const accessToken = await getValidAccessToken();
+
+		// Fetch single activity from Strava
+		const response = await fetch(`https://www.strava.com/api/v3/activities/${activityId}`, {
+			headers: {
+				Authorization: `Bearer ${accessToken}`,
+			},
+		});
+
+		if (!response.ok) {
+			if (response.status === 404) {
+				return res.status(404).json({ error: 'Activity not found' });
+			}
+			throw new Error(`Strava API error: ${response.status}`);
+		}
+
+		const activity = (await response.json()) as any;
+
+		console.log(`✅ Fetched activity ${activityId}`);
+		console.log('Activity details:', activity);
+
+		res.json({
+			success: true,
+			activity: activity,
+		});
+	} catch (error: any) {
+		console.error('❌ Strava API error:', error.message);
+		res.status(500).json({
+			error: 'Failed to fetch activity details',
+			details: error.message,
+		});
+	}
+});
+
 export default router;
