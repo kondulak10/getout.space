@@ -39,3 +39,8 @@ coverage/
 .cache/
 temp/
 tmp/
+
+# Webhook setup scripts (contain sensitive credentials)
+setup-webhook.sh
+setup-webhook.bat
+test-webhook.js

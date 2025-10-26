@@ -1,12 +1,29 @@
 import { ActivitiesTable, type StravaActivity } from "@/components/ActivitiesTable";
+import { ActivityFeed } from "@/components/ActivityFeed";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { MapView } from "@/components/MapView";
+import polyline from "@mapbox/polyline";
 import { useEffect, useState } from "react";
+
+interface ActivityDetails {
+	id: number;
+	name: string;
+	type: string;
+	distance: number;
+	moving_time: number;
+	map?: {
+		polyline: string;
+		summary_polyline: string;
+	};
+}
 
 export function StravaSection() {
 	const [stravaLoading, setStravaLoading] = useState(false);
 	const [isAuthenticated, setIsAuthenticated] = useState(false);
 	const [activities, setActivities] = useState<StravaActivity[]>([]);
+	const [selectedActivity, setSelectedActivity] = useState<ActivityDetails | null>(null);
+	const [routeCoordinates, setRouteCoordinates] = useState<[number, number][]>([]);
 
 	const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:4001";
 
@@ -93,6 +110,18 @@ export function StravaSection() {
 			if (data.success) {
 				console.log(`✅ Activity ${activityId} details:`);
 				console.log(data.activity);
+
+				// Decode polyline if available
+				if (data.activity.map?.polyline) {
+					const decoded = polyline.decode(data.activity.map.polyline);
+					console.log(`📍 Decoded ${decoded.length} GPS points`);
+					setRouteCoordinates(decoded);
+					setSelectedActivity(data.activity);
+				} else {
+					console.warn("⚠️ No map data available for this activity");
+					setRouteCoordinates([]);
+					setSelectedActivity(null);
+				}
 			} else {
 				console.error("❌ Error:", data.error);
 			}
@@ -158,7 +187,7 @@ export function StravaSection() {
 					<CardHeader>
 						<CardTitle>Your Strava Activities</CardTitle>
 						<CardDescription>
-							Click on any activity to view detailed information in the console
+							Click on any activity to view the route on the map
 						</CardDescription>
 					</CardHeader>
 					<CardContent>
@@ -166,6 +195,25 @@ export function StravaSection() {
 					</CardContent>
 				</Card>
 			)}
+
+			{/* Map View */}
+			{selectedActivity && routeCoordinates.length > 0 && (
+				<Card className="w-full">
+					<CardHeader>
+						<CardTitle>{selectedActivity.name}</CardTitle>
+						<CardDescription>
+							{selectedActivity.type} • {(selectedActivity.distance / 1000).toFixed(2)} km •{' '}
+							{Math.floor(selectedActivity.moving_time / 60)} minutes
+						</CardDescription>
+					</CardHeader>
+					<CardContent>
+						<MapView coordinates={routeCoordinates} className="w-full h-[500px] rounded-lg" />
+					</CardContent>
+				</Card>
+			)}
+
+			{/* Live Activity Feed */}
+			<ActivityFeed onActivityClick={handleActivityClick} />
 		</>
 	);
 }
