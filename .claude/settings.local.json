@@ -3,7 +3,9 @@
     "allow": [
       "Bash(npm install:*)",
       "Bash(mkdir:*)",
-      "WebFetch(domain:developers.strava.com)"
+      "WebFetch(domain:developers.strava.com)",
+      "WebFetch(domain:docs.mapbox.com)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []
