@@ -1,0 +1,4 @@
+# Copy this file to terraform.tfvars and update with your domain name
+domain_name = "getout.space"
+aws_region  = "eu-north-1"
+environment = "production"
