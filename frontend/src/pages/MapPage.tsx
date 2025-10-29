@@ -1,20 +1,20 @@
-import { useCallback } from 'react';
-import 'mapbox-gl/dist/mapbox-gl.css';
-import { useHexagonData } from '@/hooks/useHexagonData';
-import { useMapInstance } from '@/hooks/useMapInstance';
-import { MapInfoOverlay } from '@/components/MapInfoOverlay';
-import type { HexagonData } from '@/utils/hexagonUtils';
+import { MapInfoOverlay } from "@/components/MapInfoOverlay";
+import { useHexagonData } from "@/hooks/useHexagonData";
+import { useMapInstance } from "@/hooks/useMapInstance";
+import type { HexagonData } from "@/utils/hexagonUtils";
+import "mapbox-gl/dist/mapbox-gl.css";
+import { useCallback } from "react";
 
 export function MapPage() {
 	const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
 	// Hexagon data management
-	const { hexDataMap, getHexData } = useHexagonData();
+	const { hexDataMap } = useHexagonData();
 
 	// Handle hexagon click
 	const handleHexClick = useCallback((hex: string, data: HexagonData | undefined) => {
-		console.log('🔷 Clicked hexagon:', hex);
-		console.log('Data:', data);
+		console.log("🔷 Clicked hexagon:", hex);
+		console.log("Data:", data);
 	}, []);
 
 	// Map instance

@@ -5,7 +5,10 @@
       "Bash(mkdir:*)",
       "WebFetch(domain:developers.strava.com)",
       "WebFetch(domain:docs.mapbox.com)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(nslookup:*)",
+      "Bash(aws route53 list-hosted-zones:*)",
+      "Bash(aws route53 list-resource-record-sets:*)"
     ],
     "deny": [],
     "ask": []

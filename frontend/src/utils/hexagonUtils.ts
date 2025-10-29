@@ -1,6 +1,12 @@
-import { cellToBoundary, latLngToCell, gridDisk } from 'h3-js';
-import type mapboxgl from 'mapbox-gl';
-import { H3_RESOLUTION, HEX_COLORS, IMAGE_PROBABILITY, SAMPLE_IMAGE_URL, getRingSizeForZoom } from '@/constants/map';
+import {
+	H3_RESOLUTION,
+	HEX_COLORS,
+	IMAGE_PROBABILITY,
+	SAMPLE_IMAGE_URL,
+	getRingSizeForZoom,
+} from "@/constants/map";
+import { cellToBoundary, gridDisk, latLngToCell } from "h3-js";
+import type { Map } from "mapbox-gl";
 
 export interface HexagonData {
 	color: string;
@@ -18,10 +24,10 @@ export const h3ToGeoJSON = (h3Index: string) => {
 	const closedBoundary = [...boundary, boundary[0]];
 
 	return {
-		type: 'Feature' as const,
+		type: "Feature" as const,
 		properties: { h3Index },
 		geometry: {
-			type: 'Polygon' as const,
+			type: "Polygon" as const,
 			coordinates: [closedBoundary],
 		},
 	};
@@ -40,24 +46,21 @@ export const getHexagonCenter = (hex: string): [number, number] => {
 };
 
 // Get hexagons for current viewport
-export const getViewportHexagons = (map: mapboxgl.Map): string[] => {
+export const getViewportHexagons = (map: Map): string[] => {
 	const bounds = map.getBounds();
 	const center = map.getCenter();
 	const zoom = map.getZoom();
 
-	// Get H3 cell at center
 	const centerCell = latLngToCell(center.lat, center.lng, H3_RESOLUTION);
 
-	// Calculate ring size based on zoom level
 	const ringSize = getRingSizeForZoom(zoom);
 
-	// Get hexagons in ring around center
 	const hexagons = gridDisk(centerCell, ringSize);
 
-	// Filter to only those in viewport
 	return hexagons.filter((hex) => {
 		const [centerLat, centerLng] = getHexagonCenter(hex);
 		return (
+			bounds &&
 			centerLat >= bounds.getSouth() &&
 			centerLat <= bounds.getNorth() &&
 			centerLng >= bounds.getWest() &&
@@ -83,10 +86,7 @@ export const getOrCreateHexagonData = (
 };
 
 // Create GeoJSON features from hexagons
-export const createHexagonFeatures = (
-	hexagons: string[],
-	dataMap: Map<string, HexagonData>
-) => {
+export const createHexagonFeatures = (hexagons: string[], dataMap: Map<string, HexagonData>) => {
 	return hexagons.map((hex) => {
 		const feature = h3ToGeoJSON(hex);
 		const data = getOrCreateHexagonData(hex, dataMap);
