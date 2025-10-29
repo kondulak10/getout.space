@@ -6,7 +6,7 @@ import {
 	getRingSizeForZoom,
 } from "@/constants/map";
 import { cellToBoundary, gridDisk, latLngToCell } from "h3-js";
-import type { Map } from "mapbox-gl";
+import type { Map as MapboxMap } from "mapbox-gl";
 
 export interface HexagonData {
 	color: string;
@@ -46,7 +46,7 @@ export const getHexagonCenter = (hex: string): [number, number] => {
 };
 
 // Get hexagons for current viewport
-export const getViewportHexagons = (map: Map): string[] => {
+export const getViewportHexagons = (map: MapboxMap): string[] => {
 	const bounds = map.getBounds();
 	const center = map.getCenter();
 	const zoom = map.getZoom();

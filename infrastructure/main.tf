@@ -22,7 +22,7 @@ provider "aws" {
 # S3 bucket for website hosting
 resource "aws_s3_bucket" "website" {
   provider = aws.main
-  bucket   = var.domain_name
+  bucket   = "getout-space-web"
 }
 
 resource "aws_s3_bucket_website_configuration" "website" {
