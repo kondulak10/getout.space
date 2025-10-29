@@ -43,12 +43,14 @@ For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md)
 ## Tech Stack
 
 ### Frontend
+
 - React 18
 - TypeScript
 - Vite
 - ESLint
 
 ### Infrastructure
+
 - AWS S3 (Static hosting)
 - AWS CloudFront (CDN)
 - AWS Route 53 (DNS)
@@ -57,6 +59,7 @@ For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md)
 - GitHub Actions (CI/CD)
 
 ### Region
+
 - Primary: EU North 1 (Stockholm)
 - SSL Certificate: US East 1 (required for CloudFront)
 
@@ -74,6 +77,7 @@ For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md)
 ## Commands
 
 ### Frontend
+
 ```bash
 npm run dev          # Start dev server
 npm run build        # Build for production
@@ -82,6 +86,7 @@ npm run lint         # Run ESLint
 ```
 
 ### Infrastructure
+
 ```bash
 cd infrastructure
 terraform init       # Initialize Terraform
@@ -97,3 +102,5 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for complete setup instructions.
 ## License
 
 MIT
+
+V
