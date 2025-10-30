@@ -34,7 +34,16 @@
       "Bash(terraform state rm:*)",
       "Bash(aws route53 delete-hosted-zone:*)",
       "Bash(npm run build:*)",
-      "Bash(terraform output:*)"
+      "Bash(terraform output:*)",
+      "Bash(docker build:*)",
+      "Bash(where:*)",
+      "Bash(terraform init:*)",
+      "Bash(aws iam list-access-keys:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(cat:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []
