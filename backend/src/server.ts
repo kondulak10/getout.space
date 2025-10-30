@@ -1,7 +1,11 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import { ApolloServer } from '@apollo/server';
+import { expressMiddleware } from '@apollo/server/express4';
 import { connectDatabase } from './config/database';
+import { typeDefs } from './graphql/schema';
+import { resolvers } from './graphql/resolvers';
 import testRoutes from './routes/test.routes';
 import stravaRoutes from './routes/strava.routes';
 import webhookRoutes from './routes/webhook.routes';
@@ -246,15 +250,38 @@ app.use(testRoutes);
 app.use(stravaRoutes);
 app.use(webhookRoutes);
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`
+// Initialize Apollo Server
+const startApolloServer = async () => {
+  const server = new ApolloServer({
+    typeDefs,
+    resolvers,
+  });
+
+  await server.start();
+
+  // Mount Apollo GraphQL endpoint
+  app.use(
+    '/graphql',
+    expressMiddleware(server, {
+      context: async ({ req }) => ({ req }),
+    })
+  );
+
+  // Start server
+  app.listen(PORT, () => {
+    console.log(`
 ╔═══════════════════════════════════════════╗
-║   🚀 GetOut Backend (Simple Mode)        ║
+║   🚀 GetOut Backend                      ║
 ╠═══════════════════════════════════════════╣
 ║   Health:   http://localhost:${PORT}/health     ║
+║   GraphQL:  http://localhost:${PORT}/graphql    ║
 ║   Test:     http://localhost:${PORT}/api/test   ║
-║   Echo:     POST http://localhost:${PORT}/api/echo
 ╚═══════════════════════════════════════════╝
-  `);
+    `);
+  });
+};
+
+startApolloServer().catch((error) => {
+  console.error('Failed to start Apollo Server:', error);
+  process.exit(1);
 });

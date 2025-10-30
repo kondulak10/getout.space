@@ -12,10 +12,12 @@
 		"lint:fix": "eslint . --fix",
 		"format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
 		"format:check": "prettier --check \"src/**/*.{ts,tsx,css}\"",
-		"preview": "vite preview"
+		"preview": "vite preview",
+		"codegen": "graphql-codegen --config codegen.ts"
 	},
 	"dependencies": {
-		"@apollo/client": "^4.0.7",
+		"@apollo/client": "^4.0.8",
+		"@graphql-typed-document-node/core": "^3.2.0",
 		"@mapbox/polyline": "^1.2.1",
 		"@radix-ui/react-slot": "^1.2.3",
 		"class-variance-authority": "^0.7.1",
@@ -31,6 +33,10 @@
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.36.0",
+		"@graphql-codegen/cli": "^6.0.1",
+		"@graphql-codegen/typescript": "^5.0.2",
+		"@graphql-codegen/typescript-operations": "^5.0.2",
+		"@graphql-codegen/typescript-react-apollo": "^4.3.3",
 		"@tailwindcss/postcss": "^4.1.16",
 		"@types/mapbox__polyline": "^1.0.5",
 		"@types/node": "^24.6.0",

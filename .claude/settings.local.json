@@ -40,12 +40,24 @@
       "Bash(terraform init:*)",
       "Bash(aws iam list-access-keys:*)",
       "Bash(git add:*)",
+      "Bash(cat:*)",
+      "Bash(curl:*)",
+      "Bash(aws ecs describe-services:*)",
+      "Bash(aws ecs list-tasks:*)",
+      "Bash(aws elbv2:*)",
+      "Bash(aws logs tail:*)",
+      "Bash(aws ecs describe-tasks:*)",
+      "Bash(aws:*)",
+      "Bash(terraform:*)",
+      "Bash(npm run codegen:*)",
+      "Bash(npx graphql-codegen:*)"
+    ],
+    "deny": [
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(cat:*)",
-      "Bash(curl:*)"
+      "Bash(npm run dev:*)",
+      "Bash(npm run build:*)"
     ],
-    "deny": [],
     "ask": []
   }
 }
