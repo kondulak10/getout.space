@@ -1,8 +1,19 @@
 import jwt from 'jsonwebtoken';
 import { IUser } from '../models/User';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const JWT_SECRET_RAW = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = '7d'; // Token expires in 7 days
+
+// CRITICAL: Fail fast if JWT_SECRET is not set
+if (!JWT_SECRET_RAW) {
+  console.error('❌ CRITICAL: JWT_SECRET environment variable is not set!');
+  console.error('❌ Application cannot start without a secure JWT secret.');
+  console.error('❌ Add JWT_SECRET to your .env file with a strong random value.');
+  process.exit(1);
+}
+
+// After validation, we know it's a valid string
+const JWT_SECRET: string = JWT_SECRET_RAW;
 
 export interface JWTPayload {
   userId: string;

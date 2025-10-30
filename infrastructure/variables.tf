@@ -41,7 +41,13 @@ variable "strava_webhook_verify_token" {
 }
 
 variable "jwt_secret" {
-  description = "JWT Secret for authentication"
+  description = "JWT Secret for authentication (64-char hex string)"
+  type        = string
+  sensitive   = true
+}
+
+variable "encryption_key" {
+  description = "Encryption key for Strava tokens at rest (64-char hex string)"
   type        = string
   sensitive   = true
 }

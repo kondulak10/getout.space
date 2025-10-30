@@ -331,6 +331,7 @@ resource "aws_secretsmanager_secret_version" "backend_env" {
     STRAVA_CLIENT_SECRET          = var.strava_client_secret
     STRAVA_WEBHOOK_VERIFY_TOKEN   = var.strava_webhook_verify_token
     JWT_SECRET                    = var.jwt_secret
+    ENCRYPTION_KEY                = var.encryption_key
     FRONTEND_URL                  = "https://${var.domain_name}"
     BACKEND_URL                   = "http://${aws_lb.backend.dns_name}"
     AWS_REGION                    = var.aws_region
@@ -390,6 +391,10 @@ resource "aws_ecs_task_definition" "backend" {
         {
           name      = "JWT_SECRET"
           valueFrom = "${aws_secretsmanager_secret.backend_env.arn}:JWT_SECRET::"
+        },
+        {
+          name      = "ENCRYPTION_KEY"
+          valueFrom = "${aws_secretsmanager_secret.backend_env.arn}:ENCRYPTION_KEY::"
         },
         {
           name      = "FRONTEND_URL"

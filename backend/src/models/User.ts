@@ -1,4 +1,5 @@
 import mongoose, { Document, Schema } from 'mongoose';
+import { encrypt, decrypt } from '../utils/encryption';
 
 // TypeScript interface for Strava Profile
 export interface IStravaProfile {
@@ -72,6 +73,51 @@ const userSchema = new Schema<IUser>(
     timestamps: true, // Automatically adds createdAt and updatedAt
   }
 );
+
+// Mongoose middleware: Encrypt tokens before saving to database
+userSchema.pre('save', function (next) {
+  // Only encrypt if tokens are modified (new or updated)
+  if (this.isModified('accessToken')) {
+    this.accessToken = encrypt(this.accessToken);
+  }
+  if (this.isModified('refreshToken')) {
+    this.refreshToken = encrypt(this.refreshToken);
+  }
+  next();
+});
+
+// Mongoose middleware: Decrypt tokens after loading from database
+userSchema.post('init', function (doc) {
+  // Decrypt tokens when document is loaded from DB
+  try {
+    doc.accessToken = decrypt(doc.accessToken);
+  } catch (error) {
+    console.error('Failed to decrypt accessToken for user:', doc._id);
+  }
+
+  try {
+    doc.refreshToken = decrypt(doc.refreshToken);
+  } catch (error) {
+    console.error('Failed to decrypt refreshToken for user:', doc._id);
+  }
+});
+
+// Mongoose middleware: Decrypt tokens after findOne, findOneAndUpdate, etc.
+userSchema.post('findOne', function (doc) {
+  if (doc) {
+    try {
+      doc.accessToken = decrypt(doc.accessToken);
+    } catch (error) {
+      console.error('Failed to decrypt accessToken for user:', doc._id);
+    }
+
+    try {
+      doc.refreshToken = decrypt(doc.refreshToken);
+    } catch (error) {
+      console.error('Failed to decrypt refreshToken for user:', doc._id);
+    }
+  }
+});
 
 // Create and export the model
 export const User = mongoose.model<IUser>('User', userSchema);
