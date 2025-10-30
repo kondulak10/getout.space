@@ -50,7 +50,8 @@
       "Bash(aws:*)",
       "Bash(terraform:*)",
       "Bash(npm run codegen:*)",
-      "Bash(npx graphql-codegen:*)"
+      "Bash(npx graphql-codegen:*)",
+      "Bash(node node_modules/@graphql-codegen/cli/cjs/bin.js:*)"
     ],
     "deny": [
       "Bash(git commit:*)",

@@ -9,8 +9,10 @@ import {
 	CardTitle,
 } from '@/components/ui/card';
 import { StravaSection } from '@/components/StravaSection';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function HomePage() {
+	const { isAuthenticated, logout, user } = useAuth();
 	const [loading, setLoading] = useState(false);
 	const [usersLoading, setUsersLoading] = useState(false);
 	const [users, setUsers] = useState<any[]>([]);
@@ -55,13 +57,31 @@ export function HomePage() {
 		<div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
 			<div className="w-full max-w-6xl space-y-4">
 				{/* Navigation */}
-				<div className="flex justify-end">
-					<a
-						href="/map"
-						className="bg-white rounded-lg shadow px-4 py-2 text-sm font-medium hover:bg-gray-50 transition-colors"
-					>
-						🗺️ View Hex Map Test
-					</a>
+				<div className="flex justify-between items-center">
+					<div className="flex gap-2">
+						<a
+							href="/map"
+							className="bg-white rounded-lg shadow px-4 py-2 text-sm font-medium hover:bg-gray-50 transition-colors"
+						>
+							🗺️ View Hex Map
+						</a>
+						{isAuthenticated && user?.isAdmin && (
+							<a
+								href="/users"
+								className="bg-white rounded-lg shadow px-4 py-2 text-sm font-medium hover:bg-gray-50 transition-colors"
+							>
+								👥 Users (Admin)
+							</a>
+						)}
+					</div>
+					{isAuthenticated && (
+						<button
+							onClick={logout}
+							className="bg-red-500 text-white rounded-lg shadow px-4 py-2 text-sm font-medium hover:bg-red-600 transition-colors"
+						>
+							🚪 Logout
+						</button>
+					)}
 				</div>
 
 				{/* Backend Test Card */}

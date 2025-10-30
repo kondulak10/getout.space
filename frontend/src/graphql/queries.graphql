@@ -1,0 +1,23 @@
+query GetUsers {
+  users {
+    id
+    stravaId
+    isAdmin
+    stravaProfile {
+      firstname
+      lastname
+      profile
+      city
+      state
+      country
+      sex
+      username
+    }
+    createdAt
+    updatedAt
+  }
+}
+
+mutation DeleteUser($id: ID!) {
+  deleteUser(id: $id)
+}

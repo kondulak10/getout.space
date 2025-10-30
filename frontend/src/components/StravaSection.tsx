@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { RouteHexMapView } from "@/components/RouteHexMapView";
 import polyline from "@mapbox/polyline";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ActivityDetails {
 	id: number;
@@ -19,13 +20,13 @@ interface ActivityDetails {
 }
 
 export function StravaSection() {
+	const { isAuthenticated, login, user } = useAuth();
 	const [stravaLoading, setStravaLoading] = useState(false);
-	const [isAuthenticated, setIsAuthenticated] = useState(false);
 	const [activities, setActivities] = useState<StravaActivity[]>([]);
 	const [selectedActivity, setSelectedActivity] = useState<ActivityDetails | null>(null);
 	const [routeCoordinates, setRouteCoordinates] = useState<[number, number][]>([]);
 
-	const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:4001";
+	const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
 
 	// Handle OAuth callback
 	useEffect(() => {
@@ -51,9 +52,13 @@ export function StravaSection() {
 
 			const data = await response.json();
 
-			if (data.success) {
+			if (data.success && data.token && data.user) {
 				console.log("✅ Authentication successful!");
-				setIsAuthenticated(true);
+				console.log("👤 User:", data.user);
+
+				// Store JWT token and user data in auth context
+				login(data.token, data.user);
+
 				// Clean URL
 				window.history.replaceState({}, document.title, "/");
 			} else {
@@ -83,7 +88,13 @@ export function StravaSection() {
 		try {
 			console.log("🏃 Fetching Strava activities...");
 
-			const response = await fetch(`${backendUrl}/api/strava/activities`);
+			const token = localStorage.getItem('getout_auth_token');
+			const response = await fetch(`${backendUrl}/api/strava/activities`, {
+				headers: {
+					'Authorization': `Bearer ${token}`,
+				},
+			});
+
 			const data = await response.json();
 
 			if (data.success) {
@@ -104,7 +115,12 @@ export function StravaSection() {
 		try {
 			console.log(`🔍 Fetching details for activity ${activityId}...`);
 
-			const response = await fetch(`${backendUrl}/api/strava/activities/${activityId}`);
+			const token = localStorage.getItem('getout_auth_token');
+			const response = await fetch(`${backendUrl}/api/strava/activities/${activityId}`, {
+				headers: {
+					'Authorization': `Bearer ${token}`,
+				},
+			});
 			const data = await response.json();
 
 			if (data.success) {
@@ -156,8 +172,22 @@ export function StravaSection() {
 							</>
 						) : (
 							<>
-								<div className="p-3 bg-green-50 border border-green-200 rounded-md text-sm text-green-700">
-									✅ Authenticated with Strava!
+								<div className="p-4 bg-green-50 border border-green-200 rounded-md">
+									<div className="flex items-center gap-3">
+										<img
+											src={user?.profile.profile}
+											alt={user?.profile.firstname}
+											className="w-12 h-12 rounded-full"
+										/>
+										<div>
+											<p className="font-semibold text-green-800">
+												✅ Authenticated as {user?.profile.firstname} {user?.profile.lastname}
+											</p>
+											<p className="text-sm text-green-600">
+												{user?.isAdmin && '👑 Admin • '}Strava ID: {user?.stravaId}
+											</p>
+										</div>
+									</div>
 								</div>
 								<Button
 									onClick={fetchStravaActivities}
@@ -172,7 +202,8 @@ export function StravaSection() {
 									<ol className="list-decimal list-inside space-y-1">
 										<li>Click "Fetch Strava Activities"</li>
 										<li>View your activities in the table below</li>
-										<li>Click on any activity to see detailed info in console (F12)</li>
+										<li>Click on any activity to see the route on the map</li>
+										{user?.isAdmin && <li>Access the <a href="/users" className="text-blue-600 hover:underline">Users page</a> (admin only)</li>}
 									</ol>
 								</div>
 							</>

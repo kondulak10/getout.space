@@ -2,7 +2,7 @@ import type { CodegenConfig } from '@graphql-codegen/cli';
 
 const config: CodegenConfig = {
   schema: 'http://localhost:4000/graphql',
-  documents: ['src/**/*.tsx', 'src/**/*.ts'],
+  documents: ['src/**/*.graphql', 'src/**/*.tsx', 'src/**/*.ts'],
   ignoreNoDocuments: true,
   generates: {
     './src/gql/graphql.ts': {
@@ -13,9 +13,7 @@ const config: CodegenConfig = {
       ],
       config: {
         withHooks: true,
-        apolloClientVersion: 4,
-        apolloReactCommonImportFrom: '@apollo/client/react',
-        apolloReactHooksImportFrom: '@apollo/client/react/hooks',
+        apolloReactHooksImportFrom: '@apollo/client/react',
       },
     },
   },

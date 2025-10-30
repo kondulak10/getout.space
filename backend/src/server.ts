@@ -9,6 +9,7 @@ import { resolvers } from './graphql/resolvers';
 import testRoutes from './routes/test.routes';
 import stravaRoutes from './routes/strava.routes';
 import webhookRoutes from './routes/webhook.routes';
+import expressPlayground from 'graphql-playground-middleware-express';
 
 const PORT = process.env.PORT || 4000;
 
@@ -165,6 +166,18 @@ app.get('/', (req, res) => {
             <h2 class="section-title">📍 API Endpoints</h2>
 
             <div class="endpoint">
+                <span class="endpoint-method post">POST</span>
+                <span class="endpoint-path">/graphql</span>
+                <div class="endpoint-desc">GraphQL API endpoint</div>
+            </div>
+
+            <div class="endpoint">
+                <span class="endpoint-method get">GET</span>
+                <span class="endpoint-path">/playground</span>
+                <div class="endpoint-desc">📖 Interactive GraphQL documentation - <a href="/playground" class="link" target="_blank">Open Playground</a></div>
+            </div>
+
+            <div class="endpoint">
                 <span class="endpoint-method get">GET</span>
                 <span class="endpoint-path">/health</span>
                 <div class="endpoint-desc">Health check endpoint</div>
@@ -184,6 +197,16 @@ app.get('/', (req, res) => {
         </div>
 
         <div class="section">
+            <h2 class="section-title">🔐 Authentication Endpoints</h2>
+
+            <div class="endpoint">
+                <span class="endpoint-method get">GET</span>
+                <span class="endpoint-path">/api/auth/me</span>
+                <div class="endpoint-desc">Get current authenticated user (requires JWT token)</div>
+            </div>
+        </div>
+
+        <div class="section">
             <h2 class="section-title">🏃 Strava Endpoints</h2>
 
             <div class="endpoint">
@@ -195,19 +218,19 @@ app.get('/', (req, res) => {
             <div class="endpoint">
                 <span class="endpoint-method post">POST</span>
                 <span class="endpoint-path">/api/strava/callback</span>
-                <div class="endpoint-desc">Exchange authorization code for tokens</div>
+                <div class="endpoint-desc">Exchange authorization code for JWT token (returns token + user data)</div>
             </div>
 
             <div class="endpoint">
                 <span class="endpoint-method get">GET</span>
                 <span class="endpoint-path">/api/strava/activities</span>
-                <div class="endpoint-desc">Fetch authenticated user's activities</div>
+                <div class="endpoint-desc">Fetch authenticated user's activities (requires JWT token)</div>
             </div>
 
             <div class="endpoint">
                 <span class="endpoint-method get">GET</span>
                 <span class="endpoint-path">/api/strava/activities/:id</span>
-                <div class="endpoint-desc">Get detailed information for a specific activity</div>
+                <div class="endpoint-desc">Get detailed information for a specific activity (requires JWT token)</div>
             </div>
         </div>
 
@@ -255,15 +278,61 @@ const startApolloServer = async () => {
   const server = new ApolloServer({
     typeDefs,
     resolvers,
+    introspection: true, // Enable introspection for documentation
+    // In production, you might want to disable the landing page for security
+    // plugins: [ApolloServerPluginLandingPageDisabled()],
   });
 
   await server.start();
 
-  // Mount Apollo GraphQL endpoint
+  // Mount Apollo GraphQL endpoint with authentication context
   app.use(
     '/graphql',
     expressMiddleware(server, {
-      context: async ({ req }) => ({ req }),
+      context: async ({ req }) => {
+        // Import here to avoid circular dependencies
+        const { verifyToken, extractTokenFromHeader } = await import('./utils/jwt');
+        const { User } = await import('./models/User');
+
+        // Extract token from Authorization header
+        const token = extractTokenFromHeader(req.headers.authorization);
+
+        if (token) {
+          try {
+            const payload = verifyToken(token);
+            const user = await User.findById(payload.userId);
+
+            if (user) {
+              return {
+                user,
+                userId: payload.userId,
+                isAuthenticated: true,
+              };
+            }
+          } catch (error) {
+            // Invalid token - continue without authentication
+            console.log('Invalid token in GraphQL request');
+          }
+        }
+
+        // No authentication
+        return {
+          user: undefined,
+          userId: undefined,
+          isAuthenticated: false,
+        };
+      },
+    })
+  );
+
+  // GraphQL Playground - Interactive documentation UI
+  app.get(
+    '/playground',
+    expressPlayground({
+      endpoint: '/graphql',
+      settings: {
+        'request.credentials': 'include',
+      },
     })
   );
 
