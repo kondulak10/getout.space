@@ -333,7 +333,7 @@ resource "aws_secretsmanager_secret_version" "backend_env" {
     JWT_SECRET                    = var.jwt_secret
     ENCRYPTION_KEY                = var.encryption_key
     FRONTEND_URL                  = "https://${var.domain_name}"
-    BACKEND_URL                   = "http://${aws_lb.backend.dns_name}"
+    BACKEND_URL                   = "https://api.${var.domain_name}"
     AWS_REGION                    = var.aws_region
   })
 }
