@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import { connectDatabase } from './config/database';
 import testRoutes from './routes/test.routes';
 import stravaRoutes from './routes/strava.routes';
 import webhookRoutes from './routes/webhook.routes';
@@ -8,6 +9,9 @@ import webhookRoutes from './routes/webhook.routes';
 const PORT = process.env.PORT || 4000;
 
 const app = express();
+
+// Connect to MongoDB
+connectDatabase();
 
 // Middleware
 app.use(cors());
