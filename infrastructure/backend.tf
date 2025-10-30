@@ -129,7 +129,62 @@ resource "aws_lb_target_group" "backend" {
   }
 }
 
-# ALB Listener (HTTP)
+# ACM Certificate for backend API subdomain
+resource "aws_acm_certificate" "api" {
+  provider          = aws.main
+  domain_name       = "api.${var.domain_name}"
+  validation_method = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tags = {
+    Name = "api.${var.domain_name}"
+  }
+}
+
+# Route53 record for API certificate validation
+resource "aws_route53_record" "api_cert_validation" {
+  provider = aws.main
+  for_each = {
+    for dvo in aws_acm_certificate.api.domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  }
+
+  allow_overwrite = true
+  name            = each.value.name
+  records         = [each.value.record]
+  ttl             = 60
+  type            = each.value.type
+  zone_id         = aws_route53_zone.main.zone_id
+}
+
+# Wait for API certificate validation
+resource "aws_acm_certificate_validation" "api" {
+  provider                = aws.main
+  certificate_arn         = aws_acm_certificate.api.arn
+  validation_record_fqdns = [for record in aws_route53_record.api_cert_validation : record.fqdn]
+}
+
+# Route53 record for API subdomain
+resource "aws_route53_record" "api" {
+  provider = aws.main
+  zone_id  = aws_route53_zone.main.zone_id
+  name     = "api.${var.domain_name}"
+  type     = "A"
+
+  alias {
+    name                   = aws_lb.backend.dns_name
+    zone_id                = aws_lb.backend.zone_id
+    evaluate_target_health = true
+  }
+}
+
+# ALB Listener (HTTP) - Redirect to HTTPS
 resource "aws_lb_listener" "backend_http" {
   provider          = aws.main
   load_balancer_arn = aws_lb.backend.arn
@@ -137,9 +192,31 @@ resource "aws_lb_listener" "backend_http" {
   protocol          = "HTTP"
 
   default_action {
+    type = "redirect"
+
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
+  }
+}
+
+# ALB Listener (HTTPS)
+resource "aws_lb_listener" "backend_https" {
+  provider          = aws.main
+  load_balancer_arn = aws_lb.backend.arn
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  certificate_arn   = aws_acm_certificate.api.arn
+
+  default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.backend.arn
   }
+
+  depends_on = [aws_acm_certificate_validation.api]
 }
 
 # ECS Cluster

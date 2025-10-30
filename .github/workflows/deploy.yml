@@ -32,7 +32,7 @@ jobs:
         working-directory: ./frontend
         run: npm run build:prod
         env:
-          VITE_BACKEND_URL: http://getout-backend-alb-692248173.eu-north-1.elb.amazonaws.com
+          VITE_BACKEND_URL: https://api.getout.space
           VITE_MAPBOX_TOKEN: pk.eyJ1Ijoia291ZGVsa2EiLCJhIjoiY2o4b3YzajV4MDljOTJxcnNnOHJvY2lpMCJ9.ILCCsALFB59ZFSegrCTruA
 
       - name: Configure AWS credentials
