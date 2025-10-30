@@ -3,18 +3,52 @@ import {
 	useGetUsersQuery,
 	User,
 } from "@/gql/graphql";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/useAuth";
+import { useState } from "react";
 
 export default function UsersPage() {
 	const { user: currentUser } = useAuth();
 	const { data, loading, error, refetch } = useGetUsersQuery();
 	const [deleteUser] = useDeleteUserMutation({
-		onCompleted: () => refetch(),
+		onCompleted: () => {
+			refetch();
+			alert("✅ User deleted successfully!");
+		},
+		onError: (error) => {
+			alert(`❌ Failed to delete user: ${error.message}`);
+		},
 	});
+	const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
 
-	const handleDeleteUser = async (id: string) => {
-		if (confirm("Are you sure you want to delete this user? This cannot be undone.")) {
+	const handleDeleteUser = async (id: string, userName: string) => {
+		if (!currentUser?.isAdmin) {
+			alert("❌ You must be an admin to delete users.");
+			return;
+		}
+
+		const isDeletingSelf = id === currentUser?.id;
+		const confirmMessage = isDeletingSelf
+			? `⚠️ WARNING: You are about to delete YOUR OWN ACCOUNT!\n\nUser: ${userName}\n\nThis will:\n- Log you out immediately\n- Delete your account permanently\n- Delete all your data\n\nThis cannot be undone!\n\nAre you absolutely sure?`
+			: `⚠️ Are you sure you want to delete ${userName}?\n\nThis will permanently delete:\n- Their user account\n- All their data\n\nThis cannot be undone!`;
+
+		if (!confirm(confirmMessage)) {
+			return;
+		}
+
+		try {
+			setDeletingUserId(id);
 			await deleteUser({ variables: { id } });
+
+			// If deleting self, log out
+			if (isDeletingSelf) {
+				localStorage.removeItem('getout_auth_token');
+				localStorage.removeItem('getout_user');
+				window.location.href = '/';
+			}
+		} catch (error) {
+			console.error("Delete error:", error);
+		} finally {
+			setDeletingUserId(null);
 		}
 	};
 
@@ -26,8 +60,19 @@ export default function UsersPage() {
 			<div className="max-w-6xl mx-auto">
 				<div className="flex items-center justify-between mb-6">
 					<div>
-						<h1 className="text-3xl font-bold">Users Management</h1>
-						<p className="text-gray-600 mt-1">Admin Only - Manage authenticated Strava users</p>
+						<div className="flex items-center gap-3 mb-2">
+							<h1 className="text-3xl font-bold">Users Management</h1>
+							{currentUser?.isAdmin && (
+								<span className="px-3 py-1 text-sm font-semibold rounded-full bg-purple-100 text-purple-800">
+									👑 Admin Access
+								</span>
+							)}
+						</div>
+						<p className="text-gray-600">
+							{currentUser?.isAdmin
+								? "Manage authenticated Strava users and delete accounts"
+								: "View authenticated Strava users"}
+						</p>
 					</div>
 					<a
 						href="/"
@@ -110,16 +155,18 @@ export default function UsersPage() {
 									</td>
 									<td className="px-6 py-4 whitespace-nowrap text-sm">
 										<button
-											onClick={() => handleDeleteUser(user.id)}
-											disabled={user.id === currentUser?.id}
-											className={`${
-												user.id === currentUser?.id
-													? "text-gray-400 cursor-not-allowed"
-													: "text-red-600 hover:text-red-900"
+											onClick={() => handleDeleteUser(user.id, `${user.stravaProfile.firstname} ${user.stravaProfile.lastname}`)}
+											disabled={deletingUserId === user.id}
+											className={`px-3 py-1 rounded transition-colors ${
+												deletingUserId === user.id
+													? "text-gray-400 cursor-not-allowed bg-gray-100"
+													: user.id === currentUser?.id
+													? "text-white bg-orange-600 hover:bg-orange-700"
+													: "text-white bg-red-600 hover:bg-red-700"
 											}`}
-											title={user.id === currentUser?.id ? "Cannot delete yourself" : "Delete user"}
+											title={user.id === currentUser?.id ? "Delete your own account (will log you out)" : "Delete user"}
 										>
-											Delete
+											{deletingUserId === user.id ? "Deleting..." : user.id === currentUser?.id ? "Delete Self" : "Delete"}
 										</button>
 									</td>
 								</tr>

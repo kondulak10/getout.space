@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RouteHexMapView } from "@/components/RouteHexMapView";
 import polyline from "@mapbox/polyline";
-import { useEffect, useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useEffect, useState, useRef } from "react";
+import { useAuth } from "@/contexts/useAuth";
 
 interface ActivityDetails {
 	id: number;
@@ -26,22 +26,30 @@ export function StravaSection() {
 	const [selectedActivity, setSelectedActivity] = useState<ActivityDetails | null>(null);
 	const [routeCoordinates, setRouteCoordinates] = useState<[number, number][]>([]);
 
+	// Prevent double OAuth code exchange (React Strict Mode runs effects twice)
+	const hasExchangedCode = useRef(false);
+
 	const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
 
 	// Handle OAuth callback
 	useEffect(() => {
+		// OAuth codes can only be used once!
+		// Prevent double execution with ref guard
 		const urlParams = new URLSearchParams(window.location.search);
 		const code = urlParams.get("code");
 		const scope = urlParams.get("scope");
 
-		if (code && scope) {
+		if (code && scope && !isAuthenticated && !hasExchangedCode.current) {
 			console.log("📥 Received authorization code, exchanging for tokens...");
+			hasExchangedCode.current = true;
 			exchangeCodeForTokens(code);
 		}
-	}, []);
+	}, [isAuthenticated]);
 
 	const exchangeCodeForTokens = async (code: string) => {
 		try {
+			console.log("🔄 Exchanging OAuth code for tokens...");
+
 			const response = await fetch(`${backendUrl}/api/strava/callback`, {
 				method: "POST",
 				headers: {
@@ -52,7 +60,9 @@ export function StravaSection() {
 
 			const data = await response.json();
 
-			if (data.success && data.token && data.user) {
+			console.log("📥 Server response:", data);
+
+			if (response.ok && data.success && data.token && data.user) {
 				console.log("✅ Authentication successful!");
 				console.log("👤 User:", data.user);
 
@@ -61,11 +71,16 @@ export function StravaSection() {
 
 				// Clean URL
 				window.history.replaceState({}, document.title, "/");
+
+				alert(`✅ Successfully logged in as ${data.user.profile.firstname} ${data.user.profile.lastname}!`);
 			} else {
-				console.error("❌ Authentication failed:", data.error);
+				const errorMsg = data.error || data.details || "Unknown error";
+				console.error("❌ Authentication failed:", errorMsg);
+				alert(`❌ Login failed: ${errorMsg}`);
 			}
 		} catch (error) {
 			console.error("❌ Token exchange failed:", error);
+			alert(`❌ Login error: ${error instanceof Error ? error.message : 'Network error'}`);
 		}
 	};
 

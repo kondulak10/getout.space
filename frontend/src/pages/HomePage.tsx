@@ -9,7 +9,7 @@ import {
 	CardTitle,
 } from '@/components/ui/card';
 import { StravaSection } from '@/components/StravaSection';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/useAuth';
 
 export function HomePage() {
 	const { isAuthenticated, logout, user } = useAuth();

@@ -41,6 +41,17 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 		});
 
 		if (!response.ok) {
+			const errorData = await response.json().catch(() => ({})) as any;
+			console.error('❌ Strava API error:', response.status, errorData);
+
+			// Common OAuth errors
+			if (response.status === 400 && errorData.message?.includes('expired')) {
+				throw new Error('Authorization code has expired. Please try logging in again.');
+			}
+			if (response.status === 400) {
+				throw new Error('Authorization code is invalid or already used. Please try logging in again.');
+			}
+
 			throw new Error(`Strava token exchange failed: ${response.status}`);
 		}
 
