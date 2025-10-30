@@ -1,6 +1,6 @@
 // 🚨 IMPORTANT: Update version on EVERY frontend change! 🚨
 // Increment: 1.0.1 -> 1.0.2 (minor), 1.0.9 -> 1.1.0 (feature), 2.0.0 (major)
-export const APP_VERSION = '1.0.1';
+export const APP_VERSION = '1.0.2';
 export const BUILD_DATE = '2025-10-30';
 
 export const logVersion = () => {
