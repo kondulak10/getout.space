@@ -60,7 +60,8 @@
       "Bash(npm uninstall:*)",
       "Bash(npx tsc --noEmit)",
       "Bash(node -e:*)",
-      "WebFetch(domain:press.strava.com)"
+      "WebFetch(domain:press.strava.com)",
+      "Bash(tree:*)"
     ],
     "deny": [
       "Bash(git commit:*)",
