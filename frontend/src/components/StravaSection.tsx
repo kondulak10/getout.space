@@ -25,6 +25,10 @@ export function StravaSection() {
 	const [activities, setActivities] = useState<StravaActivity[]>([]);
 	const [selectedActivity, setSelectedActivity] = useState<ActivityDetails | null>(null);
 	const [routeCoordinates, setRouteCoordinates] = useState<[number, number][]>([]);
+	const [currentPage, setCurrentPage] = useState(1);
+	const [perPage] = useState(30);
+	const [hasMoreActivities, setHasMoreActivities] = useState(true);
+	const [totalRunCount, setTotalRunCount] = useState<number | null>(null);
 
 	// Prevent double OAuth code exchange (React Strict Mode runs effects twice)
 	const hasExchangedCode = useRef(false);
@@ -98,13 +102,12 @@ export function StravaSection() {
 		}
 	};
 
-	const fetchStravaActivities = async () => {
-		setStravaLoading(true);
+	const fetchAthleteStats = async () => {
 		try {
-			console.log("🏃 Fetching Strava activities...");
+			console.log("📊 Fetching athlete stats...");
 
 			const token = localStorage.getItem('getout_auth_token');
-			const response = await fetch(`${backendUrl}/api/strava/activities`, {
+			const response = await fetch(`${backendUrl}/api/strava/stats`, {
 				headers: {
 					'Authorization': `Bearer ${token}`,
 				},
@@ -113,9 +116,45 @@ export function StravaSection() {
 			const data = await response.json();
 
 			if (data.success) {
-				console.log(`✅ Fetched ${data.count} activities!`);
+				console.log(`✅ Total runs: ${data.runCount}`);
+				setTotalRunCount(data.runCount);
+			}
+		} catch (error) {
+			console.error("❌ Failed to fetch stats:", error);
+		}
+	};
+
+	const fetchStravaActivities = async (page: number = currentPage) => {
+		setStravaLoading(true);
+		try {
+			// Fetch stats on first page load
+			if (page === 1 && totalRunCount === null) {
+				await fetchAthleteStats();
+			}
+
+			console.log(`🏃 Fetching Strava activities page ${page}...`);
+
+			const token = localStorage.getItem('getout_auth_token');
+			const url = new URL(`${backendUrl}/api/strava/activities`);
+			url.searchParams.set('page', page.toString());
+			url.searchParams.set('per_page', perPage.toString());
+
+			const response = await fetch(url.toString(), {
+				headers: {
+					'Authorization': `Bearer ${token}`,
+				},
+			});
+
+			const data = await response.json();
+
+			if (data.success) {
+				console.log(`✅ Fetched ${data.count} activities from page ${data.page}!`);
 				console.log("Activities:", data.activities);
 				setActivities(data.activities);
+				setCurrentPage(data.page);
+
+				// Use hasMorePages from backend (based on Strava's full response, not filtered)
+				setHasMoreActivities(data.hasMorePages ?? false);
 			} else {
 				console.error("❌ Error:", data.error);
 			}
@@ -205,7 +244,7 @@ export function StravaSection() {
 									</div>
 								</div>
 								<Button
-									onClick={fetchStravaActivities}
+									onClick={() => fetchStravaActivities(1)}
 									disabled={stravaLoading}
 									size="lg"
 									className="w-full"
@@ -234,10 +273,33 @@ export function StravaSection() {
 						<CardTitle>Your Strava Activities</CardTitle>
 						<CardDescription>
 							Click on any activity to view the route on the map
+							{totalRunCount !== null && ` • Total runs: ${totalRunCount}`} • Page {currentPage}
 						</CardDescription>
 					</CardHeader>
-					<CardContent>
+					<CardContent className="space-y-4">
 						<ActivitiesTable activities={activities} onActivityClick={handleActivityClick} />
+
+						{/* Pagination Controls */}
+						<div className="flex items-center justify-between pt-4">
+							<Button
+								onClick={() => fetchStravaActivities(currentPage - 1)}
+								disabled={currentPage === 1 || stravaLoading}
+								variant="outline"
+							>
+								← Previous Page
+							</Button>
+							<span className="text-sm text-muted-foreground">
+								Page {currentPage}
+								{totalRunCount !== null && ` of ~${Math.ceil(totalRunCount / perPage)}`}
+							</span>
+							<Button
+								onClick={() => fetchStravaActivities(currentPage + 1)}
+								disabled={!hasMoreActivities || stravaLoading}
+								variant="outline"
+							>
+								Next Page →
+							</Button>
+						</div>
 					</CardContent>
 				</Card>
 			)}

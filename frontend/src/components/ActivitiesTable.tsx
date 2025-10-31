@@ -19,6 +19,7 @@ export interface StravaActivity {
 	start_date_local: string;
 	average_speed: number;
 	max_speed: number;
+	isStored?: boolean;
 }
 
 interface ActivitiesTableProps {
@@ -69,12 +70,13 @@ export function ActivitiesTable({ activities, onActivityClick }: ActivitiesTable
 						<TableHead>Elevation</TableHead>
 						<TableHead>Avg Speed</TableHead>
 						<TableHead>Date</TableHead>
+						<TableHead>Status</TableHead>
 					</TableRow>
 				</TableHeader>
 				<TableBody>
 					{activities.length === 0 ? (
 						<TableRow>
-							<TableCell colSpan={7} className="text-center text-muted-foreground">
+							<TableCell colSpan={8} className="text-center text-muted-foreground">
 								No activities found
 							</TableCell>
 						</TableRow>
@@ -92,6 +94,17 @@ export function ActivitiesTable({ activities, onActivityClick }: ActivitiesTable
 								<TableCell>{activity.total_elevation_gain.toFixed(0)}m</TableCell>
 								<TableCell>{formatSpeed(activity.average_speed)}</TableCell>
 								<TableCell>{formatDate(activity.start_date_local)}</TableCell>
+								<TableCell>
+									{activity.isStored ? (
+										<span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+											✓ Stored
+										</span>
+									) : (
+										<span className="px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">
+											Not stored
+										</span>
+									)}
+								</TableCell>
 							</TableRow>
 						))
 					)}

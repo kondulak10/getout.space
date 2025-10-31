@@ -127,7 +127,19 @@ export const analyzeRouteAndConvertToHexagons = (
 
 	if (distance <= closeThreshold) {
 		console.log(`✅ Closed loop detected (within ${closeThreshold}m threshold)`);
-		const hexagons = routeToHexagonsArea(coordinates);
+
+		// Get area hexagons (filled polygon)
+		const areaHexagons = routeToHexagonsArea(coordinates);
+
+		// Also get line hexagons (perimeter path)
+		const lineHexagons = routeToHexagonsLine(coordinates, true);
+
+		// Combine both sets to ensure no hexagons are omitted
+		const combinedHexSet = new Set([...areaHexagons, ...lineHexagons]);
+		const hexagons = Array.from(combinedHexSet);
+
+		console.log(`📊 Area hexagons: ${areaHexagons.length}, Line hexagons: ${lineHexagons.length}, Combined: ${hexagons.length}`);
+
 		return {
 			hexagons,
 			type: 'area',
