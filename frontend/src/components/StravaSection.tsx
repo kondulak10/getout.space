@@ -200,6 +200,46 @@ export function StravaSection() {
 		}
 	};
 
+	const handleProcessActivity = async (activityId: number) => {
+		try {
+			console.log(`💾 Processing activity ${activityId}...`);
+
+			const token = localStorage.getItem('getout_auth_token');
+			const response = await fetch(`${backendUrl}/api/strava/process-activity`, {
+				method: 'POST',
+				headers: {
+					'Authorization': `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ activityId }),
+			});
+
+			const data = await response.json();
+
+			if (response.ok && data.success) {
+				console.log(`✅ Activity processed successfully!`);
+				console.log(`📊 Hexagons: ${data.hexagons.created} created, ${data.hexagons.updated} captured, ${data.hexagons.couldNotUpdate} skipped`);
+
+				// Update the activity's isStored status in the local state
+				setActivities(prevActivities =>
+					prevActivities.map(activity =>
+						activity.id === activityId
+							? { ...activity, isStored: true }
+							: activity
+					)
+				);
+
+				alert(`✅ Activity saved!\n\n📊 Hexagons: ${data.hexagons.totalParsed} total\n✨ ${data.hexagons.created} created\n🎯 ${data.hexagons.updated} captured\n⏭️ ${data.hexagons.couldNotUpdate} skipped`);
+			} else {
+				console.error("❌ Error:", data.error);
+				alert(`❌ Failed to process activity: ${data.error || data.details || 'Unknown error'}`);
+			}
+		} catch (error) {
+			console.error("❌ Failed to process activity:", error);
+			alert(`❌ Error: ${error instanceof Error ? error.message : 'Network error'}`);
+		}
+	};
+
 	return (
 		<>
 			<Card className="w-full">
@@ -277,7 +317,11 @@ export function StravaSection() {
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-4">
-						<ActivitiesTable activities={activities} onActivityClick={handleActivityClick} />
+						<ActivitiesTable
+							activities={activities}
+							onActivityClick={handleActivityClick}
+							onProcessActivity={handleProcessActivity}
+						/>
 
 						{/* Pagination Controls */}
 						<div className="flex items-center justify-between pt-4">
