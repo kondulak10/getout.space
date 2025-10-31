@@ -32,4 +32,3 @@ interface AuthContextType {
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export type { User, StravaProfile, AuthContextType };
-

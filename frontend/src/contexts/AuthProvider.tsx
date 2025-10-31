@@ -1,6 +1,6 @@
 import * as React from "react";
 import { ReactNode, useEffect, useState } from "react";
-import { AuthContext, AuthContextType, User } from "./authContext";
+import { AuthContext, AuthContextType, User } from "./auth.types";
 
 const TOKEN_KEY = "getout_auth_token";
 const USER_KEY = "getout_user";

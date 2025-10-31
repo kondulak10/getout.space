@@ -6,7 +6,7 @@ import '@/index.css'
 import App from '@/App.tsx'
 import { logVersion } from '@/version'
 import { apolloClient } from '@/lib/apollo-client'
-import { AuthProvider } from '@/contexts/AuthContext'
+import { AuthProvider } from '@/contexts/AuthProvider'
 
 // Log version on mount
 logVersion();
