@@ -52,7 +52,8 @@
       "Bash(npm run codegen:*)",
       "Bash(npx graphql-codegen:*)",
       "Bash(node node_modules/@graphql-codegen/cli/cjs/bin.js:*)",
-      "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\contexts\\authContext.ts\" \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\contexts\\AuthContext.tsx\")"
+      "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\contexts\\authContext.ts\" \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\contexts\\AuthContext.tsx\")",
+      "Bash(npm run typecheck:*)"
     ],
     "deny": [
       "Bash(git commit:*)",

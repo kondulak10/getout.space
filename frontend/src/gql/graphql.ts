@@ -1,5 +1,4 @@
 import { gql } from '@apollo/client';
-import * as Apollo from '@apollo/client';
 import * as ApolloReactHooks from '@apollo/client/react';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
@@ -143,13 +142,13 @@ export function useGetUsersSuspenseQuery(baseOptions?: ApolloReactHooks.SkipToke
 export type GetUsersQueryHookResult = ReturnType<typeof useGetUsersQuery>;
 export type GetUsersLazyQueryHookResult = ReturnType<typeof useGetUsersLazyQuery>;
 export type GetUsersSuspenseQueryHookResult = ReturnType<typeof useGetUsersSuspenseQuery>;
-export type GetUsersQueryResult = Apollo.QueryResult<GetUsersQuery, GetUsersQueryVariables>;
+export type GetUsersQueryResult = ReturnType<typeof useGetUsersQuery>;
 export const DeleteUserDocument = gql`
     mutation DeleteUser($id: ID!) {
   deleteUser(id: $id)
 }
     `;
-export type DeleteUserMutationFn = Apollo.MutationFunction<DeleteUserMutation, DeleteUserMutationVariables>;
+export type DeleteUserMutationFn = ReturnType<typeof useDeleteUserMutation>[0];
 
 /**
  * __useDeleteUserMutation__
@@ -173,5 +172,5 @@ export function useDeleteUserMutation(baseOptions?: ApolloReactHooks.MutationHoo
         return ApolloReactHooks.useMutation<DeleteUserMutation, DeleteUserMutationVariables>(DeleteUserDocument, options);
       }
 export type DeleteUserMutationHookResult = ReturnType<typeof useDeleteUserMutation>;
-export type DeleteUserMutationResult = Apollo.MutationResult<DeleteUserMutation>;
-export type DeleteUserMutationOptions = Apollo.BaseMutationOptions<DeleteUserMutation, DeleteUserMutationVariables>;
+export type DeleteUserMutationResult = ReturnType<typeof useDeleteUserMutation>[1];
+export type DeleteUserMutationOptions = Parameters<typeof useDeleteUserMutation>[0];

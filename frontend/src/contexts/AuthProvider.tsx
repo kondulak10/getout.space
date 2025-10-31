@@ -1,4 +1,3 @@
-import * as React from "react";
 import { ReactNode, useEffect, useState } from "react";
 import { AuthContext, AuthContextType, User } from "./auth.types";
 
