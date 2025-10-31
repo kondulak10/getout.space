@@ -15,6 +15,7 @@ export interface IStravaProfile {
 
 // TypeScript interface for User
 export interface IUser extends Document {
+  _id: mongoose.Types.ObjectId;
   stravaId: number;
   accessToken: string;
   refreshToken: string;

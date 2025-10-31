@@ -2,6 +2,8 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 // TypeScript interface for Activity
 export interface IActivity extends Document {
+  _id: mongoose.Types.ObjectId;
+
   // Identifiers
   stravaActivityId: number;
   userId: mongoose.Types.ObjectId;
