@@ -13,6 +13,8 @@ query GetUsers {
       sex
       username
     }
+    tokenExpiresAt
+    tokenIsExpired
     createdAt
     updatedAt
   }
@@ -20,4 +22,12 @@ query GetUsers {
 
 mutation DeleteUser($id: ID!) {
   deleteUser(id: $id)
+}
+
+mutation RefreshUserToken($id: ID!) {
+  refreshUserToken(id: $id) {
+    id
+    tokenExpiresAt
+    tokenIsExpired
+  }
 }

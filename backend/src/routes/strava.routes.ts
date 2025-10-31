@@ -2,6 +2,7 @@ import { Request, Response, Router } from 'express';
 import { User } from '../models/User';
 import { generateToken } from '../utils/jwt';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { refreshStravaToken } from '../utils/strava';
 
 const router = Router();
 
@@ -58,6 +59,11 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 		const data = (await response.json()) as any;
 
 		console.log('✅ Tokens received from Strava');
+		console.log('📊 Token data from Strava:', {
+			expires_at: data.expires_at,
+			expires_in: data.expires_in,
+			expires_at_date: data.expires_at ? new Date(data.expires_at * 1000).toISOString() : 'N/A',
+		});
 		console.log('👤 Athlete data:', data.athlete);
 
 		// Check if this is the first user (for admin privileges)
@@ -150,31 +156,14 @@ export async function getValidAccessToken(userId: string): Promise<string> {
 
 	// If token expires in less than 5 minutes, refresh it
 	if (user.tokenExpiresAt - now < 300) {
-		console.log('🔄 Access token expired, refreshing...');
+		console.log('🔄 Access token expired or expiring soon, refreshing...');
 
-		const response = await fetch('https://www.strava.com/oauth/token', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
-				client_id: process.env.STRAVA_CLIENT_ID,
-				client_secret: process.env.STRAVA_CLIENT_SECRET,
-				refresh_token: user.refreshToken,
-				grant_type: 'refresh_token',
-			}),
-		});
-
-		if (!response.ok) {
-			throw new Error(`Token refresh failed: ${response.status}`);
-		}
-
-		const data = (await response.json()) as any;
+		const tokenData = await refreshStravaToken(user);
 
 		// Update user's tokens in database
-		user.accessToken = data.access_token;
-		user.refreshToken = data.refresh_token;
-		user.tokenExpiresAt = data.expires_at;
+		user.accessToken = tokenData.access_token;
+		user.refreshToken = tokenData.refresh_token;
+		user.tokenExpiresAt = tokenData.expires_at;
 		await user.save();
 
 		console.log('✅ Token refreshed and saved to DB');

@@ -56,7 +56,9 @@
       "Bash(npm run typecheck:*)",
       "WebFetch(domain:www.apollographql.com)",
       "WebFetch(domain:the-guild.dev)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(node -e:*)"
     ],
     "deny": [
       "Bash(git commit:*)",

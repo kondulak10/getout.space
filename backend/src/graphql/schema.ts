@@ -17,6 +17,8 @@ export const typeDefs = gql`
     stravaId: Int!
     isAdmin: Boolean!
     stravaProfile: StravaProfile!
+    tokenExpiresAt: Int!
+    tokenIsExpired: Boolean!
     createdAt: String!
     updatedAt: String!
   }
@@ -47,5 +49,11 @@ export const typeDefs = gql`
     Requires: Authentication + Admin
     """
     deleteUser(id: ID!): Boolean!
+
+    """
+    Refresh Strava access token for a user (Admin only)
+    Requires: Authentication + Admin
+    """
+    refreshUserToken(id: ID!): User!
   }
 `;

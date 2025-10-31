@@ -1,6 +1,7 @@
 import { GraphQLError } from 'graphql';
 import { User, IUser } from '../models/User';
 import { verifyToken, extractTokenFromHeader } from '../utils/jwt';
+import { refreshStravaToken } from '../utils/strava';
 
 // GraphQL Context type
 export interface GraphQLContext {
@@ -31,6 +32,14 @@ function requireAdmin(context: GraphQLContext): IUser {
 }
 
 export const resolvers = {
+  User: {
+    // Field resolver: Check if token is expired
+    tokenIsExpired: (parent: IUser) => {
+      const now = Math.floor(Date.now() / 1000);
+      return parent.tokenExpiresAt < now;
+    },
+  },
+
   Query: {
     // Get current authenticated user
     me: async (_: any, __: any, context: GraphQLContext) => {
@@ -88,6 +97,41 @@ export const resolvers = {
       } catch (error) {
         console.error('Error deleting user:', error);
         return false;
+      }
+    },
+
+    // Refresh user's Strava token (Admin only)
+    refreshUserToken: async (_: any, { id }: { id: string }, context: GraphQLContext) => {
+      requireAdmin(context);
+
+      try {
+        const user = await User.findById(id);
+
+        if (!user) {
+          throw new GraphQLError('User not found', {
+            extensions: { code: 'NOT_FOUND' },
+          });
+        }
+
+        console.log(`🔄 Admin-initiated token refresh for user: ${user.stravaProfile.firstname}`);
+
+        // Use shared token refresh helper
+        const tokenData = await refreshStravaToken(user);
+
+        // Update user's tokens in database
+        user.accessToken = tokenData.access_token;
+        user.refreshToken = tokenData.refresh_token;
+        user.tokenExpiresAt = tokenData.expires_at;
+        await user.save();
+
+        // Return updated user
+        return user;
+      } catch (error) {
+        console.error('Error refreshing user token:', error);
+        if (error instanceof GraphQLError) {
+          throw error;
+        }
+        throw new GraphQLError('Failed to refresh token');
       }
     },
   },
