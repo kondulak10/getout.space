@@ -1,6 +1,7 @@
+import { useQuery, useMutation } from "@apollo/client/react";
 import {
-	useDeleteUserMutation,
-	useGetUsersQuery,
+	GetUsersDocument,
+	DeleteUserDocument,
 	User,
 } from "@/gql/graphql";
 import { useAuth } from "@/contexts/useAuth";
@@ -8,8 +9,8 @@ import { useState } from "react";
 
 export default function UsersPage() {
 	const { user: currentUser } = useAuth();
-	const { data, loading, error, refetch } = useGetUsersQuery();
-	const [deleteUser] = useDeleteUserMutation({
+	const { data, loading, error, refetch } = useQuery(GetUsersDocument);
+	const [deleteUser] = useMutation(DeleteUserDocument, {
 		onCompleted: () => {
 			refetch();
 			alert("✅ User deleted successfully!");

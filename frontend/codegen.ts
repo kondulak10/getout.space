@@ -9,14 +9,17 @@ const config: CodegenConfig = {
       plugins: [
         'typescript',
         'typescript-operations',
-        'typescript-react-apollo',
+        'typed-document-node',
       ],
       config: {
-        withHooks: true,
-        apolloReactHooksImportFrom: '@apollo/client/react',
-        addDocBlocks: false,
-        skipTypename: false,
-        avoidOptionals: false,
+        // Apollo Client 4 recommended settings
+        avoidOptionals: {
+          field: true,
+          inputValue: false,
+        },
+        defaultScalarType: 'unknown',
+        nonOptionalTypename: true,
+        skipTypeNameForRoot: true,
       },
     },
   },

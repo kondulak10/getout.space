@@ -53,7 +53,10 @@
       "Bash(npx graphql-codegen:*)",
       "Bash(node node_modules/@graphql-codegen/cli/cjs/bin.js:*)",
       "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\contexts\\authContext.ts\" \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\contexts\\AuthContext.tsx\")",
-      "Bash(npm run typecheck:*)"
+      "Bash(npm run typecheck:*)",
+      "WebFetch(domain:www.apollographql.com)",
+      "WebFetch(domain:the-guild.dev)",
+      "Bash(npm uninstall:*)"
     ],
     "deny": [
       "Bash(git commit:*)",
