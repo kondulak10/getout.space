@@ -16,9 +16,6 @@ router.get('/health', (req: Request, res: Response) => {
 router.get('/version', (req: Request, res: Response) => {
   res.json({
     version: version.APP_VERSION,
-    gitHash: version.GIT_HASH,
-    gitBranch: version.GIT_BRANCH,
-    buildDate: version.BUILD_DATE,
     buildTimestamp: version.BUILD_TIMESTAMP,
     versionString: version.getVersionString(),
   });

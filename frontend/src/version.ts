@@ -3,13 +3,10 @@
  * Generated at build time by scripts/generate-version.js
  */
 
-export const APP_VERSION = '1.0.49';
-export const GIT_HASH = 'f43a844';
-export const GIT_BRANCH = 'main';
-export const BUILD_DATE = '2025-11-03';
-export const BUILD_TIMESTAMP = '2025-11-03T19:17:41.927Z';
+export const APP_VERSION = '0311-2132';
+export const BUILD_TIMESTAMP = '2025-11-03T20:32:57.508Z';
 
-export const getVersionString = () => `v${APP_VERSION}-${GIT_HASH}`;
+export const getVersionString = () => APP_VERSION;
 
 export const logVersion = () => {
   const styles = {
@@ -36,11 +33,7 @@ export const logVersion = () => {
     styles.version
   );
   console.log(
-    `%c║  Branch: ${GIT_BRANCH.padEnd(31, ' ')}║`,
-    styles.info
-  );
-  console.log(
-    `%c║  Build: ${BUILD_DATE.padEnd(32, ' ')}║`,
+    `%c║  Build: ${BUILD_TIMESTAMP.split('T')[0].padEnd(32, ' ')}║`,
     styles.info
   );
   console.log(
@@ -50,9 +43,5 @@ export const logVersion = () => {
   console.log(
     '%c╚═══════════════════════════════════════════╝',
     styles.border
-  );
-  console.log(
-    '%c💡 Cache-busted on every deployment via git hash',
-    'color: #f59e0b; font-size: 11px;'
   );
 };
