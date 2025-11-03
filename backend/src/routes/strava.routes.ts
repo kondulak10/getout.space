@@ -112,9 +112,9 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 			}
 		}
 
-		// Process profile image and upload to S3
+		// Process profile image and upload to S3 (optional - only if user has a photo)
 		const stravaImageUrl = data.athlete.profile || data.athlete.profile_medium || '';
-		let s3ProfileUrl = user.stravaProfile.profile; // Keep existing for updates
+		let s3ProfileUrl = user.stravaProfile.profile; // Keep existing if already set
 		let s3HexagonUrl = user.stravaProfile.imghex;
 
 		if (stravaImageUrl) {
@@ -129,15 +129,16 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 				s3HexagonUrl = hexagonUrl;
 				console.log('✅ Profile images uploaded to S3');
 			} catch (error) {
-				console.error('⚠️ Failed to process profile image:', error);
-				console.error('Will continue with existing/Strava URL');
-				// Fall back to Strava URL if S3 upload fails
-				if (!s3ProfileUrl) {
-					s3ProfileUrl = stravaImageUrl;
-				}
+				console.error('⚠️ Failed to process profile image, using Strava URL as fallback');
+				console.error('Error:', error instanceof Error ? error.message : 'Unknown error');
+				// Fall back to Strava URL if S3 upload fails - don't break authentication!
+				s3ProfileUrl = stravaImageUrl;
+				s3HexagonUrl = undefined; // Clear hexagon URL if processing failed
 			}
 		} else {
-			console.log('⚠️ No profile image URL available from Strava');
+			console.log('ℹ️ User has no profile photo from Strava - skipping image processing');
+			s3ProfileUrl = undefined;
+			s3HexagonUrl = undefined;
 		}
 
 		// Update user with final profile URLs

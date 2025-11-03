@@ -4,7 +4,7 @@ export const userSchema = gql`
   type StravaProfile {
     firstname: String!
     lastname: String!
-    profile: String!
+    profile: String
     imghex: String
     city: String
     state: String

@@ -5,7 +5,7 @@ import { encrypt, decrypt } from '../utils/encryption';
 export interface IStravaProfile {
   firstname: string;
   lastname: string;
-  profile: string; // Profile picture URL
+  profile?: string; // Profile picture URL (optional - user may have no photo)
   imghex?: string; // Hexagon-clipped profile picture (base64 or URL)
   city?: string;
   state?: string;
@@ -32,7 +32,7 @@ const stravaProfileSchema = new Schema<IStravaProfile>(
   {
     firstname: { type: String, required: true },
     lastname: { type: String, required: true },
-    profile: { type: String, required: true },
+    profile: { type: String }, // Optional - user may have no profile photo
     imghex: { type: String }, // Hexagon-clipped profile picture
     city: { type: String },
     state: { type: String },
