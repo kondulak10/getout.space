@@ -68,7 +68,8 @@
       "Bash(node scripts/check-webhook.js:*)",
       "Bash(node scripts/generate-version.js:*)",
       "Bash(gh run list:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(git show:*)"
     ],
     "deny": [
       "Bash(git commit:*)",
