@@ -6,6 +6,7 @@ export interface IStravaProfile {
   firstname: string;
   lastname: string;
   profile: string; // Profile picture URL
+  imghex?: string; // Hexagon-clipped profile picture (base64 or URL)
   city?: string;
   state?: string;
   country?: string;
@@ -32,6 +33,7 @@ const stravaProfileSchema = new Schema<IStravaProfile>(
     firstname: { type: String, required: true },
     lastname: { type: String, required: true },
     profile: { type: String, required: true },
+    imghex: { type: String }, // Hexagon-clipped profile picture
     city: { type: String },
     state: { type: String },
     country: { type: String },
@@ -91,15 +93,21 @@ userSchema.pre('save', function (next) {
 userSchema.post('init', function (doc) {
   // Decrypt tokens when document is loaded from DB
   try {
-    doc.accessToken = decrypt(doc.accessToken);
+    // Check if token looks encrypted (has the iv:authTag:data format)
+    if (doc.accessToken && doc.accessToken.includes(':')) {
+      doc.accessToken = decrypt(doc.accessToken);
+    }
   } catch (error) {
-    console.error('Failed to decrypt accessToken for user:', doc._id);
+    console.error('Failed to decrypt accessToken for user:', doc._id, '- token may be in old format or corrupted');
   }
 
   try {
-    doc.refreshToken = decrypt(doc.refreshToken);
+    // Check if token looks encrypted (has the iv:authTag:data format)
+    if (doc.refreshToken && doc.refreshToken.includes(':')) {
+      doc.refreshToken = decrypt(doc.refreshToken);
+    }
   } catch (error) {
-    console.error('Failed to decrypt refreshToken for user:', doc._id);
+    console.error('Failed to decrypt refreshToken for user:', doc._id, '- token may be in old format or corrupted');
   }
 });
 
@@ -107,15 +115,21 @@ userSchema.post('init', function (doc) {
 userSchema.post('findOne', function (doc) {
   if (doc) {
     try {
-      doc.accessToken = decrypt(doc.accessToken);
+      // Check if token looks encrypted (has the iv:authTag:data format)
+      if (doc.accessToken && doc.accessToken.includes(':')) {
+        doc.accessToken = decrypt(doc.accessToken);
+      }
     } catch (error) {
-      console.error('Failed to decrypt accessToken for user:', doc._id);
+      console.error('Failed to decrypt accessToken for user:', doc._id, '- token may be in old format or corrupted');
     }
 
     try {
-      doc.refreshToken = decrypt(doc.refreshToken);
+      // Check if token looks encrypted (has the iv:authTag:data format)
+      if (doc.refreshToken && doc.refreshToken.includes(':')) {
+        doc.refreshToken = decrypt(doc.refreshToken);
+      }
     } catch (error) {
-      console.error('Failed to decrypt refreshToken for user:', doc._id);
+      console.error('Failed to decrypt refreshToken for user:', doc._id, '- token may be in old format or corrupted');
     }
   }
 });

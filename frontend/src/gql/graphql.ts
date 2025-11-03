@@ -13,12 +13,13 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
+  Date: { input: unknown; output: unknown; }
 };
 
 export type Activity = {
   __typename: 'Activity';
   averageSpeed: Scalars['Float']['output'];
-  createdAt: Scalars['String']['output'];
+  createdAt: Scalars['Date']['output'];
   description: Maybe<Scalars['String']['output']>;
   distance: Scalars['Float']['output'];
   elapsedTime: Scalars['Int']['output'];
@@ -31,14 +32,14 @@ export type Activity = {
   name: Scalars['String']['output'];
   source: Scalars['String']['output'];
   sportType: Maybe<Scalars['String']['output']>;
-  startDate: Scalars['String']['output'];
-  startDateLocal: Scalars['String']['output'];
+  startDate: Scalars['Date']['output'];
+  startDateLocal: Scalars['Date']['output'];
   startLocation: Maybe<Location>;
   stravaActivityId: Scalars['Float']['output'];
   summaryPolyline: Maybe<Scalars['String']['output']>;
   timezone: Maybe<Scalars['String']['output']>;
   type: Scalars['String']['output'];
-  updatedAt: Scalars['String']['output'];
+  updatedAt: Scalars['Date']['output'];
   user: Maybe<User>;
   userId: Scalars['ID']['output'];
 };
@@ -47,7 +48,7 @@ export type CaptureHistoryEntry = {
   __typename: 'CaptureHistoryEntry';
   activityId: Scalars['ID']['output'];
   activityType: Scalars['String']['output'];
-  capturedAt: Scalars['String']['output'];
+  capturedAt: Scalars['Date']['output'];
   stravaActivityId: Scalars['Float']['output'];
   stravaId: Scalars['Int']['output'];
   userId: Scalars['ID']['output'];
@@ -58,20 +59,20 @@ export type Hexagon = {
   activityType: Scalars['String']['output'];
   captureCount: Scalars['Int']['output'];
   captureHistory: Array<CaptureHistoryEntry>;
-  createdAt: Scalars['String']['output'];
+  createdAt: Scalars['Date']['output'];
   currentActivity: Maybe<Activity>;
   currentActivityId: Scalars['ID']['output'];
   currentOwner: Maybe<User>;
   currentOwnerId: Scalars['ID']['output'];
   currentOwnerStravaId: Scalars['Int']['output'];
   currentStravaActivityId: Scalars['Float']['output'];
-  firstCapturedAt: Scalars['String']['output'];
+  firstCapturedAt: Scalars['Date']['output'];
   firstCapturedBy: Maybe<User>;
   hexagonId: Scalars['String']['output'];
   id: Scalars['ID']['output'];
-  lastCapturedAt: Scalars['String']['output'];
+  lastCapturedAt: Scalars['Date']['output'];
   routeType: Maybe<Scalars['String']['output']>;
-  updatedAt: Scalars['String']['output'];
+  updatedAt: Scalars['Date']['output'];
 };
 
 export type Location = {
@@ -302,6 +303,7 @@ export type StravaProfile = {
   city: Maybe<Scalars['String']['output']>;
   country: Maybe<Scalars['String']['output']>;
   firstname: Scalars['String']['output'];
+  imghex: Maybe<Scalars['String']['output']>;
   lastname: Scalars['String']['output'];
   profile: Scalars['String']['output'];
   sex: Maybe<Scalars['String']['output']>;
@@ -311,20 +313,20 @@ export type StravaProfile = {
 
 export type User = {
   __typename: 'User';
-  createdAt: Scalars['String']['output'];
+  createdAt: Scalars['Date']['output'];
   id: Scalars['ID']['output'];
   isAdmin: Scalars['Boolean']['output'];
   stravaId: Scalars['Int']['output'];
   stravaProfile: StravaProfile;
   tokenExpiresAt: Scalars['Int']['output'];
   tokenIsExpired: Scalars['Boolean']['output'];
-  updatedAt: Scalars['String']['output'];
+  updatedAt: Scalars['Date']['output'];
 };
 
 export type GetUsersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetUsersQuery = { users: Array<{ __typename: 'User', id: string, stravaId: number, isAdmin: boolean, tokenExpiresAt: number, tokenIsExpired: boolean, createdAt: string, updatedAt: string, stravaProfile: { __typename: 'StravaProfile', firstname: string, lastname: string, profile: string, city: string | null, state: string | null, country: string | null, sex: string | null, username: string | null } }> };
+export type GetUsersQuery = { users: Array<{ __typename: 'User', id: string, stravaId: number, isAdmin: boolean, tokenExpiresAt: number, tokenIsExpired: boolean, createdAt: unknown, updatedAt: unknown, stravaProfile: { __typename: 'StravaProfile', firstname: string, lastname: string, profile: string, city: string | null, state: string | null, country: string | null, sex: string | null, username: string | null } }> };
 
 export type DeleteUserMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -355,7 +357,7 @@ export type MyHexagonsInBboxQueryVariables = Exact<{
 }>;
 
 
-export type MyHexagonsInBboxQuery = { myHexagonsInBbox: Array<{ __typename: 'Hexagon', hexagonId: string, currentOwnerId: string, currentOwnerStravaId: number, currentStravaActivityId: number, activityType: string, captureCount: number, lastCapturedAt: string }> };
+export type MyHexagonsInBboxQuery = { myHexagonsInBbox: Array<{ __typename: 'Hexagon', hexagonId: string, currentOwnerId: string, currentOwnerStravaId: number, currentStravaActivityId: number, activityType: string, captureCount: number, lastCapturedAt: unknown }> };
 
 export type HexagonsInBboxQueryVariables = Exact<{
   south: Scalars['Float']['input'];
@@ -365,14 +367,14 @@ export type HexagonsInBboxQueryVariables = Exact<{
 }>;
 
 
-export type HexagonsInBboxQuery = { hexagonsInBbox: Array<{ __typename: 'Hexagon', hexagonId: string, currentOwnerId: string, currentOwnerStravaId: number, currentStravaActivityId: number, activityType: string, captureCount: number, lastCapturedAt: string }> };
+export type HexagonsInBboxQuery = { hexagonsInBbox: Array<{ __typename: 'Hexagon', hexagonId: string, currentOwnerId: string, currentOwnerStravaId: number, currentStravaActivityId: number, activityType: string, captureCount: number, lastCapturedAt: unknown }> };
 
 export type HexagonDetailQueryVariables = Exact<{
   hexagonId: Scalars['String']['input'];
 }>;
 
 
-export type HexagonDetailQuery = { hexagon: { __typename: 'Hexagon', hexagonId: string, captureCount: number, currentActivity: { __typename: 'Activity', id: string, stravaActivityId: number, name: string, distance: number, averageSpeed: number, startDateLocal: string, movingTime: number } | null } | null };
+export type HexagonDetailQuery = { hexagon: { __typename: 'Hexagon', hexagonId: string, captureCount: number, currentActivity: { __typename: 'Activity', id: string, stravaActivityId: number, name: string, distance: number, averageSpeed: number, startDateLocal: unknown, movingTime: number } | null } | null };
 
 export type MyHexagonsCountQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -390,7 +392,7 @@ export type MyActivitiesQueryVariables = Exact<{
 }>;
 
 
-export type MyActivitiesQuery = { myActivities: Array<{ __typename: 'Activity', id: string, stravaActivityId: number, userId: string, name: string, type: string, sportType: string | null, startDate: string, startDateLocal: string, movingTime: number, distance: number, averageSpeed: number, createdAt: string }> };
+export type MyActivitiesQuery = { myActivities: Array<{ __typename: 'Activity', id: string, stravaActivityId: number, userId: string, name: string, type: string, sportType: string | null, startDate: unknown, startDateLocal: unknown, movingTime: number, distance: number, averageSpeed: number, createdAt: unknown }> };
 
 
 export const GetUsersDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetUsers"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"users"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"stravaId"}},{"kind":"Field","name":{"kind":"Name","value":"isAdmin"}},{"kind":"Field","name":{"kind":"Name","value":"stravaProfile"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"firstname"}},{"kind":"Field","name":{"kind":"Name","value":"lastname"}},{"kind":"Field","name":{"kind":"Name","value":"profile"}},{"kind":"Field","name":{"kind":"Name","value":"city"}},{"kind":"Field","name":{"kind":"Name","value":"state"}},{"kind":"Field","name":{"kind":"Name","value":"country"}},{"kind":"Field","name":{"kind":"Name","value":"sex"}},{"kind":"Field","name":{"kind":"Name","value":"username"}}]}},{"kind":"Field","name":{"kind":"Name","value":"tokenExpiresAt"}},{"kind":"Field","name":{"kind":"Name","value":"tokenIsExpired"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]}}]} as unknown as DocumentNode<GetUsersQuery, GetUsersQueryVariables>;

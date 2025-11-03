@@ -2,6 +2,7 @@ import { useMapbox } from '@/hooks/useMapbox';
 import { useHexagons } from '@/hooks/useHexagons';
 import { useMapView } from '@/hooks/useMapView';
 import { useHexagonSelection } from '@/hooks/useHexagonSelection';
+import { useActivityProfileImages } from '@/hooks/useActivityProfileImages';
 import { UserOverlay } from '@/components/UserOverlay';
 import { MapViewToggle } from '@/components/MapViewToggle';
 import { HexagonLoadingIndicator } from '@/components/HexagonLoadingIndicator';
@@ -22,11 +23,14 @@ export function HomePage() {
 	});
 
 	// Unified hexagon hook - mode changes based on view
-	const { loading, refetchHexagons } = useHexagons({
+	const { loading, refetchHexagons, hexagonsData } = useHexagons({
 		mapRef,
 		mode: mapView,
 		onHexagonClick: handleHexagonClick,
 	});
+
+	// Add profile images on hexagons
+	useActivityProfileImages(mapRef, hexagonsData);
 
 	// Callback for when activities change
 	const handleActivityChanged = () => {

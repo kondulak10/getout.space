@@ -6,6 +6,7 @@ import { getValidAccessToken } from '../services/strava.service';
 import { processActivity, deleteActivityAndRestoreHexagons } from '../services/activityProcessing.service';
 import { StravaOAuthTokenResponse, StravaActivity, StravaAthleteStats } from '../types/strava.types';
 import { Activity } from '../models/Activity';
+import { processAndUploadProfileImage } from '../utils/imageProcessing';
 
 const router = Router();
 
@@ -77,37 +78,25 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 		// Find or create user
 		let user = await User.findOne({ stravaId: data.athlete.id });
 
+		// Create temporary user to get ID for S3 path (for new users)
+		// For existing users, we'll use their existing ID
+		let tempUserId: string;
 		if (user) {
-			// Update existing user's tokens
-			console.log('👤 Updating existing user:', user.stravaProfile.firstname);
-			user.accessToken = data.access_token;
-			user.refreshToken = data.refresh_token;
-			user.tokenExpiresAt = data.expires_at;
-			// Update profile in case it changed
-			user.stravaProfile = {
-				firstname: data.athlete.firstname,
-				lastname: data.athlete.lastname,
-				profile: data.athlete.profile || data.athlete.profile_medium || '',
-				city: data.athlete.city,
-				state: data.athlete.state,
-				country: data.athlete.country,
-				sex: data.athlete.sex,
-				username: data.athlete.username,
-			};
-			await user.save();
+			tempUserId = user._id.toString();
 		} else {
-			// Create new user
+			// Need to create user first to get ID
 			console.log('👤 Creating new user:', data.athlete.firstname);
 			user = new User({
 				stravaId: data.athlete.id,
 				accessToken: data.access_token,
 				refreshToken: data.refresh_token,
 				tokenExpiresAt: data.expires_at,
-				isAdmin: isFirstUser, // First user becomes admin
+				isAdmin: isFirstUser,
 				stravaProfile: {
 					firstname: data.athlete.firstname,
 					lastname: data.athlete.lastname,
-					profile: data.athlete.profile || data.athlete.profile_medium || '',
+					profile: '', // Will update after S3 upload
+					imghex: '', // Will update after S3 upload
 					city: data.athlete.city,
 					state: data.athlete.state,
 					country: data.athlete.country,
@@ -116,11 +105,59 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 				},
 			});
 			await user.save();
+			tempUserId = user._id.toString();
 
 			if (isFirstUser) {
 				console.log('👑 First user registered as admin!');
 			}
 		}
+
+		// Process profile image and upload to S3
+		const stravaImageUrl = data.athlete.profile || data.athlete.profile_medium || '';
+		let s3ProfileUrl = user.stravaProfile.profile; // Keep existing for updates
+		let s3HexagonUrl = user.stravaProfile.imghex;
+
+		if (stravaImageUrl) {
+			try {
+				console.log('📸 Processing and uploading profile image to S3...');
+				const { originalUrl, hexagonUrl } = await processAndUploadProfileImage(
+					stravaImageUrl,
+					tempUserId,
+					400
+				);
+				s3ProfileUrl = originalUrl;
+				s3HexagonUrl = hexagonUrl;
+				console.log('✅ Profile images uploaded to S3');
+			} catch (error) {
+				console.error('⚠️ Failed to process profile image:', error);
+				console.error('Will continue with existing/Strava URL');
+				// Fall back to Strava URL if S3 upload fails
+				if (!s3ProfileUrl) {
+					s3ProfileUrl = stravaImageUrl;
+				}
+			}
+		} else {
+			console.log('⚠️ No profile image URL available from Strava');
+		}
+
+		// Update user with final profile URLs
+		user.accessToken = data.access_token;
+		user.refreshToken = data.refresh_token;
+		user.tokenExpiresAt = data.expires_at;
+		user.stravaProfile = {
+			firstname: data.athlete.firstname,
+			lastname: data.athlete.lastname,
+			profile: s3ProfileUrl,
+			imghex: s3HexagonUrl,
+			city: data.athlete.city,
+			state: data.athlete.state,
+			country: data.athlete.country,
+			sex: data.athlete.sex,
+			username: data.athlete.username,
+		};
+		await user.save();
+
+		console.log('👤 User profile updated:', user.stravaProfile.firstname);
 
 		// Generate JWT token
 		const token = generateToken(user);

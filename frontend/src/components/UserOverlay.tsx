@@ -37,9 +37,10 @@ export function UserOverlay({ onActivityChanged }: UserOverlayProps) {
 				{/* Profile Row */}
 				<div className="flex items-center gap-3">
 					<img
-						src={user.profile.profile}
+						src={user.profile.imghex || user.profile.profile}
 						alt={`${user.profile.firstname} ${user.profile.lastname}`}
-						className="w-12 h-12 rounded-full object-cover"
+						className="w-12 h-12 object-cover"
+						style={{ clipPath: user.profile.imghex ? 'none' : 'circle(50%)' }}
 					/>
 					<div className="flex-1">
 						<div className="font-semibold text-sm text-gray-900">

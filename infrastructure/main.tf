@@ -68,6 +68,19 @@ resource "aws_s3_bucket_policy" "website" {
   depends_on = [aws_s3_bucket_public_access_block.website]
 }
 
+resource "aws_s3_bucket_cors_configuration" "website" {
+  provider = aws.main
+  bucket   = aws_s3_bucket.website.id
+
+  cors_rule {
+    allowed_headers = ["*"]
+    allowed_methods = ["GET", "HEAD"]
+    allowed_origins = ["http://localhost:5173", "https://getout.space", "https://www.getout.space"]
+    expose_headers  = ["ETag"]
+    max_age_seconds = 3600
+  }
+}
+
 # Route53 hosted zone
 resource "aws_route53_zone" "main" {
   provider = aws.main
@@ -150,6 +163,7 @@ resource "aws_cloudfront_distribution" "website" {
       cookies {
         forward = "none"
       }
+      headers = ["Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"]
     }
 
     viewer_protocol_policy = "redirect-to-https"

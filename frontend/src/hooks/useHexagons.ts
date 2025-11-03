@@ -339,5 +339,6 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 		userCount, // Only meaningful in 'battle' mode
 		loading,
 		refetchHexagons,
+		hexagonsData, // Expose hexagons data for other hooks
 	};
 };

@@ -166,9 +166,10 @@ export default function UsersPage() {
 									<td className="px-6 py-4">
 										<div className="flex items-center gap-3">
 											<img
-												src={user.stravaProfile.profile}
+												src={user.stravaProfile.imghex || user.stravaProfile.profile}
 												alt={`${user.stravaProfile.firstname} ${user.stravaProfile.lastname}`}
-												className="h-12 w-12 rounded-full object-cover flex-shrink-0"
+												className="h-12 w-12 object-cover flex-shrink-0"
+												style={{ clipPath: user.stravaProfile.imghex ? 'none' : 'circle(50%)' }}
 											/>
 											<div className="min-w-0">
 												<div className="flex items-center gap-2">

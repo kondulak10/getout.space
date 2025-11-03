@@ -4,6 +4,7 @@ interface StravaProfile {
   firstname: string;
   lastname: string;
   profile: string;
+  imghex?: string;
   city?: string;
   state?: string;
   country?: string;

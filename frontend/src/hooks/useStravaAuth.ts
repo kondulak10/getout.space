@@ -53,8 +53,9 @@ export function useStravaAuth() {
 
 			if (data.success && data.token && data.user) {
 				console.log('✅ Authentication successful!');
-				console.log('👤 User:', data.user);
-				console.log(`✅ Successfully logged in as ${data.user.profile.firstname} ${data.user.profile.lastname}!`);
+				console.log(`👤 User: ${data.user.profile.firstname} ${data.user.profile.lastname}${data.user.isAdmin ? ' 👑' : ''}`);
+				console.log(`🖼️ Profile: ${data.user.profile.profile || 'Not set'}`);
+				console.log(`🔷 Hexagon: ${data.user.profile.imghex || 'Not set'}`);
 
 				login(data.token, data.user);
 

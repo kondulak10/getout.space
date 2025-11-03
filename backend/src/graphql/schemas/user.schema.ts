@@ -5,6 +5,7 @@ export const userSchema = gql`
     firstname: String!
     lastname: String!
     profile: String!
+    imghex: String
     city: String
     state: String
     country: String

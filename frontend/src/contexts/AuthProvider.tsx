@@ -23,7 +23,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				const parsedUser = JSON.parse(storedUser);
 				setToken(storedToken);
 				setUser(parsedUser);
-				console.log('✅ Auth restored from localStorage:', parsedUser.profile.firstname);
+				console.log(`✅ Auth restored: ${parsedUser.profile.firstname} ${parsedUser.profile.lastname}${parsedUser.isAdmin ? ' 👑' : ''}`);
+				console.log(`🖼️ Profile: ${parsedUser.profile.profile || 'Not set'}`);
+				console.log(`🔷 Hexagon: ${parsedUser.profile.imghex || 'Not set'}`);
 			} catch (error) {
 				console.error("Failed to parse stored user data:", error);
 				// Clear invalid data
