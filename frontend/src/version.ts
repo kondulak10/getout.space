@@ -1,7 +1,15 @@
-// 🚨 IMPORTANT: Update version on EVERY frontend change! 🚨
-// Increment: 1.0.1 -> 1.0.2 (minor), 1.0.9 -> 1.1.0 (feature), 2.0.0 (major)
-export const APP_VERSION = '1.0.3';
-export const BUILD_DATE = '2025-10-30';
+/**
+ * 🤖 AUTO-GENERATED - DO NOT EDIT MANUALLY
+ * Generated at build time by scripts/generate-version.js
+ */
+
+export const APP_VERSION = '1.0.48';
+export const GIT_HASH = 'cb10859';
+export const GIT_BRANCH = 'main';
+export const BUILD_DATE = '2025-11-03';
+export const BUILD_TIMESTAMP = '2025-11-03T15:53:45.033Z';
+
+export const getVersionString = () => `v${APP_VERSION}-${GIT_HASH}`;
 
 export const logVersion = () => {
   const styles = {
@@ -24,8 +32,12 @@ export const logVersion = () => {
     styles.border
   );
   console.log(
-    `%c║  Version: ${APP_VERSION.padEnd(30, ' ')}║`,
+    `%c║  Version: ${getVersionString().padEnd(30, ' ')}║`,
     styles.version
+  );
+  console.log(
+    `%c║  Branch: ${GIT_BRANCH.padEnd(31, ' ')}║`,
+    styles.info
   );
   console.log(
     `%c║  Build: ${BUILD_DATE.padEnd(32, ' ')}║`,
@@ -40,7 +52,7 @@ export const logVersion = () => {
     styles.border
   );
   console.log(
-    '%c💡 Check cache invalidation by watching version changes',
+    '%c💡 Cache-busted on every deployment via git hash',
     'color: #f59e0b; font-size: 11px;'
   );
 };
