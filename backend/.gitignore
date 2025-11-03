@@ -5,6 +5,9 @@ node_modules/
 dist/
 build/
 
+# Auto-generated files
+src/version.ts
+
 # Environment variables
 .env
 .env.local

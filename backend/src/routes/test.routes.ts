@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import * as version from '../version';
 
 const router = Router();
 
@@ -8,6 +9,18 @@ router.get('/health', (req: Request, res: Response) => {
     status: 'ok',
     message: 'Backend is running!',
     timestamp: new Date().toISOString(),
+  });
+});
+
+// Version info
+router.get('/version', (req: Request, res: Response) => {
+  res.json({
+    version: version.APP_VERSION,
+    gitHash: version.GIT_HASH,
+    gitBranch: version.GIT_BRANCH,
+    buildDate: version.BUILD_DATE,
+    buildTimestamp: version.BUILD_TIMESTAMP,
+    versionString: version.getVersionString(),
   });
 });
 

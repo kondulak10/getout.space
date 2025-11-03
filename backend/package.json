@@ -5,6 +5,7 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon --exec ts-node src/server.ts",
+    "prebuild": "node scripts/generate-version.js",
     "build": "tsc",
     "start": "node dist/server.js",
     "lint": "eslint . --ext .ts",
