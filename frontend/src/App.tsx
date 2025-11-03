@@ -1,21 +1,17 @@
 import { Routes, Route } from 'react-router-dom';
-import { HomePage } from '@/pages/HomePage';
-import { TestPage } from '@/pages/TestPage';
-import { MapPage } from '@/pages/MapPage';
-import UsersPage from '@/pages/UsersPage';
+import { IndexPage } from '@/pages/IndexPage';
+import { ProfilePage } from '@/pages/ProfilePage';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 
 function App() {
 	return (
 		<Routes>
-			<Route path="/" element={<HomePage />} />
-			<Route path="/test" element={<TestPage />} />
-			<Route path="/map" element={<MapPage />} />
+			<Route path="/" element={<IndexPage />} />
 			<Route
-				path="/users"
+				path="/profile"
 				element={
-					<ProtectedRoute requireAdmin={true}>
-						<UsersPage />
+					<ProtectedRoute>
+						<ProfilePage />
 					</ProtectedRoute>
 				}
 			/>

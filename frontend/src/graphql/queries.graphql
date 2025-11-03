@@ -67,3 +67,24 @@ query HexagonDetail($hexagonId: String!) {
 query MyHexagonsCount {
   myHexagonsCount
 }
+
+mutation DeleteMyAccount {
+  deleteMyAccount
+}
+
+query MyActivities($limit: Int, $offset: Int) {
+  myActivities(limit: $limit, offset: $offset) {
+    id
+    stravaActivityId
+    userId
+    name
+    type
+    sportType
+    startDate
+    startDateLocal
+    movingTime
+    distance
+    averageSpeed
+    createdAt
+  }
+}

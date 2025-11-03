@@ -72,6 +72,35 @@ export const userResolvers = {
       }
     },
 
+    // Delete current user's account and all data
+    deleteMyAccount: async (_: any, __: any, context: GraphQLContext) => {
+      const currentUser = requireAuth(context);
+
+      try {
+        const { Activity } = require('../../models/Activity');
+        const { Hexagon } = require('../../models/Hexagon');
+
+        console.log(`🗑️ User ${currentUser.stravaProfile.firstname} is deleting their account...`);
+
+        // Delete all activities by this user
+        const deletedActivities = await Activity.deleteMany({ userId: currentUser._id });
+        console.log(`   ✓ Deleted ${deletedActivities.deletedCount} activities`);
+
+        // Delete all hexagons owned by this user
+        const deletedHexagons = await Hexagon.deleteMany({ currentOwnerId: currentUser._id });
+        console.log(`   ✓ Deleted ${deletedHexagons.deletedCount} hexagons`);
+
+        // Delete the user
+        await User.findByIdAndDelete(currentUser._id);
+        console.log(`   ✓ User account deleted`);
+
+        return true;
+      } catch (error) {
+        console.error('❌ Error deleting user account:', error);
+        throw new GraphQLError('Failed to delete account');
+      }
+    },
+
     // Refresh user's Strava token (Admin only)
     refreshUserToken: async (_: any, { id }: { id: string }, context: GraphQLContext) => {
       requireAdmin(context);

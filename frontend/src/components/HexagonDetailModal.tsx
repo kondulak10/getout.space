@@ -37,7 +37,11 @@ export function HexagonDetailModal({
 	};
 
 	const formatDate = (dateString: string) => {
-		return new Date(dateString).toLocaleDateString('en-US', {
+		const date = new Date(dateString);
+		if (isNaN(date.getTime())) {
+			return 'Invalid date';
+		}
+		return date.toLocaleDateString('en-US', {
 			month: 'short',
 			day: 'numeric',
 			year: 'numeric',
@@ -97,7 +101,7 @@ export function HexagonDetailModal({
 						<div>
 							<div className="text-xs text-gray-500 mb-1">Date</div>
 							<div className="text-sm font-semibold text-gray-900">
-								{formatDate(activity.startDateLocal)}
+								{activity.startDateLocal ? formatDate(activity.startDateLocal) : 'N/A'}
 							</div>
 						</div>
 						<div>

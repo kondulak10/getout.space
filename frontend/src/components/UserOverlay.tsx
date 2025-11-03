@@ -1,28 +1,16 @@
-import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/useAuth';
 import { useUserActivities } from '@/hooks/useUserActivities';
-import { CompactActivitiesModal } from './CompactActivitiesModal';
+import { User } from 'lucide-react';
 
 export function UserOverlay() {
-	const { isAuthenticated, user, logout } = useAuth();
-	const {
-		latestActivity,
-		stravaActivities,
-		loading,
-		loadStravaActivities,
-		saveActivity,
-		removeActivity,
-	} = useUserActivities();
-	const [showModal, setShowModal] = useState(false);
+	const { isAuthenticated, user } = useAuth();
+	const { latestActivity } = useUserActivities();
+	const navigate = useNavigate();
 
 	if (!isAuthenticated || !user) {
 		return null;
 	}
-
-	const handleRefetchActivities = async () => {
-		await loadStravaActivities();
-		setShowModal(true);
-	};
 
 	const formatDistance = (meters: number) => {
 		return (meters / 1000).toFixed(1) + ' km';
@@ -36,70 +24,47 @@ export function UserOverlay() {
 	};
 
 	return (
-		<>
-			<div className="absolute top-4 right-4 z-10">
-				<div className="bg-white rounded-lg shadow-lg p-4 min-w-[320px]">
-					{/* Profile Row */}
-					<div className="flex items-center gap-3">
-						<img
-							src={user.profile.profile}
-							alt={`${user.profile.firstname} ${user.profile.lastname}`}
-							className="w-12 h-12 rounded-full object-cover"
-						/>
-						<div className="flex-1">
-							<div className="font-semibold text-sm text-gray-900">
-								{user.profile.firstname} {user.profile.lastname}
-							</div>
-							<div className="text-xs text-gray-500">Strava ID: {user.stravaId}</div>
+		<div className="absolute top-4 right-4 z-10">
+			<div className="bg-white rounded-lg shadow-lg p-4 min-w-[320px]">
+				{/* Profile Row */}
+				<div className="flex items-center gap-3">
+					<img
+						src={user.profile.profile}
+						alt={`${user.profile.firstname} ${user.profile.lastname}`}
+						className="w-12 h-12 rounded-full object-cover"
+					/>
+					<div className="flex-1">
+						<div className="font-semibold text-sm text-gray-900">
+							{user.profile.firstname} {user.profile.lastname}
 						</div>
-						<button
-							onClick={logout}
-							className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded text-xs font-medium transition-colors"
-						>
-							Logout
-						</button>
+						<div className="text-xs text-gray-500">Strava ID: {user.stravaId}</div>
 					</div>
-
-					{/* Latest Activity Row */}
-					{latestActivity && (
-						<div className="mt-3 pt-3 border-t border-gray-200">
-							<div className="text-xs text-gray-500 mb-1">
-								Latest processed: {formatDate(latestActivity.startDate)}
-							</div>
-							<div className="flex items-center justify-between gap-2">
-								<div className="text-sm font-medium text-gray-900 truncate flex-1">
-									{latestActivity.name}
-								</div>
-								<div className="text-sm text-gray-600 whitespace-nowrap">
-									{formatDistance(latestActivity.distance)}
-								</div>
-							</div>
-						</div>
-					)}
-
-					{/* Refetch Button */}
-					<div className="mt-3 pt-3 border-t border-gray-200">
-						<button
-							onClick={handleRefetchActivities}
-							disabled={loading}
-							className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white px-3 py-2 rounded text-xs font-medium transition-colors"
-						>
-							{loading ? 'Loading...' : '🔄 Refetch Activities'}
-						</button>
-					</div>
+					<button
+						onClick={() => navigate('/profile')}
+						className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded transition-colors"
+						title="Profile"
+					>
+						<User className="w-4 h-4" />
+					</button>
 				</div>
-			</div>
 
-			{/* Modal */}
-			{showModal && (
-				<CompactActivitiesModal
-					activities={stravaActivities}
-					loading={loading}
-					onClose={() => setShowModal(false)}
-					onProcess={saveActivity}
-					onDelete={removeActivity}
-				/>
-			)}
-		</>
+				{/* Latest Activity Row */}
+				{latestActivity && (
+					<div className="mt-3 pt-3 border-t border-gray-200">
+						<div className="text-xs text-gray-500 mb-1">
+							Latest processed: {formatDate(latestActivity.startDate)}
+						</div>
+						<div className="flex items-center justify-between gap-2">
+							<div className="text-sm font-medium text-gray-900 truncate flex-1">
+								{latestActivity.name}
+							</div>
+							<div className="text-sm text-gray-600 whitespace-nowrap">
+								{formatDistance(latestActivity.distance)}
+							</div>
+						</div>
+					</div>
+				)}
+			</div>
+		</div>
 	);
 }

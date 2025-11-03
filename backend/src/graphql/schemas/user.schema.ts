@@ -51,6 +51,13 @@ export const userSchema = gql`
     deleteUser(id: ID!): Boolean!
 
     """
+    Delete current user's account and all associated data
+    Removes all activities and unassigns all hexagons
+    Requires: Authentication
+    """
+    deleteMyAccount: Boolean!
+
+    """
     Refresh Strava access token for a user (Admin only)
     Requires: Authentication + Admin
     """
