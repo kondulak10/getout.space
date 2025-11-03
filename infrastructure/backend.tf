@@ -299,6 +299,28 @@ resource "aws_iam_role" "ecs_task" {
   })
 }
 
+# IAM Policy for S3 access (profile images)
+resource "aws_iam_role_policy" "ecs_task_s3" {
+  provider = aws.main
+  name     = "getout-ecs-task-s3-policy"
+  role     = aws_iam_role.ecs_task.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:DeleteObject"
+        ]
+        Resource = "arn:aws:s3:::getout-space-web/profile-images/*"
+      }
+    ]
+  })
+}
+
 # CloudWatch Log Group
 resource "aws_cloudwatch_log_group" "backend" {
   provider          = aws.main

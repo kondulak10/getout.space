@@ -24,6 +24,10 @@ RUN npm ci
 COPY src ./src
 COPY scripts ./scripts
 
+# Bust cache for version generation (using build time as cache buster)
+ARG CACHE_BUST=unknown
+RUN echo "Cache bust: $CACHE_BUST"
+
 # Build TypeScript (prebuild script will generate version automatically)
 RUN npm run build
 
