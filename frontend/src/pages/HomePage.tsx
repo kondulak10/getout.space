@@ -7,6 +7,7 @@ import { UserOverlay } from '@/components/UserOverlay';
 import { MapViewToggle } from '@/components/MapViewToggle';
 import { HexagonLoadingIndicator } from '@/components/HexagonLoadingIndicator';
 import { HexagonDetailModal } from '@/components/HexagonDetailModal';
+import { VersionBadge } from '@/components/VersionBadge';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 /**
@@ -44,6 +45,7 @@ export function HomePage() {
 			<div ref={mapContainerRef} className="w-full h-full" />
 
 			{/* UI Overlays */}
+			<VersionBadge />
 			<MapViewToggle view={mapView} onViewChange={setMapView} />
 			<UserOverlay onActivityChanged={handleActivityChanged} />
 			<HexagonLoadingIndicator isLoading={loading} />
