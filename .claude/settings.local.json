@@ -63,7 +63,8 @@
       "WebFetch(domain:press.strava.com)",
       "Bash(tree:*)",
       "Bash(find:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "WebFetch(domain:visgl.github.io)"
     ],
     "deny": [
       "Bash(git commit:*)",
