@@ -7,23 +7,34 @@ const USER_KEY = "getout_user";
 export function AuthProvider({ children }: { children: ReactNode }) {
 	const [token, setToken] = useState<string | null>(null);
 	const [user, setUser] = useState<User | null>(null);
+	const [isLoading, setIsLoading] = useState(true);
 
 	// Load auth data from localStorage on mount
 	useEffect(() => {
+		console.log('🔍 AuthProvider: Loading auth from localStorage...');
 		const storedToken = localStorage.getItem(TOKEN_KEY);
 		const storedUser = localStorage.getItem(USER_KEY);
 
+		console.log('Token exists:', !!storedToken);
+		console.log('User exists:', !!storedUser);
+
 		if (storedToken && storedUser) {
 			try {
+				const parsedUser = JSON.parse(storedUser);
 				setToken(storedToken);
-				setUser(JSON.parse(storedUser));
+				setUser(parsedUser);
+				console.log('✅ Auth restored from localStorage:', parsedUser.profile.firstname);
 			} catch (error) {
 				console.error("Failed to parse stored user data:", error);
 				// Clear invalid data
 				localStorage.removeItem(TOKEN_KEY);
 				localStorage.removeItem(USER_KEY);
 			}
+		} else {
+			console.log('⚠️ No auth data in localStorage');
 		}
+
+		setIsLoading(false);
 	}, []);
 
 	const login = (newToken: string, newUser: User) => {
@@ -47,6 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		token,
 		isAuthenticated: !!token && !!user,
 		isAdmin: user?.isAdmin ?? false,
+		isLoading,
 		login,
 		logout,
 		setUser,

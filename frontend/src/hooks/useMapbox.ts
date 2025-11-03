@@ -1,18 +1,14 @@
 import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
+import { MAP_VIEWPORTS, DEFAULT_VIEWPORT, type ViewportKey } from '@/config/mapViewports';
 
 interface UseMapboxOptions {
+	viewport?: ViewportKey;
 	style?: string;
-	center?: [number, number];
-	zoom?: number;
 }
 
 export const useMapbox = (options: UseMapboxOptions = {}) => {
-	const {
-		style = 'mapbox://styles/mapbox/outdoors-v12',
-		center = [-98.5795, 39.8283],
-		zoom = 3,
-	} = options;
+	const { viewport = DEFAULT_VIEWPORT, style = 'mapbox://styles/mapbox/outdoors-v12' } = options;
 
 	const mapContainerRef = useRef<HTMLDivElement>(null);
 	const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -23,19 +19,22 @@ export const useMapbox = (options: UseMapboxOptions = {}) => {
 
 		mapboxgl.accessToken = mapboxToken;
 
+		const viewportConfig = MAP_VIEWPORTS[viewport];
+
 		const map = new mapboxgl.Map({
 			container: mapContainerRef.current,
 			style,
-			center,
-			zoom,
+			center: viewportConfig.center,
+			zoom: viewportConfig.zoom,
 		});
 
 		mapRef.current = map;
 
 		return () => {
 			map.remove();
+			mapRef.current = null;
 		};
-	}, [mapboxToken, style, center, zoom]);
+	}, [mapboxToken, viewport, style]);
 
 	return {
 		mapContainerRef,

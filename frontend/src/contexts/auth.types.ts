@@ -24,6 +24,7 @@ interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isLoading: boolean;
   login: (token: string, user: User) => void;
   logout: () => void;
   setUser: (user: User | null) => void;

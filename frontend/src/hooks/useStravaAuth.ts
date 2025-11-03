@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/contexts/useAuth';
 import { getStravaAuthUrl, exchangeCodeForToken } from '@/services/stravaApi.service';
 
@@ -8,6 +8,7 @@ import { getStravaAuthUrl, exchangeCodeForToken } from '@/services/stravaApi.ser
 export function useStravaAuth() {
 	const { isAuthenticated, login, user } = useAuth();
 	const hasExchangedCode = useRef(false);
+	const [isAuthenticating, setIsAuthenticating] = useState(false);
 
 	// Handle OAuth callback on component mount
 	useEffect(() => {
@@ -20,6 +21,7 @@ export function useStravaAuth() {
 		if (code && scope && !isAuthenticated && !hasExchangedCode.current) {
 			console.log('📥 Received authorization code, exchanging for tokens...');
 			hasExchangedCode.current = true;
+			setIsAuthenticating(true);
 			handleOAuthCallback(code);
 		}
 	}, [isAuthenticated]);
@@ -70,11 +72,14 @@ export function useStravaAuth() {
 		} catch (error) {
 			console.error('❌ Token exchange failed:', error);
 			alert(`❌ Login error: ${error instanceof Error ? error.message : 'Network error'}`);
+		} finally {
+			setIsAuthenticating(false);
 		}
 	};
 
 	return {
 		isAuthenticated,
+		isAuthenticating,
 		user,
 		loginWithStrava,
 	};
