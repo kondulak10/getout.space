@@ -225,3 +225,50 @@ export async function fetchAthleteStats(): Promise<StatsResponse> {
 
 	return await response.json();
 }
+
+// ============================================================
+// User Activities (from our database)
+// ============================================================
+
+export interface UserActivity {
+	id: string;
+	stravaActivityId: number;
+	name: string;
+	distance: number;
+	startDate: string;
+}
+
+export interface LatestActivityResponse {
+	success: boolean;
+	activity: UserActivity | null;
+	error?: string;
+}
+
+export interface AllActivitiesResponse {
+	success: boolean;
+	count: number;
+	activities: UserActivity[];
+	error?: string;
+}
+
+/**
+ * Fetch latest activity from database
+ */
+export async function fetchLatestActivity(): Promise<LatestActivityResponse> {
+	const response = await fetch(`${BACKEND_URL}/api/activities/latest`, {
+		headers: createAuthHeaders(),
+	});
+
+	return await response.json();
+}
+
+/**
+ * Fetch all activities from database
+ */
+export async function fetchAllActivities(): Promise<AllActivitiesResponse> {
+	const response = await fetch(`${BACKEND_URL}/api/activities/all`, {
+		headers: createAuthHeaders(),
+	});
+
+	return await response.json();
+}

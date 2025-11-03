@@ -8,11 +8,18 @@ import React from "react";
 interface UseUserHexagonsOptions {
 	mapRef: React.RefObject<MapboxMap | null>;
 	enabled: boolean;
+	onHexagonClick?: (hexagonId: string) => void;
 }
 
-export const useUserHexagons = ({ mapRef, enabled }: UseUserHexagonsOptions) => {
+export const useUserHexagons = ({ mapRef, enabled, onHexagonClick }: UseUserHexagonsOptions) => {
 	const [visibleHexCount, setVisibleHexCount] = useState(0);
 	const debounceTimeoutRef = React.useRef<number | null>(null);
+	const onHexagonClickRef = React.useRef(onHexagonClick);
+
+	// Keep ref updated
+	useEffect(() => {
+		onHexagonClickRef.current = onHexagonClick;
+	}, [onHexagonClick]);
 
 	// Get total hex count
 	const { data: countData } = useQuery(MyHexagonsCountDocument, {
@@ -29,13 +36,14 @@ export const useUserHexagons = ({ mapRef, enabled }: UseUserHexagonsOptions) => 
 		const map = mapRef.current;
 		const hexagons = hexagonsData.myHexagonsInBbox;
 
-		// Create GeoJSON features from hexagons
+		// Create GeoJSON features from hexagons (minimal data only!)
 		const features = hexagons.map((hex) => {
 			const feature = h3ToGeoJSON(hex.hexagonId);
 			return {
 				...feature,
 				properties: {
 					...feature.properties,
+					hexagonId: hex.hexagonId, // Only store hexagonId for click handling
 					color: "#3B82F6", // Blue color for user's hexes
 					hasImage: false,
 					captureCount: hex.captureCount,
@@ -123,6 +131,30 @@ export const useUserHexagons = ({ mapRef, enabled }: UseUserHexagonsOptions) => 
 				"line-width": 2,
 				"line-opacity": 0.8,
 			},
+		});
+
+		// Add click handler for hexagons using ref
+		const handleHexagonClick = (e: mapboxgl.MapMouseEvent) => {
+			if (!e.features || e.features.length === 0) return;
+
+			const feature = e.features[0];
+			const hexagonId = feature.properties?.hexagonId;
+
+			if (hexagonId && onHexagonClickRef.current) {
+				onHexagonClickRef.current(hexagonId);
+			}
+		};
+
+		// Add click event listener
+		map.on("click", "hexagon-fills", handleHexagonClick);
+
+		// Change cursor on hover
+		map.on("mouseenter", "hexagon-fills", () => {
+			map.getCanvas().style.cursor = "pointer";
+		});
+
+		map.on("mouseleave", "hexagon-fills", () => {
+			map.getCanvas().style.cursor = "";
 		});
 	}, [mapRef]);
 

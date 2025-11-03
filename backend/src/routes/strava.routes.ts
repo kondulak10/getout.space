@@ -188,14 +188,21 @@ router.get('/api/strava/activities', authenticateToken, async (req: AuthRequest,
 		// Check if Strava has more pages (if we got a full page, there might be more)
 		const hasMorePages = activities.length === per_page;
 
-		// Filter to only include running activities
+		// Filter to only include running activities after Nov 1, 2025
+		const cutoffDate = new Date('2025-11-01T00:00:00Z');
 		const runningActivities = activities.filter((activity: StravaActivity) => {
 			const type = activity.type;
 			const sportType = activity.sport_type;
-			return type === 'Run' || sportType === 'TrailRun' || sportType === 'VirtualRun';
+			const isRunning = type === 'Run' || sportType === 'TrailRun' || sportType === 'VirtualRun';
+
+			// Check if activity is after cutoff date
+			const activityDate = new Date(activity.start_date);
+			const isAfterCutoff = activityDate >= cutoffDate;
+
+			return isRunning && isAfterCutoff;
 		});
 
-		console.log(`🏃 Filtered to ${runningActivities.length} running activities (from ${activities.length} total)`);
+		console.log(`🏃 Filtered to ${runningActivities.length} running activities after ${cutoffDate.toISOString()} (from ${activities.length} total)`);
 
 		// Check which activities are already stored in our database
 		const stravaActivityIds = runningActivities.map((a: StravaActivity) => a.id);
@@ -414,6 +421,74 @@ router.get('/api/auth/me', authenticateToken, async (req: AuthRequest, res: Resp
 		console.error('❌ Error fetching user:', errorMessage);
 		res.status(500).json({
 			error: 'Failed to fetch user',
+			details: errorMessage,
+		});
+	}
+});
+
+// Get latest activity for the authenticated user
+router.get('/api/activities/latest', authenticateToken, async (req: AuthRequest, res: Response) => {
+	try {
+		console.log('📊 Fetching latest activity for user:', req.user?.stravaProfile.firstname);
+
+		const latestActivity = await Activity.findOne({ userId: req.userId })
+			.sort({ startDate: -1 })
+			.limit(1)
+			.lean();
+
+		if (!latestActivity) {
+			return res.json({
+				success: true,
+				activity: null,
+			});
+		}
+
+		res.json({
+			success: true,
+			activity: {
+				id: latestActivity._id,
+				stravaActivityId: latestActivity.stravaActivityId,
+				name: latestActivity.name,
+				distance: latestActivity.distance,
+				startDate: latestActivity.startDate,
+			},
+		});
+	} catch (error: unknown) {
+		const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+		console.error('❌ Error fetching latest activity:', errorMessage);
+		res.status(500).json({
+			error: 'Failed to fetch latest activity',
+			details: errorMessage,
+		});
+	}
+});
+
+// Get all activities for the authenticated user from database
+router.get('/api/activities/all', authenticateToken, async (req: AuthRequest, res: Response) => {
+	try {
+		console.log('📊 Fetching all activities for user:', req.user?.stravaProfile.firstname);
+
+		const activities = await Activity.find({ userId: req.userId })
+			.sort({ startDate: -1 })
+			.select('stravaActivityId name distance startDate')
+			.lean();
+
+		res.json({
+			success: true,
+			count: activities.length,
+			activities: activities.map((activity) => ({
+				id: activity._id,
+				stravaActivityId: activity.stravaActivityId,
+				name: activity.name,
+				distance: activity.distance,
+				startDate: activity.startDate,
+			})),
+		});
+	} catch (error: unknown) {
+		const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+		console.error('❌ Error fetching activities:', errorMessage);
+		res.status(500).json({
+			error: 'Failed to fetch activities',
 			details: errorMessage,
 		});
 	}

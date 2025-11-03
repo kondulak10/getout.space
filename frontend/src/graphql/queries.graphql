@@ -41,9 +41,26 @@ query MyHexagonsInBbox($south: Float!, $west: Float!, $north: Float!, $east: Flo
     hexagonId
     currentOwnerId
     currentOwnerStravaId
+    currentStravaActivityId
     activityType
     captureCount
     lastCapturedAt
+  }
+}
+
+query HexagonDetail($hexagonId: String!) {
+  hexagon(hexagonId: $hexagonId) {
+    hexagonId
+    captureCount
+    currentActivity {
+      id
+      stravaActivityId
+      name
+      distance
+      averageSpeed
+      startDateLocal
+      movingTime
+    }
   }
 }
 
