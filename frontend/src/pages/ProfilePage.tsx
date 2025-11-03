@@ -131,7 +131,7 @@ export function ProfilePage() {
 												<span>•</span>
 												<span>{formatDistance(activity.distance)}</span>
 												<span>•</span>
-												<span>{formatDate(activity.startDateLocal)}</span>
+												<span>{formatDate(activity.startDateLocal as string)}</span>
 											</div>
 										</div>
 

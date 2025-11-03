@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-import mapboxgl from 'mapbox-gl';
 import type { Map as MapboxMap } from 'mapbox-gl';
 import { cellToBoundary } from 'h3-js';
 import { useAuth } from '@/contexts/useAuth';

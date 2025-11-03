@@ -37,7 +37,7 @@ export function useHexagonSelection() {
 						name: data.hexagon.currentActivity.name,
 						distance: data.hexagon.currentActivity.distance,
 						averageSpeed: data.hexagon.currentActivity.averageSpeed,
-						startDateLocal: data.hexagon.currentActivity.startDateLocal,
+						startDateLocal: data.hexagon.currentActivity.startDateLocal as string,
 						movingTime: data.hexagon.currentActivity.movingTime,
 					},
 				});

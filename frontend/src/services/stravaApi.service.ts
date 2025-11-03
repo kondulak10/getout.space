@@ -38,6 +38,7 @@ export interface AuthResponse {
 			firstname: string;
 			lastname: string;
 			profile: string;
+			imghex?: string;
 		};
 	};
 	error?: string;

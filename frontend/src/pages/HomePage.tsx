@@ -30,7 +30,7 @@ export function HomePage() {
 	});
 
 	// Add profile images on hexagons
-	useActivityProfileImages(mapRef, hexagonsData);
+	useActivityProfileImages(mapRef, hexagonsData ?? null);
 
 	// Callback for when activities change
 	const handleActivityChanged = () => {

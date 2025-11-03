@@ -204,7 +204,7 @@ export default function UsersPage() {
 									</td>
 									<td className="px-6 py-4 whitespace-nowrap">
 										<div className="text-sm text-gray-500">
-											{new Date(user.createdAt).toLocaleDateString()}
+											{new Date(user.createdAt as string).toLocaleDateString()}
 										</div>
 									</td>
 									<td className="px-6 py-4 whitespace-nowrap text-sm">
