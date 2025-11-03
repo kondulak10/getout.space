@@ -1,7 +1,7 @@
 /**
- * Auto-generate version.ts with git commit hash and build timestamp
+ * Auto-generate version.ts with build timestamp
+ * Version format: YYYYMMDD-HHMMSS
  */
-import { execSync } from 'child_process';
 import { writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -10,27 +10,15 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 try {
-  // Get git commit hash (short version)
-  const gitHash = execSync('git rev-parse --short HEAD')
-    .toString()
-    .trim();
+  // Generate version from current date/time: DDMM-HHMM
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
 
-  // Get git branch
-  const gitBranch = execSync('git rev-parse --abbrev-ref HEAD')
-    .toString()
-    .trim();
-
-  // Get total commit count (auto-incrementing patch number)
-  const commitCount = execSync('git rev-list --count HEAD')
-    .toString()
-    .trim();
-
-  // Get build timestamp
-  const buildDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-  const buildTime = new Date().toISOString();
-
-  // Auto-generate version: 1.0.{commitCount}
-  const version = `1.0.${commitCount}`;
+  const version = `${day}${month}-${hours}${minutes}`;
+  const buildTime = now.toISOString();
 
   // Generate version.ts content
   const content = `/**
@@ -39,12 +27,9 @@ try {
  */
 
 export const APP_VERSION = '${version}';
-export const GIT_HASH = '${gitHash}';
-export const GIT_BRANCH = '${gitBranch}';
-export const BUILD_DATE = '${buildDate}';
 export const BUILD_TIMESTAMP = '${buildTime}';
 
-export const getVersionString = () => \`v\${APP_VERSION}-\${GIT_HASH}\`;
+export const getVersionString = () => APP_VERSION;
 
 export const logVersion = () => {
   const styles = {
@@ -71,11 +56,7 @@ export const logVersion = () => {
     styles.version
   );
   console.log(
-    \`%c║  Branch: \${GIT_BRANCH.padEnd(31, ' ')}║\`,
-    styles.info
-  );
-  console.log(
-    \`%c║  Build: \${BUILD_DATE.padEnd(32, ' ')}║\`,
+    \`%c║  Build: \${BUILD_TIMESTAMP.split('T')[0].padEnd(32, ' ')}║\`,
     styles.info
   );
   console.log(
@@ -86,10 +67,6 @@ export const logVersion = () => {
     '%c╚═══════════════════════════════════════════╝',
     styles.border
   );
-  console.log(
-    '%c💡 Cache-busted on every deployment via git hash',
-    'color: #f59e0b; font-size: 11px;'
-  );
 };
 `;
 
@@ -99,8 +76,7 @@ export const logVersion = () => {
 
   console.log('✅ Generated version.ts:');
   console.log(`   Version: ${version}`);
-  console.log(`   Git: ${gitHash} (${gitBranch})`);
-  console.log(`   Build: ${buildDate}`);
+  console.log(`   Build: ${buildTime}`);
 } catch (error) {
   console.error('❌ Failed to generate version.ts:', error.message);
   process.exit(1);
