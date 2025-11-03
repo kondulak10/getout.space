@@ -1,8 +1,6 @@
-import { useEffect } from 'react';
 import { useMapbox } from '@/hooks/useMapbox';
-import { useUserHexagons } from '@/hooks/useUserHexagons';
+import { useHexagons } from '@/hooks/useHexagons';
 import { useMapView } from '@/hooks/useMapView';
-import { useHexagonLayerSetup } from '@/hooks/useHexagonLayerSetup';
 import { useHexagonSelection } from '@/hooks/useHexagonSelection';
 import { UserOverlay } from '@/components/UserOverlay';
 import { MapViewToggle } from '@/components/MapViewToggle';
@@ -15,7 +13,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
  * Shows the interactive map with hexagons
  */
 export function HomePage() {
-	const { mapView, setMapView, isOnlyYouView } = useMapView();
+	const { mapView, setMapView } = useMapView();
 	const { selectedHexagon, hexagonDetailLoading, handleHexagonClick, clearSelection } = useHexagonSelection();
 
 	const { mapContainerRef, mapRef } = useMapbox({
@@ -23,27 +21,18 @@ export function HomePage() {
 		style: 'mapbox://styles/mapbox/light-v11',
 	});
 
-	const { totalHexCount, loading: hexagonsLoading, setupHexagonLayer, updateHexagons, refetchHexagons, cleanupHexagonLayer, clearBoundsCache } = useUserHexagons({
+	// Unified hexagon hook - mode changes based on view
+	const { loading, refetchHexagons } = useHexagons({
 		mapRef,
-		enabled: isOnlyYouView,
+		mode: mapView,
 		onHexagonClick: handleHexagonClick,
 	});
 
-	useHexagonLayerSetup({
-		mapRef,
-		enabled: isOnlyYouView,
-		setupHexagonLayer,
-		updateHexagons,
-		cleanupHexagonLayer,
-		clearBoundsCache,
-	});
-
-	// Refetch hexagons when view changes
-	useEffect(() => {
-		if (mapRef.current) {
-			refetchHexagons();
-		}
-	}, [mapView, refetchHexagons, mapRef]);
+	// Callback for when activities change
+	const handleActivityChanged = () => {
+		console.log('🔄 Activity changed, refreshing hexagons...');
+		refetchHexagons();
+	};
 
 	return (
 		<div className="relative w-full h-screen">
@@ -51,9 +40,9 @@ export function HomePage() {
 			<div ref={mapContainerRef} className="w-full h-full" />
 
 			{/* UI Overlays */}
-			<MapViewToggle view={mapView} onViewChange={setMapView} totalHexCount={totalHexCount} />
-			<UserOverlay />
-			<HexagonLoadingIndicator isLoading={hexagonsLoading} />
+			<MapViewToggle view={mapView} onViewChange={setMapView} />
+			<UserOverlay onActivityChanged={handleActivityChanged} />
+			<HexagonLoadingIndicator isLoading={loading} />
 
 			{/* Hexagon Detail Modal */}
 			{(selectedHexagon || hexagonDetailLoading) && (

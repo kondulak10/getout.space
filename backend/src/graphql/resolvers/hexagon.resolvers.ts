@@ -98,6 +98,45 @@ export const hexagonResolvers = {
       }
     },
 
+    // Get all hexagons from all users within a bounding box
+    hexagonsInBbox: async (
+      _: any,
+      { south, west, north, east }: { south: number; west: number; north: number; east: number },
+      context: GraphQLContext
+    ) => {
+      requireAuth(context);
+
+      try {
+        // Import h3-js for filtering hexagons within bbox
+        const h3 = require('h3-js');
+
+        // Get all hexagons with a safety limit (prevent loading too many at once)
+        // TODO: Replace with geospatial indexing for better performance
+        const MAX_HEXAGONS = 10000;
+        const hexagons = await Hexagon.find({})
+          .limit(MAX_HEXAGONS)
+          .sort({ lastCapturedAt: -1 }); // Get most recent first
+
+        // Filter hexagons that are within the bounding box
+        const hexagonsInBbox = hexagons.filter((hex) => {
+          const center = h3.cellToLatLng(hex.hexagonId);
+          const [lat, lng] = center;
+
+          return lat >= south && lat <= north && lng >= west && lng <= east;
+        });
+
+        // Log warning if we hit the limit
+        if (hexagons.length === MAX_HEXAGONS) {
+          console.warn(`⚠️  Database has more than ${MAX_HEXAGONS} hexagons in this area. Consider implementing geospatial indexing.`);
+        }
+
+        return hexagonsInBbox;
+      } catch (error) {
+        console.error('Error fetching all hexagons in bbox:', error);
+        throw new GraphQLError('Failed to fetch hexagons in bounding box');
+      }
+    },
+
     // Get total count of hexagons owned by current user
     myHexagonsCount: async (_: any, __: any, context: GraphQLContext) => {
       const user = requireAuth(context);

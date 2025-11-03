@@ -1,11 +1,19 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/useAuth';
 import { useUserActivities } from '@/hooks/useUserActivities';
-import { User } from 'lucide-react';
+import { useActivitiesManager } from '@/hooks/useActivitiesManager';
+import { ActivitiesManagerModal } from './ActivitiesManagerModal';
+import { User, RefreshCw } from 'lucide-react';
 
-export function UserOverlay() {
+interface UserOverlayProps {
+	onActivityChanged?: () => void;
+}
+
+export function UserOverlay({ onActivityChanged }: UserOverlayProps) {
 	const { isAuthenticated, user } = useAuth();
 	const { latestActivity } = useUserActivities();
+	const { showModal, activities, loading, openModal, closeModal, handleSaveActivity, handleRemoveActivity } =
+		useActivitiesManager(onActivityChanged);
 	const navigate = useNavigate();
 
 	if (!isAuthenticated || !user) {
@@ -64,7 +72,29 @@ export function UserOverlay() {
 						</div>
 					</div>
 				)}
+
+				{/* Manage Activities Button */}
+				<div className="mt-3 pt-3 border-t border-gray-200">
+					<button
+						onClick={openModal}
+						disabled={loading}
+						className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white px-3 py-2 rounded text-sm font-medium transition-colors"
+					>
+						<RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+						{loading ? 'Loading...' : 'Manage Activities'}
+					</button>
+				</div>
 			</div>
+
+			{/* Activities Modal */}
+			<ActivitiesManagerModal
+				isOpen={showModal}
+				activities={activities}
+				loading={loading}
+				onClose={closeModal}
+				onProcess={handleSaveActivity}
+				onDelete={handleRemoveActivity}
+			/>
 		</div>
 	);
 }
