@@ -3,7 +3,7 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Install build dependencies for canvas
+# Install build dependencies for canvas and git for version script
 RUN apk add --no-cache \
     build-base \
     cairo-dev \
@@ -11,7 +11,8 @@ RUN apk add --no-cache \
     jpeg-dev \
     giflib-dev \
     pixman-dev \
-    python3
+    python3 \
+    git
 
 # Copy package files
 COPY package*.json ./
@@ -20,10 +21,14 @@ COPY tsconfig.json ./
 # Install dependencies
 RUN npm ci
 
-# Copy source code
-COPY src ./src
+# Copy git folder for version info
+COPY ../.git ../.git
 
-# Build TypeScript
+# Copy source code and scripts
+COPY src ./src
+COPY scripts ./scripts
+
+# Build TypeScript (prebuild script generates version.ts from git info)
 RUN npm run build
 
 # Production stage
