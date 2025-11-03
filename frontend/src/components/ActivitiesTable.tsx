@@ -8,7 +8,7 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 
 export interface StravaActivity {
 	id: number;
@@ -29,10 +29,12 @@ interface ActivitiesTableProps {
 	activities: StravaActivity[];
 	onActivityClick: (activityId: number) => void;
 	onProcessActivity: (activityId: number) => Promise<void>;
+	onDeleteActivity: (activityId: number) => Promise<void>;
 }
 
-export function ActivitiesTable({ activities, onActivityClick, onProcessActivity }: ActivitiesTableProps) {
+export function ActivitiesTable({ activities, onActivityClick, onProcessActivity, onDeleteActivity }: ActivitiesTableProps) {
 	const [processingIds, setProcessingIds] = useState<Set<number>>(new Set());
+	const [deletingIds, setDeletingIds] = useState<Set<number>>(new Set());
 
 	const handleProcessActivity = async (activityId: number, e: React.MouseEvent) => {
 		e.stopPropagation(); // Prevent row click
@@ -41,6 +43,25 @@ export function ActivitiesTable({ activities, onActivityClick, onProcessActivity
 			await onProcessActivity(activityId);
 		} finally {
 			setProcessingIds(prev => {
+				const next = new Set(prev);
+				next.delete(activityId);
+				return next;
+			});
+		}
+	};
+
+	const handleDeleteActivity = async (activityId: number, e: React.MouseEvent) => {
+		e.stopPropagation(); // Prevent row click
+
+		if (!confirm('⚠️ Are you sure you want to delete this activity?\n\nThis will:\n- Remove the activity from the database\n- Restore previous owners of captured hexagons (or delete hexagons if no previous owner)\n\nThe activity will remain in your Strava account.')) {
+			return;
+		}
+
+		setDeletingIds(prev => new Set(prev).add(activityId));
+		try {
+			await onDeleteActivity(activityId);
+		} finally {
+			setDeletingIds(prev => {
 				const next = new Set(prev);
 				next.delete(activityId);
 				return next;
@@ -107,23 +128,44 @@ export function ActivitiesTable({ activities, onActivityClick, onProcessActivity
 									)}
 								</TableCell>
 								<TableCell onClick={(e) => e.stopPropagation()}>
-									{!activity.isStored && (
-										<Button
-											size="sm"
-											variant="outline"
-											onClick={(e) => handleProcessActivity(activity.id, e)}
-											disabled={processingIds.has(activity.id)}
-										>
-											{processingIds.has(activity.id) ? (
-												<>
-													<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-													Processing...
-												</>
-											) : (
-												"Save"
-											)}
-										</Button>
-									)}
+									<div className="flex gap-2">
+										{!activity.isStored ? (
+											<Button
+												size="sm"
+												variant="outline"
+												onClick={(e) => handleProcessActivity(activity.id, e)}
+												disabled={processingIds.has(activity.id)}
+											>
+												{processingIds.has(activity.id) ? (
+													<>
+														<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+														Processing...
+													</>
+												) : (
+													"Save"
+												)}
+											</Button>
+										) : (
+											<Button
+												size="sm"
+												variant="destructive"
+												onClick={(e) => handleDeleteActivity(activity.id, e)}
+												disabled={deletingIds.has(activity.id)}
+											>
+												{deletingIds.has(activity.id) ? (
+													<>
+														<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+														Deleting...
+													</>
+												) : (
+													<>
+														<Trash2 className="mr-2 h-4 w-4" />
+														Delete
+													</>
+												)}
+											</Button>
+										)}
+									</div>
 								</TableCell>
 							</TableRow>
 						))

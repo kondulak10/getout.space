@@ -11,11 +11,18 @@ import {
 import { StravaSection } from '@/components/StravaSection';
 import { useAuth } from '@/contexts/useAuth';
 
+interface TestUser {
+	_id: string;
+	name: string;
+	img: string;
+	createdAt: string;
+}
+
 export function HomePage() {
 	const { isAuthenticated, logout, user } = useAuth();
 	const [loading, setLoading] = useState(false);
 	const [usersLoading, setUsersLoading] = useState(false);
-	const [users, setUsers] = useState<any[]>([]);
+	const [users, setUsers] = useState<TestUser[]>([]);
 
 	const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000';
 

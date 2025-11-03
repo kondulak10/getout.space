@@ -61,7 +61,9 @@
       "Bash(npx tsc --noEmit)",
       "Bash(node -e:*)",
       "WebFetch(domain:press.strava.com)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(find:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [
       "Bash(git commit:*)",

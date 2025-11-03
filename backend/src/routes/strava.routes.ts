@@ -1,13 +1,11 @@
 import { Request, Response, Router } from 'express';
-import mongoose from 'mongoose';
-import polyline from '@mapbox/polyline';
 import { User } from '../models/User';
-import { Activity } from '../models/Activity';
-import { Hexagon, IHexagon, ICaptureHistoryEntry } from '../models/Hexagon';
 import { generateToken } from '../utils/jwt';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
-import { refreshStravaToken } from '../utils/strava';
-import { analyzeRouteAndConvertToHexagons } from '../utils/routeToHexagons';
+import { getValidAccessToken } from '../services/strava.service';
+import { processActivity, deleteActivityAndRestoreHexagons } from '../services/activityProcessing.service';
+import { StravaOAuthTokenResponse, StravaActivity, StravaAthleteStats } from '../types/strava.types';
+import { Activity } from '../models/Activity';
 
 const router = Router();
 
@@ -47,11 +45,12 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 		});
 
 		if (!response.ok) {
-			const errorData = await response.json().catch(() => ({})) as any;
+			const errorData = await response.json().catch(() => ({})) as Record<string, unknown>;
 			console.error('❌ Strava API error:', response.status, errorData);
 
 			// Common OAuth errors
-			if (response.status === 400 && errorData.message?.includes('expired')) {
+			const message = typeof errorData.message === 'string' ? errorData.message : '';
+			if (response.status === 400 && message.includes('expired')) {
 				throw new Error('Authorization code has expired. Please try logging in again.');
 			}
 			if (response.status === 400) {
@@ -61,7 +60,7 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 			throw new Error(`Strava token exchange failed: ${response.status}`);
 		}
 
-		const data = (await response.json()) as any;
+		const data = (await response.json()) as StravaOAuthTokenResponse;
 
 		console.log('✅ Tokens received from Strava');
 		console.log('📊 Token data from Strava:', {
@@ -88,7 +87,7 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 			user.stravaProfile = {
 				firstname: data.athlete.firstname,
 				lastname: data.athlete.lastname,
-				profile: data.athlete.profile || data.athlete.profile_medium,
+				profile: data.athlete.profile || data.athlete.profile_medium || '',
 				city: data.athlete.city,
 				state: data.athlete.state,
 				country: data.athlete.country,
@@ -108,7 +107,7 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 				stravaProfile: {
 					firstname: data.athlete.firstname,
 					lastname: data.athlete.lastname,
-					profile: data.athlete.profile || data.athlete.profile_medium,
+					profile: data.athlete.profile || data.athlete.profile_medium || '',
 					city: data.athlete.city,
 					state: data.athlete.state,
 					country: data.athlete.country,
@@ -139,43 +138,19 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 				profile: user.stravaProfile,
 			},
 		});
-	} catch (error: any) {
-		console.error('❌ Token exchange error:', error.message);
+	} catch (error: unknown) {
+		const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+		console.error('❌ Token exchange error:', errorMessage);
 		res.status(500).json({
 			error: 'Failed to exchange authorization code',
-			details: error.message,
+			details: errorMessage,
 		});
 	}
 });
 
-// Helper: Refresh access token if expired for a specific user
-// Exported so it can be used by webhooks
-export async function getValidAccessToken(userId: string): Promise<string> {
-	const user = await User.findById(userId);
-
-	if (!user) {
-		throw new Error('User not found');
-	}
-
-	const now = Math.floor(Date.now() / 1000);
-
-	// If token expires in less than 5 minutes, refresh it
-	if (user.tokenExpiresAt - now < 300) {
-		console.log('🔄 Access token expired or expiring soon, refreshing...');
-
-		const tokenData = await refreshStravaToken(user);
-
-		// Update user's tokens in database
-		user.accessToken = tokenData.access_token;
-		user.refreshToken = tokenData.refresh_token;
-		user.tokenExpiresAt = tokenData.expires_at;
-		await user.save();
-
-		console.log('✅ Token refreshed and saved to DB');
-	}
-
-	return user.accessToken;
-}
+// Note: getValidAccessToken moved to services/strava.service.ts
+// Re-export for backward compatibility with webhooks
+export { getValidAccessToken } from '../services/strava.service';
 
 // Step 3: Get Strava activities (with auto token refresh) - REQUIRES AUTH
 router.get('/api/strava/activities', authenticateToken, async (req: AuthRequest, res: Response) => {
@@ -206,7 +181,7 @@ router.get('/api/strava/activities', authenticateToken, async (req: AuthRequest,
 			throw new Error(`Strava API error: ${response.status}`);
 		}
 
-		const activities = (await response.json()) as any[];
+		const activities = (await response.json()) as StravaActivity[];
 
 		console.log(`✅ Fetched ${activities.length} activities from Strava`);
 
@@ -214,7 +189,7 @@ router.get('/api/strava/activities', authenticateToken, async (req: AuthRequest,
 		const hasMorePages = activities.length === per_page;
 
 		// Filter to only include running activities
-		const runningActivities = activities.filter((activity: any) => {
+		const runningActivities = activities.filter((activity: StravaActivity) => {
 			const type = activity.type;
 			const sportType = activity.sport_type;
 			return type === 'Run' || sportType === 'TrailRun' || sportType === 'VirtualRun';
@@ -223,18 +198,17 @@ router.get('/api/strava/activities', authenticateToken, async (req: AuthRequest,
 		console.log(`🏃 Filtered to ${runningActivities.length} running activities (from ${activities.length} total)`);
 
 		// Check which activities are already stored in our database
-		const { Activity } = await import('../models/Activity');
-		const stravaActivityIds = runningActivities.map((a: any) => a.id);
+		const stravaActivityIds = runningActivities.map((a: StravaActivity) => a.id);
 
 		const storedActivities = await Activity.find(
 			{ stravaActivityId: { $in: stravaActivityIds } },
 			{ stravaActivityId: 1 }
 		);
 
-		const storedActivityIds = new Set(storedActivities.map((a: any) => a.stravaActivityId));
+		const storedActivityIds = new Set(storedActivities.map((a) => a.stravaActivityId));
 
 		// Add isStored flag to each activity
-		const activitiesWithStoredFlag = runningActivities.map((activity: any) => ({
+		const activitiesWithStoredFlag = runningActivities.map((activity: StravaActivity) => ({
 			...activity,
 			isStored: storedActivityIds.has(activity.id),
 		}));
@@ -249,11 +223,12 @@ router.get('/api/strava/activities', authenticateToken, async (req: AuthRequest,
 			hasMorePages, // Based on Strava's response, not filtered results
 			activities: activitiesWithStoredFlag,
 		});
-	} catch (error: any) {
-		console.error('❌ Strava API error:', error.message);
+	} catch (error: unknown) {
+		const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+		console.error('❌ Strava API error:', errorMessage);
 		res.status(500).json({
 			error: 'Failed to fetch activities',
-			details: error.message,
+			details: errorMessage,
 		});
 	}
 });
@@ -281,7 +256,7 @@ router.get('/api/strava/activities/:id', authenticateToken, async (req: AuthRequ
 			throw new Error(`Strava API error: ${response.status}`);
 		}
 
-		const activity = (await response.json()) as any;
+		const activity = (await response.json()) as StravaActivity;
 
 		console.log(`✅ Fetched activity ${activityId}`);
 
@@ -289,11 +264,12 @@ router.get('/api/strava/activities/:id', authenticateToken, async (req: AuthRequ
 			success: true,
 			activity: activity,
 		});
-	} catch (error: any) {
-		console.error('❌ Strava API error:', error.message);
+	} catch (error: unknown) {
+		const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+		console.error('❌ Strava API error:', errorMessage);
 		res.status(500).json({
 			error: 'Failed to fetch activity details',
-			details: error.message,
+			details: errorMessage,
 		});
 	}
 });
@@ -317,7 +293,7 @@ router.get('/api/strava/stats', authenticateToken, async (req: AuthRequest, res:
 			throw new Error(`Strava API error: ${response.status}`);
 		}
 
-		const stats = (await response.json()) as any;
+		const stats = (await response.json()) as StravaAthleteStats;
 
 		console.log('✅ Fetched athlete stats');
 
@@ -329,20 +305,53 @@ router.get('/api/strava/stats', authenticateToken, async (req: AuthRequest, res:
 			stats: stats,
 			runCount: runCount,
 		});
-	} catch (error: any) {
-		console.error('❌ Strava API error:', error.message);
+	} catch (error: unknown) {
+		const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+		console.error('❌ Strava API error:', errorMessage);
 		res.status(500).json({
 			error: 'Failed to fetch stats',
-			details: error.message,
+			details: errorMessage,
+		});
+	}
+});
+
+// Delete Strava activity - removes activity and restores/deletes hexagons
+router.delete('/api/strava/activities/:stravaActivityId', authenticateToken, async (req: AuthRequest, res: Response) => {
+	try {
+		const { stravaActivityId } = req.params;
+		const currentUser = req.user!;
+
+		if (!stravaActivityId) {
+			return res.status(400).json({ error: 'stravaActivityId is required' });
+		}
+
+		const result = await deleteActivityAndRestoreHexagons(parseInt(stravaActivityId), currentUser);
+
+		res.json({
+			success: true,
+			...result,
+		});
+	} catch (error: unknown) {
+		const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+		console.error('❌ Error deleting activity:', error);
+
+		if (errorMessage === 'Activity not found in database') {
+			return res.status(404).json({ error: errorMessage });
+		}
+
+		if (errorMessage === 'You can only delete your own activities') {
+			return res.status(403).json({ error: errorMessage });
+		}
+
+		res.status(500).json({
+			error: 'Failed to delete activity',
+			details: errorMessage,
 		});
 	}
 });
 
 // Process Strava activity - fetch, decode polyline, create hexagons
 router.post('/api/strava/process-activity', authenticateToken, async (req: AuthRequest, res: Response) => {
-	const session = await mongoose.startSession();
-	session.startTransaction();
-
 	try {
 		const { activityId } = req.body;
 		const currentUser = req.user!;
@@ -351,265 +360,37 @@ router.post('/api/strava/process-activity', authenticateToken, async (req: AuthR
 			return res.status(400).json({ error: 'activityId is required' });
 		}
 
-		console.log(`🎯 Processing Strava activity ${activityId} for user: ${currentUser.stravaProfile.firstname}`);
-
-		// Get valid access token (auto-refreshes if needed)
-		const accessToken = await getValidAccessToken(req.userId!);
-
-		// Fetch activity details from Strava
-		const response = await fetch(`https://www.strava.com/api/v3/activities/${activityId}`, {
-			headers: {
-				Authorization: `Bearer ${accessToken}`,
-			},
-		});
-
-		if (!response.ok) {
-			await session.abortTransaction();
-			return res.status(response.status).json({ error: `Strava API error: ${response.status}` });
-		}
-
-		const stravaActivity = (await response.json()) as any;
-
-		// Validate activity type - only allow running activities
-		const activityType = stravaActivity.type;
-		const sportType = stravaActivity.sport_type;
-		const isRunningActivity = activityType === 'Run' || sportType === 'TrailRun' || sportType === 'VirtualRun';
-
-		if (!isRunningActivity) {
-			await session.abortTransaction();
-			return res.status(400).json({
-				error: 'Only running activities are allowed',
-				details: `Activity type "${activityType}" (sport type: "${sportType}") is not supported. Only Run, TrailRun, and VirtualRun activities can be processed.`,
-			});
-		}
-
-		// Validate activity has polyline
-		if (!stravaActivity.map?.summary_polyline) {
-			await session.abortTransaction();
-			return res.status(400).json({ error: 'Activity has no GPS data (summary_polyline missing)' });
-		}
-
-		console.log(`📍 Activity: ${stravaActivity.name} - ${stravaActivity.type}`);
-
-		// Decode polyline to coordinates
-		const coordinates = polyline.decode(stravaActivity.map.summary_polyline) as [number, number][];
-		console.log(`📍 Decoded ${coordinates.length} GPS points`);
-
-		// Convert coordinates to hexagons
-		const { hexagons, type: routeType } = analyzeRouteAndConvertToHexagons(coordinates);
-		console.log(`🔷 Generated ${hexagons.length} hexagons (type: ${routeType})`);
-
-		// Save/Update Activity
-		let activity = await Activity.findOne({ stravaActivityId: activityId }).session(session);
-		let wasActivityCreated = false;
-
-		if (activity) {
-			console.log(`📝 Updating existing activity ${activity._id}`);
-			// Update all fields
-			activity.userId = currentUser._id;
-			activity.source = 'api';
-			activity.name = stravaActivity.name;
-			activity.type = stravaActivity.type;
-			activity.sportType = stravaActivity.sport_type;
-			activity.description = stravaActivity.description;
-			activity.startDate = new Date(stravaActivity.start_date);
-			activity.startDateLocal = new Date(stravaActivity.start_date_local);
-			activity.timezone = stravaActivity.timezone;
-			activity.movingTime = stravaActivity.moving_time;
-			activity.elapsedTime = stravaActivity.elapsed_time;
-			activity.distance = stravaActivity.distance;
-			activity.elevationGain = stravaActivity.total_elevation_gain;
-			activity.averageSpeed = stravaActivity.average_speed;
-			activity.startLocation = stravaActivity.start_latlng ? {
-				lat: stravaActivity.start_latlng[0],
-				lng: stravaActivity.start_latlng[1],
-			} : undefined;
-			activity.endLocation = stravaActivity.end_latlng ? {
-				lat: stravaActivity.end_latlng[0],
-				lng: stravaActivity.end_latlng[1],
-			} : undefined;
-			activity.summaryPolyline = stravaActivity.map.summary_polyline;
-			activity.isManual = stravaActivity.manual;
-			activity.isPrivate = stravaActivity.private;
-			await activity.save({ session });
-		} else {
-			console.log(`✨ Creating new activity`);
-			activity = new Activity({
-				stravaActivityId: activityId,
-				userId: currentUser._id,
-				source: 'api',
-				name: stravaActivity.name,
-				type: stravaActivity.type,
-				sportType: stravaActivity.sport_type,
-				description: stravaActivity.description,
-				startDate: new Date(stravaActivity.start_date),
-				startDateLocal: new Date(stravaActivity.start_date_local),
-				timezone: stravaActivity.timezone,
-				movingTime: stravaActivity.moving_time,
-				elapsedTime: stravaActivity.elapsed_time,
-				distance: stravaActivity.distance,
-				elevationGain: stravaActivity.total_elevation_gain,
-				averageSpeed: stravaActivity.average_speed,
-				startLocation: stravaActivity.start_latlng ? {
-					lat: stravaActivity.start_latlng[0],
-					lng: stravaActivity.start_latlng[1],
-				} : undefined,
-				endLocation: stravaActivity.end_latlng ? {
-					lat: stravaActivity.end_latlng[0],
-					lng: stravaActivity.end_latlng[1],
-				} : undefined,
-				summaryPolyline: stravaActivity.map.summary_polyline,
-				isManual: stravaActivity.manual,
-				isPrivate: stravaActivity.private,
-			});
-			await activity.save({ session });
-			wasActivityCreated = true;
-		}
-
-		console.log(`✅ Activity saved: ${activity._id}`);
-
-		// Process hexagons in batch
-		// Step 1: Fetch all existing hexagons in one query
-		const existingHexagons = await Hexagon.find({
-			hexagonId: { $in: hexagons },
-		}).session(session);
-
-		// Create a map for quick lookup
-		const existingHexMap = new Map<string, IHexagon>();
-		existingHexagons.forEach((hex) => {
-			existingHexMap.set(hex.hexagonId, hex);
-		});
-
-		// Step 2: Separate into creates, updates, and skips
-		const hexagonsToCreate: any[] = [];
-		const bulkUpdateOps: any[] = [];
-		const createdIds: string[] = [];
-		const updatedIds: string[] = [];
-		const skippedIds: string[] = [];
-
-		const activityDate = activity.startDate.getTime();
-
-		for (const hexagonId of hexagons) {
-			const existingHex = existingHexMap.get(hexagonId);
-
-			if (!existingHex) {
-				// New hexagon - prepare for batch insert
-				hexagonsToCreate.push({
-					hexagonId,
-					currentOwnerId: currentUser._id,
-					currentOwnerStravaId: currentUser.stravaId,
-					currentActivityId: activity._id,
-					currentStravaActivityId: activity.stravaActivityId,
-					captureCount: 1,
-					firstCapturedAt: activity.startDate,
-					firstCapturedBy: currentUser._id,
-					lastCapturedAt: activity.startDate,
-					activityType: activity.sportType || activity.type,
-					routeType,
-					captureHistory: [],
-				});
-				createdIds.push(hexagonId);
-			} else {
-				// Existing hexagon - check if we can update it
-				const hexDate = existingHex.lastCapturedAt.getTime();
-
-				if (activityDate > hexDate) {
-					// Activity is newer - prepare update operation
-					const updateDoc: any = {
-						currentOwnerId: currentUser._id,
-						currentOwnerStravaId: currentUser.stravaId,
-						currentActivityId: activity._id,
-						currentStravaActivityId: activity.stravaActivityId,
-						lastCapturedAt: activity.startDate,
-						activityType: activity.sportType || activity.type,
-						routeType,
-					};
-
-					// Check if ownership changed
-					if (String(existingHex.currentOwnerId) !== String(currentUser._id)) {
-						// Add previous owner to capture history
-						updateDoc.$push = {
-							captureHistory: {
-								userId: existingHex.currentOwnerId,
-								stravaId: existingHex.currentOwnerStravaId,
-								activityId: existingHex.currentActivityId,
-								stravaActivityId: existingHex.currentStravaActivityId,
-								capturedAt: existingHex.lastCapturedAt,
-								activityType: existingHex.activityType,
-							},
-						};
-						updateDoc.$inc = { captureCount: 1 };
-					}
-
-					bulkUpdateOps.push({
-						updateOne: {
-							filter: { hexagonId },
-							update: updateDoc,
-						},
-					});
-					updatedIds.push(hexagonId);
-				} else {
-					// Activity is older - skip
-					skippedIds.push(hexagonId);
-				}
-			}
-		}
-
-		// Step 3: Execute batch operations
-		let created = 0;
-		let updated = 0;
-
-		if (hexagonsToCreate.length > 0) {
-			await Hexagon.insertMany(hexagonsToCreate, { session });
-			created = hexagonsToCreate.length;
-			console.log(`✅ Batch created ${created} hexagons`);
-		}
-
-		if (bulkUpdateOps.length > 0) {
-			const result = await Hexagon.bulkWrite(bulkUpdateOps, { session });
-			updated = result.modifiedCount;
-			console.log(`✅ Batch updated ${updated} hexagons`);
-		}
-
-		const couldNotUpdate = skippedIds.length;
-
-		// Commit transaction
-		await session.commitTransaction();
-
-		console.log(`✅ Transaction committed`);
-		console.log(`📊 Hexagons: ${created} created, ${updated} updated, ${couldNotUpdate} skipped`);
+		const result = await processActivity(activityId, currentUser, req.userId!);
 
 		res.json({
 			success: true,
-			activity: {
-				id: activity._id,
-				stravaActivityId: activity.stravaActivityId,
-				name: activity.name,
-				distance: activity.distance,
-				wasCreated: wasActivityCreated,
-			},
-			hexagons: {
-				totalParsed: hexagons.length,
-				created,
-				updated,
-				couldNotUpdate,
-				hexagonIds: hexagons,
-				details: {
-					created: createdIds,
-					updated: updatedIds,
-					skipped: skippedIds,
-				},
-			},
+			...result,
 		});
-	} catch (error: any) {
-		await session.abortTransaction();
+	} catch (error: unknown) {
 		console.error('❌ Error processing activity:', error);
+
+		const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+		// Handle specific error types
+		if (errorMessage.includes('Only running activities')) {
+			return res.status(400).json({
+				error: 'Only running activities are allowed',
+				details: errorMessage,
+			});
+		}
+
+		if (errorMessage.includes('no GPS data')) {
+			return res.status(400).json({ error: errorMessage });
+		}
+
+		if (errorMessage.includes('Strava API error')) {
+			return res.status(502).json({ error: errorMessage });
+		}
+
 		res.status(500).json({
 			error: 'Failed to process activity',
-			details: error.message,
+			details: errorMessage,
 		});
-	} finally {
-		session.endSession();
 	}
 });
 
@@ -628,11 +409,12 @@ router.get('/api/auth/me', authenticateToken, async (req: AuthRequest, res: Resp
 				createdAt: user.createdAt,
 			},
 		});
-	} catch (error: any) {
-		console.error('❌ Error fetching user:', error.message);
+	} catch (error: unknown) {
+		const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+		console.error('❌ Error fetching user:', errorMessage);
 		res.status(500).json({
 			error: 'Failed to fetch user',
-			details: error.message,
+			details: errorMessage,
 		});
 	}
 });

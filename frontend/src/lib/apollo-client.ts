@@ -1,6 +1,8 @@
-import { ApolloClient, InMemoryCache, HttpLink, from, ApolloLink, Observable } from '@apollo/client';
+import { ApolloClient, InMemoryCache, HttpLink, from, ApolloLink, Observable, FetchResult, Observer } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
-import { onError } from '@apollo/client/link/error';
+import { onError, ErrorResponse } from '@apollo/client/link/error';
+import { GraphQLError } from 'graphql';
+import { OperationDefinitionNode } from 'graphql';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000';
 
@@ -14,13 +16,16 @@ const loggingLink = new ApolloLink((operation, forward) => {
   const timestamp = new Date().toLocaleTimeString();
 
   // Log outgoing request
+  const firstDefinition = operation.query.definitions[0] as OperationDefinitionNode;
+  const operationType = firstDefinition?.operation || 'unknown';
+
   console.log(
     `%c🚀 GraphQL Request [${timestamp}]`,
     'background: #6B7280; color: white; padding: 4px 8px; border-radius: 3px; font-weight: bold',
     '\n',
     `Operation: ${operation.operationName}`,
     '\n',
-    `Type: ${(operation.query.definitions[0] as any)?.operation || 'unknown'}`,
+    `Type: ${operationType}`,
     '\n',
     `Variables:`, operation.variables,
     '\n',
@@ -29,9 +34,9 @@ const loggingLink = new ApolloLink((operation, forward) => {
 
   const observable = forward(operation);
 
-  return new Observable((observer: any) => {
+  return new Observable((observer: Observer<FetchResult>) => {
     const subscription = observable.subscribe({
-      next: (response: any) => {
+      next: (response: FetchResult) => {
         const endTime = Date.now();
         const duration = endTime - startTime;
         const endTimestamp = new Date().toLocaleTimeString();
@@ -50,7 +55,7 @@ const loggingLink = new ApolloLink((operation, forward) => {
 
         observer.next(response);
       },
-      error: (error: any) => observer.error(error),
+      error: (error: Error) => observer.error(error),
       complete: () => observer.complete(),
     });
 
@@ -59,12 +64,12 @@ const loggingLink = new ApolloLink((operation, forward) => {
 });
 
 // Error link for GraphQL errors
-const errorLink = onError((errorResponse: any) => {
+const errorLink = onError((errorResponse: ErrorResponse) => {
   const timestamp = new Date().toLocaleTimeString();
   const { graphQLErrors, networkError, operation } = errorResponse;
 
   if (graphQLErrors) {
-    graphQLErrors.forEach((error: any) =>
+    graphQLErrors.forEach((error: GraphQLError) =>
       console.log(
         `%c❌ GraphQL Error [${timestamp}]`,
         'background: #EF4444; color: white; padding: 4px 8px; border-radius: 3px; font-weight: bold',

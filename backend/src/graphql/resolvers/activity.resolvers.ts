@@ -1,7 +1,9 @@
 import { GraphQLError } from 'graphql';
 import { User } from '../../models/User';
 import { Activity, IActivity } from '../../models/Activity';
+import { Hexagon } from '../../models/Hexagon';
 import { GraphQLContext, requireAuth, requireAdmin } from './auth.helpers';
+import mongoose from 'mongoose';
 
 export const activityResolvers = {
   Activity: {
@@ -119,11 +121,14 @@ export const activityResolvers = {
     // Delete activity by ID
     deleteActivity: async (_: any, { id }: { id: string }, context: GraphQLContext) => {
       const currentUser = requireAuth(context);
+      const session = await mongoose.startSession();
+      session.startTransaction();
 
       try {
-        const activity = await Activity.findById(id);
+        const activity = await Activity.findById(id).session(session);
 
         if (!activity) {
+          await session.abortTransaction();
           throw new GraphQLError('Activity not found', {
             extensions: { code: 'NOT_FOUND' },
           });
@@ -131,19 +136,86 @@ export const activityResolvers = {
 
         // Allow if admin or activity owner
         if (!currentUser.isAdmin && String(activity.userId) !== String(currentUser._id)) {
+          await session.abortTransaction();
           throw new GraphQLError('You can only delete your own activities', {
             extensions: { code: 'FORBIDDEN' },
           });
         }
 
-        await Activity.findByIdAndDelete(id);
+        console.log(`🗑️ Deleting activity ${id} (Strava ID: ${activity.stravaActivityId})`);
+
+        // Find all hexagons captured by this activity
+        const hexagons = await Hexagon.find({
+          currentActivityId: activity._id
+        }).session(session);
+
+        console.log(`📦 Found ${hexagons.length} hexagons to process`);
+
+        // Process each hexagon
+        const hexagonsToDelete: string[] = [];
+        const bulkUpdateOps: any[] = [];
+        let restored = 0;
+        let deleted = 0;
+
+        for (const hexagon of hexagons) {
+          if (hexagon.captureHistory && hexagon.captureHistory.length > 0) {
+            // Restore previous owner from capture history
+            const previousCapture = hexagon.captureHistory[hexagon.captureHistory.length - 1];
+
+            bulkUpdateOps.push({
+              updateOne: {
+                filter: { _id: hexagon._id },
+                update: {
+                  $set: {
+                    currentOwnerId: previousCapture.userId,
+                    currentOwnerStravaId: previousCapture.stravaId,
+                    currentActivityId: previousCapture.activityId,
+                    currentStravaActivityId: previousCapture.stravaActivityId,
+                    lastCapturedAt: previousCapture.capturedAt,
+                    activityType: previousCapture.activityType,
+                  },
+                  $pop: { captureHistory: 1 }, // Remove last entry from history
+                  $inc: { captureCount: -1 }, // Decrement capture count
+                },
+              },
+            });
+            restored++;
+          } else {
+            // No capture history - delete the hexagon entirely
+            hexagonsToDelete.push(hexagon.hexagonId);
+            deleted++;
+          }
+        }
+
+        // Execute bulk operations
+        if (bulkUpdateOps.length > 0) {
+          await Hexagon.bulkWrite(bulkUpdateOps, { session });
+          console.log(`✅ Restored ${restored} hexagons to previous owners`);
+        }
+
+        if (hexagonsToDelete.length > 0) {
+          await Hexagon.deleteMany({
+            hexagonId: { $in: hexagonsToDelete }
+          }).session(session);
+          console.log(`✅ Deleted ${deleted} hexagons with no capture history`);
+        }
+
+        // Delete the activity
+        await Activity.findByIdAndDelete(id).session(session);
+        console.log(`✅ Activity deleted successfully`);
+
+        // Commit transaction
+        await session.commitTransaction();
         return true;
       } catch (error) {
+        await session.abortTransaction();
         console.error('Error deleting activity:', error);
         if (error instanceof GraphQLError) {
           throw error;
         }
         return false;
+      } finally {
+        session.endSession();
       }
     },
   },

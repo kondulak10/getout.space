@@ -16,7 +16,7 @@ interface User {
   stravaId: number;
   isAdmin: boolean;
   profile: StravaProfile;
-  createdAt: string;
+  createdAt?: string;
 }
 
 interface AuthContextType {

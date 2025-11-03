@@ -31,3 +31,7 @@ mutation RefreshUserToken($id: ID!) {
     tokenIsExpired
   }
 }
+
+mutation DeleteActivity($id: ID!) {
+  deleteActivity(id: $id)
+}

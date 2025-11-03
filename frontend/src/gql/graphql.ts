@@ -15,8 +15,89 @@ export type Scalars = {
   Float: { input: number; output: number; }
 };
 
+export type Activity = {
+  __typename: 'Activity';
+  averageSpeed: Scalars['Float']['output'];
+  createdAt: Scalars['String']['output'];
+  description: Maybe<Scalars['String']['output']>;
+  distance: Scalars['Float']['output'];
+  elapsedTime: Scalars['Int']['output'];
+  elevationGain: Scalars['Float']['output'];
+  endLocation: Maybe<Location>;
+  id: Scalars['ID']['output'];
+  isManual: Scalars['Boolean']['output'];
+  isPrivate: Scalars['Boolean']['output'];
+  movingTime: Scalars['Int']['output'];
+  name: Scalars['String']['output'];
+  source: Scalars['String']['output'];
+  sportType: Maybe<Scalars['String']['output']>;
+  startDate: Scalars['String']['output'];
+  startDateLocal: Scalars['String']['output'];
+  startLocation: Maybe<Location>;
+  stravaActivityId: Scalars['Float']['output'];
+  summaryPolyline: Maybe<Scalars['String']['output']>;
+  timezone: Maybe<Scalars['String']['output']>;
+  type: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+  user: Maybe<User>;
+  userId: Scalars['ID']['output'];
+};
+
+export type CaptureHistoryEntry = {
+  __typename: 'CaptureHistoryEntry';
+  activityId: Scalars['ID']['output'];
+  activityType: Scalars['String']['output'];
+  capturedAt: Scalars['String']['output'];
+  stravaActivityId: Scalars['Float']['output'];
+  stravaId: Scalars['Int']['output'];
+  userId: Scalars['ID']['output'];
+};
+
+export type Hexagon = {
+  __typename: 'Hexagon';
+  activityType: Scalars['String']['output'];
+  captureCount: Scalars['Int']['output'];
+  captureHistory: Array<CaptureHistoryEntry>;
+  createdAt: Scalars['String']['output'];
+  currentActivity: Maybe<Activity>;
+  currentActivityId: Scalars['ID']['output'];
+  currentOwner: Maybe<User>;
+  currentOwnerId: Scalars['ID']['output'];
+  currentOwnerStravaId: Scalars['Int']['output'];
+  currentStravaActivityId: Scalars['Float']['output'];
+  firstCapturedAt: Scalars['String']['output'];
+  firstCapturedBy: Maybe<User>;
+  hexagonId: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  lastCapturedAt: Scalars['String']['output'];
+  routeType: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['String']['output'];
+};
+
+export type Location = {
+  __typename: 'Location';
+  lat: Scalars['Float']['output'];
+  lng: Scalars['Float']['output'];
+};
+
 export type Mutation = {
   __typename: 'Mutation';
+  _empty: Maybe<Scalars['String']['output']>;
+  /**
+   * Capture hexagons from an activity's route
+   * Requires: Authentication
+   */
+  captureHexagons: Array<Hexagon>;
+  /**
+   * Delete activity by ID (Admin or activity owner)
+   * Requires: Authentication
+   */
+  deleteActivity: Scalars['Boolean']['output'];
+  /**
+   * Delete hexagon by ID (Admin only)
+   * Requires: Authentication + Admin
+   */
+  deleteHexagon: Scalars['Boolean']['output'];
   /**
    * Delete user by ID (Admin only)
    * Requires: Authentication + Admin
@@ -27,6 +108,23 @@ export type Mutation = {
    * Requires: Authentication + Admin
    */
   refreshUserToken: User;
+};
+
+
+export type MutationCaptureHexagonsArgs = {
+  activityId: Scalars['ID']['input'];
+  hexagonIds: Array<Scalars['String']['input']>;
+  routeType?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationDeleteActivityArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationDeleteHexagonArgs = {
+  hexagonId: Scalars['String']['input'];
 };
 
 
@@ -41,16 +139,62 @@ export type MutationRefreshUserTokenArgs = {
 
 export type Query = {
   __typename: 'Query';
+  _empty: Maybe<Scalars['String']['output']>;
+  /**
+   * Get all activities (Admin only)
+   * Requires: Authentication + Admin
+   */
+  activities: Array<Activity>;
+  /**
+   * Get single activity by ID
+   * Requires: Authentication
+   */
+  activity: Maybe<Activity>;
+  /**
+   * Get most contested hexagons (highest capture count)
+   * Requires: Authentication
+   */
+  contestedHexagons: Array<Hexagon>;
+  /**
+   * Get a specific hexagon by its H3 hexagon ID
+   * Requires: Authentication
+   */
+  hexagon: Maybe<Hexagon>;
+  /**
+   * Get all hexagons (Admin only)
+   * Requires: Authentication + Admin
+   */
+  hexagons: Array<Hexagon>;
   /**
    * Get current authenticated user
    * Requires: Authentication
    */
   me: Maybe<User>;
   /**
+   * Get all activities for current user
+   * Requires: Authentication
+   */
+  myActivities: Array<Activity>;
+  /**
+   * Get all hexagons owned by current user
+   * Requires: Authentication
+   */
+  myHexagons: Array<Hexagon>;
+  /**
    * Get user by ID (Admin only, or own profile)
    * Requires: Authentication
    */
   user: Maybe<User>;
+  /**
+   * Get activities for a specific user (Admin only, or own activities)
+   * Requires: Authentication
+   */
+  userActivities: Array<Activity>;
+  /**
+   * Get hexagons owned by a specific user
+   * Requires: Authentication
+   */
+  userHexagons: Array<Hexagon>;
   /**
    * Get all users (Admin only)
    * Requires: Authentication + Admin
@@ -59,8 +203,61 @@ export type Query = {
 };
 
 
+export type QueryActivitiesArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryActivityArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryContestedHexagonsArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryHexagonArgs = {
+  hexagonId: Scalars['String']['input'];
+};
+
+
+export type QueryHexagonsArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryMyActivitiesArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryMyHexagonsArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type QueryUserArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryUserActivitiesArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  userId: Scalars['ID']['input'];
+};
+
+
+export type QueryUserHexagonsArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  userId: Scalars['ID']['input'];
 };
 
 export type StravaProfile = {
@@ -106,7 +303,15 @@ export type RefreshUserTokenMutationVariables = Exact<{
 
 export type RefreshUserTokenMutation = { refreshUserToken: { __typename: 'User', id: string, tokenExpiresAt: number, tokenIsExpired: boolean } };
 
+export type DeleteActivityMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteActivityMutation = { deleteActivity: boolean };
+
 
 export const GetUsersDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetUsers"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"users"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"stravaId"}},{"kind":"Field","name":{"kind":"Name","value":"isAdmin"}},{"kind":"Field","name":{"kind":"Name","value":"stravaProfile"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"firstname"}},{"kind":"Field","name":{"kind":"Name","value":"lastname"}},{"kind":"Field","name":{"kind":"Name","value":"profile"}},{"kind":"Field","name":{"kind":"Name","value":"city"}},{"kind":"Field","name":{"kind":"Name","value":"state"}},{"kind":"Field","name":{"kind":"Name","value":"country"}},{"kind":"Field","name":{"kind":"Name","value":"sex"}},{"kind":"Field","name":{"kind":"Name","value":"username"}}]}},{"kind":"Field","name":{"kind":"Name","value":"tokenExpiresAt"}},{"kind":"Field","name":{"kind":"Name","value":"tokenIsExpired"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]}}]} as unknown as DocumentNode<GetUsersQuery, GetUsersQueryVariables>;
 export const DeleteUserDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteUser"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteUser"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}]}]}}]} as unknown as DocumentNode<DeleteUserMutation, DeleteUserMutationVariables>;
 export const RefreshUserTokenDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"RefreshUserToken"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"refreshUserToken"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"tokenExpiresAt"}},{"kind":"Field","name":{"kind":"Name","value":"tokenIsExpired"}}]}}]}}]} as unknown as DocumentNode<RefreshUserTokenMutation, RefreshUserTokenMutationVariables>;
+export const DeleteActivityDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteActivity"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteActivity"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}]}]}}]} as unknown as DocumentNode<DeleteActivityMutation, DeleteActivityMutationVariables>;
