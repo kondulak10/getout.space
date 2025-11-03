@@ -69,7 +69,8 @@
       "Bash(node scripts/generate-version.js:*)",
       "Bash(gh run list:*)",
       "Bash(git log:*)",
-      "Bash(git show:*)"
+      "Bash(git show:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [
       "Bash(git commit:*)",
