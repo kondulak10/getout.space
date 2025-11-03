@@ -13,7 +13,8 @@
 		"format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
 		"format:check": "prettier --check \"src/**/*.{ts,tsx,css}\"",
 		"preview": "vite preview",
-		"codegen": "graphql-codegen --config codegen.ts"
+		"codegen": "graphql-codegen --config codegen.ts",
+		"ts:check": "tsc  --watch"
 	},
 	"dependencies": {
 		"@apollo/client": "^4.0.8",

@@ -181,6 +181,16 @@ export type Query = {
    */
   myHexagons: Array<Hexagon>;
   /**
+   * Get total count of hexagons owned by current user
+   * Requires: Authentication
+   */
+  myHexagonsCount: Scalars['Int']['output'];
+  /**
+   * Get hexagons owned by current user within a bounding box
+   * Requires: Authentication
+   */
+  myHexagonsInBbox: Array<Hexagon>;
+  /**
    * Get user by ID (Admin only, or own profile)
    * Requires: Authentication
    */
@@ -239,6 +249,14 @@ export type QueryMyActivitiesArgs = {
 export type QueryMyHexagonsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryMyHexagonsInBboxArgs = {
+  east: Scalars['Float']['input'];
+  north: Scalars['Float']['input'];
+  south: Scalars['Float']['input'];
+  west: Scalars['Float']['input'];
 };
 
 
@@ -310,8 +328,25 @@ export type DeleteActivityMutationVariables = Exact<{
 
 export type DeleteActivityMutation = { deleteActivity: boolean };
 
+export type MyHexagonsInBboxQueryVariables = Exact<{
+  south: Scalars['Float']['input'];
+  west: Scalars['Float']['input'];
+  north: Scalars['Float']['input'];
+  east: Scalars['Float']['input'];
+}>;
+
+
+export type MyHexagonsInBboxQuery = { myHexagonsInBbox: Array<{ __typename: 'Hexagon', hexagonId: string, currentOwnerId: string, currentOwnerStravaId: number, activityType: string, captureCount: number, lastCapturedAt: string }> };
+
+export type MyHexagonsCountQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MyHexagonsCountQuery = { myHexagonsCount: number };
+
 
 export const GetUsersDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetUsers"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"users"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"stravaId"}},{"kind":"Field","name":{"kind":"Name","value":"isAdmin"}},{"kind":"Field","name":{"kind":"Name","value":"stravaProfile"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"firstname"}},{"kind":"Field","name":{"kind":"Name","value":"lastname"}},{"kind":"Field","name":{"kind":"Name","value":"profile"}},{"kind":"Field","name":{"kind":"Name","value":"city"}},{"kind":"Field","name":{"kind":"Name","value":"state"}},{"kind":"Field","name":{"kind":"Name","value":"country"}},{"kind":"Field","name":{"kind":"Name","value":"sex"}},{"kind":"Field","name":{"kind":"Name","value":"username"}}]}},{"kind":"Field","name":{"kind":"Name","value":"tokenExpiresAt"}},{"kind":"Field","name":{"kind":"Name","value":"tokenIsExpired"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]}}]} as unknown as DocumentNode<GetUsersQuery, GetUsersQueryVariables>;
 export const DeleteUserDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteUser"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteUser"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}]}]}}]} as unknown as DocumentNode<DeleteUserMutation, DeleteUserMutationVariables>;
 export const RefreshUserTokenDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"RefreshUserToken"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"refreshUserToken"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"tokenExpiresAt"}},{"kind":"Field","name":{"kind":"Name","value":"tokenIsExpired"}}]}}]}}]} as unknown as DocumentNode<RefreshUserTokenMutation, RefreshUserTokenMutationVariables>;
 export const DeleteActivityDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteActivity"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteActivity"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}]}]}}]} as unknown as DocumentNode<DeleteActivityMutation, DeleteActivityMutationVariables>;
+export const MyHexagonsInBboxDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"MyHexagonsInBbox"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"south"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Float"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"west"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Float"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"north"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Float"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"east"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Float"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"myHexagonsInBbox"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"south"},"value":{"kind":"Variable","name":{"kind":"Name","value":"south"}}},{"kind":"Argument","name":{"kind":"Name","value":"west"},"value":{"kind":"Variable","name":{"kind":"Name","value":"west"}}},{"kind":"Argument","name":{"kind":"Name","value":"north"},"value":{"kind":"Variable","name":{"kind":"Name","value":"north"}}},{"kind":"Argument","name":{"kind":"Name","value":"east"},"value":{"kind":"Variable","name":{"kind":"Name","value":"east"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"hexagonId"}},{"kind":"Field","name":{"kind":"Name","value":"currentOwnerId"}},{"kind":"Field","name":{"kind":"Name","value":"currentOwnerStravaId"}},{"kind":"Field","name":{"kind":"Name","value":"activityType"}},{"kind":"Field","name":{"kind":"Name","value":"captureCount"}},{"kind":"Field","name":{"kind":"Name","value":"lastCapturedAt"}}]}}]}}]} as unknown as DocumentNode<MyHexagonsInBboxQuery, MyHexagonsInBboxQueryVariables>;
+export const MyHexagonsCountDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"MyHexagonsCount"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"myHexagonsCount"}}]}}]} as unknown as DocumentNode<MyHexagonsCountQuery, MyHexagonsCountQueryVariables>;

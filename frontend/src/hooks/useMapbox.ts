@@ -39,5 +39,6 @@ export const useMapbox = (options: UseMapboxOptions = {}) => {
 	return {
 		mapContainerRef,
 		mapRef,
+		map: mapRef.current,
 	};
 };

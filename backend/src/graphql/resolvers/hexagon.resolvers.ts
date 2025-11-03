@@ -59,6 +59,58 @@ export const hexagonResolvers = {
       }
     },
 
+    // Get hexagons owned by current user within a bounding box
+    myHexagonsInBbox: async (
+      _: any,
+      { south, west, north, east }: { south: number; west: number; north: number; east: number },
+      context: GraphQLContext
+    ) => {
+      const user = requireAuth(context);
+
+      try {
+        // Import h3-js for filtering hexagons within bbox
+        const h3 = require('h3-js');
+
+        // Get user's hexagons with a safety limit (prevent loading too many at once)
+        // TODO: Replace with geospatial indexing for better performance
+        const MAX_HEXAGONS = 5000;
+        const hexagons = await Hexagon.find({ currentOwnerId: user._id })
+          .limit(MAX_HEXAGONS)
+          .sort({ lastCapturedAt: -1 }); // Get most recent first
+
+        // Filter hexagons that are within the bounding box
+        const hexagonsInBbox = hexagons.filter((hex) => {
+          const center = h3.cellToLatLng(hex.hexagonId);
+          const [lat, lng] = center;
+
+          return lat >= south && lat <= north && lng >= west && lng <= east;
+        });
+
+        // Log warning if we hit the limit
+        if (hexagons.length === MAX_HEXAGONS) {
+          console.warn(`⚠️  User ${user._id} has more than ${MAX_HEXAGONS} hexagons. Consider implementing geospatial indexing.`);
+        }
+
+        return hexagonsInBbox;
+      } catch (error) {
+        console.error('Error fetching user hexagons in bbox:', error);
+        throw new GraphQLError('Failed to fetch hexagons in bounding box');
+      }
+    },
+
+    // Get total count of hexagons owned by current user
+    myHexagonsCount: async (_: any, __: any, context: GraphQLContext) => {
+      const user = requireAuth(context);
+
+      try {
+        const count = await Hexagon.countDocuments({ currentOwnerId: user._id });
+        return count;
+      } catch (error) {
+        console.error('Error counting user hexagons:', error);
+        throw new GraphQLError('Failed to count hexagons');
+      }
+    },
+
     // Get hexagons owned by a specific user
     userHexagons: async (
       _: any,

@@ -1,6 +1,6 @@
-import { ApolloClient, InMemoryCache, HttpLink, from, ApolloLink, Observable, FetchResult, Observer } from '@apollo/client';
+import { ApolloClient, InMemoryCache, HttpLink, from, ApolloLink, Observable, FetchResult } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
-import { onError, ErrorResponse } from '@apollo/client/link/error';
+import { onError } from '@apollo/client/link/error';
 import { GraphQLError } from 'graphql';
 import { OperationDefinitionNode } from 'graphql';
 
@@ -34,7 +34,7 @@ const loggingLink = new ApolloLink((operation, forward) => {
 
   const observable = forward(operation);
 
-  return new Observable((observer: Observer<FetchResult>) => {
+  return new Observable((observer) => {
     const subscription = observable.subscribe({
       next: (response: FetchResult) => {
         const endTime = Date.now();
@@ -64,17 +64,16 @@ const loggingLink = new ApolloLink((operation, forward) => {
 });
 
 // Error link for GraphQL errors
-const errorLink = onError((errorResponse: ErrorResponse) => {
+const errorLink = onError((errorContext: any) => {
   const timestamp = new Date().toLocaleTimeString();
-  const { graphQLErrors, networkError, operation } = errorResponse;
 
-  if (graphQLErrors) {
-    graphQLErrors.forEach((error: GraphQLError) =>
+  if (errorContext.graphQLErrors) {
+    errorContext.graphQLErrors.forEach((error: GraphQLError) =>
       console.log(
         `%c❌ GraphQL Error [${timestamp}]`,
         'background: #EF4444; color: white; padding: 4px 8px; border-radius: 3px; font-weight: bold',
         '\n',
-        `Operation: ${operation?.operationName}`,
+        `Operation: ${errorContext.operation?.operationName}`,
         '\n',
         `Message: ${error.message}`,
         '\n',
@@ -85,14 +84,14 @@ const errorLink = onError((errorResponse: ErrorResponse) => {
     );
   }
 
-  if (networkError) {
+  if (errorContext.networkError) {
     console.log(
       `%c❌ Network Error [${timestamp}]`,
       'background: #EF4444; color: white; padding: 4px 8px; border-radius: 3px; font-weight: bold',
       '\n',
-      `Operation: ${operation?.operationName}`,
+      `Operation: ${errorContext.operation?.operationName}`,
       '\n',
-      `Error:`, networkError
+      `Error:`, errorContext.networkError
     );
   }
 });

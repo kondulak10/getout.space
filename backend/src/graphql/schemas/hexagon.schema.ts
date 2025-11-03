@@ -38,6 +38,23 @@ export const hexagonSchema = gql`
     myHexagons(limit: Int, offset: Int): [Hexagon!]!
 
     """
+    Get hexagons owned by current user within a bounding box
+    Requires: Authentication
+    """
+    myHexagonsInBbox(
+      south: Float!
+      west: Float!
+      north: Float!
+      east: Float!
+    ): [Hexagon!]!
+
+    """
+    Get total count of hexagons owned by current user
+    Requires: Authentication
+    """
+    myHexagonsCount: Int!
+
+    """
     Get hexagons owned by a specific user
     Requires: Authentication
     """

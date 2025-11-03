@@ -35,3 +35,18 @@ mutation RefreshUserToken($id: ID!) {
 mutation DeleteActivity($id: ID!) {
   deleteActivity(id: $id)
 }
+
+query MyHexagonsInBbox($south: Float!, $west: Float!, $north: Float!, $east: Float!) {
+  myHexagonsInBbox(south: $south, west: $west, north: $north, east: $east) {
+    hexagonId
+    currentOwnerId
+    currentOwnerStravaId
+    activityType
+    captureCount
+    lastCapturedAt
+  }
+}
+
+query MyHexagonsCount {
+  myHexagonsCount
+}
