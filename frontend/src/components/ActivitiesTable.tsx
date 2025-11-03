@@ -9,6 +9,17 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Loader2, Trash2 } from "lucide-react";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { formatDateTime, formatDistance } from "@/utils/dateFormatter";
 
 export interface StravaActivity {
 	id: number;
@@ -35,9 +46,11 @@ interface ActivitiesTableProps {
 export function ActivitiesTable({ activities, onActivityClick, onProcessActivity, onDeleteActivity }: ActivitiesTableProps) {
 	const [processingIds, setProcessingIds] = useState<Set<number>>(new Set());
 	const [deletingIds, setDeletingIds] = useState<Set<number>>(new Set());
+	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+	const [activityToDelete, setActivityToDelete] = useState<number | null>(null);
 
 	const handleProcessActivity = async (activityId: number, e: React.MouseEvent) => {
-		e.stopPropagation(); // Prevent row click
+		e.stopPropagation();
 		setProcessingIds(prev => new Set(prev).add(activityId));
 		try {
 			await onProcessActivity(activityId);
@@ -51,37 +64,28 @@ export function ActivitiesTable({ activities, onActivityClick, onProcessActivity
 	};
 
 	const handleDeleteActivity = async (activityId: number, e: React.MouseEvent) => {
-		e.stopPropagation(); // Prevent row click
+		e.stopPropagation();
+		setActivityToDelete(activityId);
+		setShowDeleteDialog(true);
+	};
 
-		if (!confirm('⚠️ Are you sure you want to delete this activity?\n\nThis will:\n- Remove the activity from the database\n- Restore previous owners of captured hexagons (or delete hexagons if no previous owner)\n\nThe activity will remain in your Strava account.')) {
-			return;
-		}
-
-		setDeletingIds(prev => new Set(prev).add(activityId));
+	const confirmDelete = async () => {
+		if (activityToDelete === null) return;
+		
+		setDeletingIds(prev => new Set(prev).add(activityToDelete));
+		setShowDeleteDialog(false);
 		try {
-			await onDeleteActivity(activityId);
+			await onDeleteActivity(activityToDelete);
 		} finally {
 			setDeletingIds(prev => {
 				const next = new Set(prev);
-				next.delete(activityId);
+				next.delete(activityToDelete);
 				return next;
 			});
+			setActivityToDelete(null);
 		}
 	};
 
-	const formatDistance = (meters: number) => {
-		return (meters / 1000).toFixed(2) + " km";
-	};
-
-	const formatDate = (dateString: string) => {
-		return new Date(dateString).toLocaleString("en-US", {
-			year: "numeric",
-			month: "short",
-			day: "numeric",
-			hour: "2-digit",
-			minute: "2-digit",
-		});
-	};
 
 	return (
 		<div className="rounded-md border">
@@ -115,7 +119,7 @@ export function ActivitiesTable({ activities, onActivityClick, onProcessActivity
 								</TableCell>
 								<TableCell className="font-medium">{activity.name}</TableCell>
 								<TableCell>{formatDistance(activity.distance)}</TableCell>
-								<TableCell>{formatDate(activity.start_date_local)}</TableCell>
+								<TableCell>{formatDateTime(activity.start_date_local)}</TableCell>
 								<TableCell>
 									{activity.isStored ? (
 										<span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
@@ -172,6 +176,29 @@ export function ActivitiesTable({ activities, onActivityClick, onProcessActivity
 					)}
 				</TableBody>
 			</Table>
+
+			<AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Delete Activity</AlertDialogTitle>
+						<AlertDialogDescription>
+							Are you sure you want to delete this activity?
+							<br /><br />
+							This will:
+							<br />• Remove the activity from the database
+							<br />• Restore previous owners of captured hexagons (or delete hexagons if no previous owner)
+							<br /><br />
+							The activity will remain in your Strava account.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>Cancel</AlertDialogCancel>
+						<AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+							Delete
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</div>
 	);
 }

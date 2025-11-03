@@ -1,6 +1,17 @@
 import { useState } from 'react';
 import { X, Trash2, Loader2, Save } from 'lucide-react';
 import type { StravaActivity } from '@/services/stravaApi.service';
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { formatDate, formatDistance } from '@/utils/dateFormatter';
 
 interface CompactActivitiesModalProps {
 	activities: StravaActivity[];
@@ -19,6 +30,8 @@ export function CompactActivitiesModal({
 }: CompactActivitiesModalProps) {
 	const [processingIds, setProcessingIds] = useState<Set<number>>(new Set());
 	const [deletingIds, setDeletingIds] = useState<Set<number>>(new Set());
+	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+	const [activityToDelete, setActivityToDelete] = useState<number | null>(null);
 
 	const handleProcess = async (activityId: number, e: React.MouseEvent) => {
 		e.stopPropagation();
@@ -36,38 +49,27 @@ export function CompactActivitiesModal({
 
 	const handleDelete = async (activityId: number, e: React.MouseEvent) => {
 		e.stopPropagation();
+		setActivityToDelete(activityId);
+		setShowDeleteDialog(true);
+	};
 
-		if (
-			!confirm(
-				'⚠️ Are you sure you want to delete this activity?\n\nThis will:\n- Remove the activity from the database\n- Restore previous owners of captured hexagons (or delete hexagons if no previous owner)\n\nThe activity will remain in your Strava account.'
-			)
-		) {
-			return;
-		}
-
-		setDeletingIds((prev) => new Set(prev).add(activityId));
+	const confirmDelete = async () => {
+		if (activityToDelete === null) return;
+		
+		setDeletingIds((prev) => new Set(prev).add(activityToDelete));
+		setShowDeleteDialog(false);
 		try {
-			await onDelete(activityId);
+			await onDelete(activityToDelete);
 		} finally {
 			setDeletingIds((prev) => {
 				const next = new Set(prev);
-				next.delete(activityId);
+				next.delete(activityToDelete);
 				return next;
 			});
+			setActivityToDelete(null);
 		}
 	};
 
-	const formatDistance = (meters: number) => {
-		return (meters / 1000).toFixed(2) + ' km';
-	};
-
-	const formatDate = (dateString: string) => {
-		return new Date(dateString).toLocaleDateString('en-US', {
-			month: 'short',
-			day: 'numeric',
-			year: 'numeric',
-		});
-	};
 
 	return (
 		<div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -166,6 +168,29 @@ export function CompactActivitiesModal({
 					</div>
 				)}
 			</div>
+
+			<AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Delete Activity</AlertDialogTitle>
+						<AlertDialogDescription>
+							Are you sure you want to delete this activity?
+							<br /><br />
+							This will:
+							<br />• Remove the activity from the database
+							<br />• Restore previous owners of captured hexagons (or delete hexagons if no previous owner)
+							<br /><br />
+							The activity will remain in your Strava account.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>Cancel</AlertDialogCancel>
+						<AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+							Delete
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</div>
 	);
 }

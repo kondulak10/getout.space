@@ -7,6 +7,17 @@ import { useActivitiesManager } from '@/hooks/useActivitiesManager';
 import { useStoredActivities } from '@/hooks/useStoredActivities';
 import { ActivitiesManagerModal } from '@/components/ActivitiesManagerModal';
 import { AlertTriangle, Activity, LogOut, Trash2, Loader2 } from 'lucide-react';
+import { formatDate, formatDistance } from '@/utils/dateFormatter';
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export function ProfilePage() {
 	const { user, logout } = useAuth();
@@ -24,21 +35,24 @@ export function ProfilePage() {
 
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const [deletingActivityId, setDeletingActivityId] = useState<string | null>(null);
+	const [showActivityDeleteDialog, setShowActivityDeleteDialog] = useState(false);
+	const [activityToDelete, setActivityToDelete] = useState<{ id: string; stravaId: number } | null>(null);
 
 	const handleDeleteActivity = async (activityId: string, stravaActivityId: number) => {
-		if (
-			!confirm(
-				`⚠️ Are you sure you want to delete this activity?\n\nThis will:\n- Remove the activity from the database\n- Restore previous owners of captured hexagons (or delete hexagons if no previous owner)\n\nThe activity will remain in your Strava account.`
-			)
-		) {
-			return;
-		}
+		setActivityToDelete({ id: activityId, stravaId: stravaActivityId });
+		setShowActivityDeleteDialog(true);
+	};
 
-		setDeletingActivityId(activityId);
+	const confirmDeleteActivity = async () => {
+		if (!activityToDelete) return;
+		
+		setDeletingActivityId(activityToDelete.id);
+		setShowActivityDeleteDialog(false);
 		try {
-			await deleteStoredActivity(stravaActivityId);
+			await deleteStoredActivity(activityToDelete.stravaId);
 		} finally {
 			setDeletingActivityId(null);
+			setActivityToDelete(null);
 		}
 	};
 
@@ -50,25 +64,12 @@ export function ProfilePage() {
 
 		try {
 			await deleteMyAccount();
-			alert('✅ Account deleted successfully');
+			console.log('✅ Account deleted successfully');
 			logout();
 			navigate('/');
 		} catch (error) {
 			console.error('Failed to delete account:', error);
-			alert('❌ Failed to delete account. Please try again.');
 		}
-	};
-
-	const formatDistance = (meters: number) => {
-		return (meters / 1000).toFixed(2) + ' km';
-	};
-
-	const formatDate = (dateString: string) => {
-		return new Date(dateString).toLocaleDateString('en-US', {
-			month: 'short',
-			day: 'numeric',
-			year: 'numeric',
-		});
 	};
 
 	if (!user) {
@@ -282,6 +283,30 @@ export function ProfilePage() {
 				onProcess={handleSaveActivity}
 				onDelete={handleRemoveActivity}
 			/>
+
+			{/* Activity Delete Confirmation Dialog */}
+			<AlertDialog open={showActivityDeleteDialog} onOpenChange={setShowActivityDeleteDialog}>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Delete Activity</AlertDialogTitle>
+						<AlertDialogDescription>
+							Are you sure you want to delete this activity?
+							<br /><br />
+							This will:
+							<br />• Remove the activity from the database
+							<br />• Restore previous owners of captured hexagons (or delete hexagons if no previous owner)
+							<br /><br />
+							The activity will remain in your Strava account.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>Cancel</AlertDialogCancel>
+						<AlertDialogAction onClick={confirmDeleteActivity} className="bg-red-600 hover:bg-red-700">
+							Delete
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</div>
 	);
 }

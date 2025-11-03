@@ -332,6 +332,7 @@ resource "aws_secretsmanager_secret_version" "backend_env" {
     STRAVA_WEBHOOK_VERIFY_TOKEN   = var.strava_webhook_verify_token
     JWT_SECRET                    = var.jwt_secret
     ENCRYPTION_KEY                = var.encryption_key
+    SLACK_WEBHOOK_URL             = var.slack_webhook_url
     FRONTEND_URL                  = "https://${var.domain_name}"
     BACKEND_URL                   = "https://api.${var.domain_name}"
     AWS_REGION                    = var.aws_region
@@ -395,6 +396,10 @@ resource "aws_ecs_task_definition" "backend" {
         {
           name      = "ENCRYPTION_KEY"
           valueFrom = "${aws_secretsmanager_secret.backend_env.arn}:ENCRYPTION_KEY::"
+        },
+        {
+          name      = "SLACK_WEBHOOK_URL"
+          valueFrom = "${aws_secretsmanager_secret.backend_env.arn}:SLACK_WEBHOOK_URL::"
         },
         {
           name      = "FRONTEND_URL"

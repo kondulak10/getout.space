@@ -118,24 +118,20 @@ export function useStravaActivities() {
 				console.log(
 					`📊 Hexagons: ${data.hexagons.created} created, ${data.hexagons.updated} captured, ${data.hexagons.couldNotUpdate} skipped`
 				);
+				console.log(`📊 Hexagons: ${data.hexagons.totalParsed} total, ✨ ${data.hexagons.created} created, 🎯 ${data.hexagons.updated} captured, ⏭️ ${data.hexagons.couldNotUpdate} skipped`);
 
-				// Update the activity's isStored status in the local state
 				setActivities((prevActivities) =>
 					prevActivities.map((activity) =>
 						activity.id === activityId ? { ...activity, isStored: true } : activity
 					)
 				);
-
-				alert(
-					`✅ Activity saved!\n\n📊 Hexagons: ${data.hexagons.totalParsed} total\n✨ ${data.hexagons.created} created\n🎯 ${data.hexagons.updated} captured\n⏭️ ${data.hexagons.couldNotUpdate} skipped`
-				);
 			} else {
 				console.error('❌ Error:', data.error);
-				alert(`❌ Failed to process activity: ${data.error || data.details || 'Unknown error'}`);
+				console.error(`Failed to process activity: ${data.error || data.details || 'Unknown error'}`);
 			}
 		} catch (error) {
 			console.error('❌ Failed to process activity:', error);
-			alert(`❌ Error: ${error instanceof Error ? error.message : 'Network error'}`);
+			console.error(`Error: ${error instanceof Error ? error.message : 'Network error'}`);
 		}
 	};
 
@@ -151,24 +147,20 @@ export function useStravaActivities() {
 			if (data.success) {
 				console.log(`✅ Activity deleted successfully!`);
 				console.log(`📊 Hexagons: ${data.hexagons.restored} restored, ${data.hexagons.deleted} deleted`);
+				console.log(`📊 Hexagons: ↩️ ${data.hexagons.restored} restored to previous owners, 🗑️ ${data.hexagons.deleted} removed (no previous owner)`);
 
-				// Update the activity's isStored status back to false in the local state
 				setActivities((prevActivities) =>
 					prevActivities.map((activity) =>
 						activity.id === activityId ? { ...activity, isStored: false } : activity
 					)
 				);
-
-				alert(
-					`✅ Activity deleted!\n\n📊 Hexagons:\n↩️ ${data.hexagons.restored} restored to previous owners\n🗑️ ${data.hexagons.deleted} removed (no previous owner)`
-				);
 			} else {
 				console.error('❌ Error:', data.error);
-				alert(`❌ Failed to delete activity: ${data.error || data.details || 'Unknown error'}`);
+				console.error(`Failed to delete activity: ${data.error || data.details || 'Unknown error'}`);
 			}
 		} catch (error) {
 			console.error('❌ Failed to delete activity:', error);
-			alert(`❌ Error: ${error instanceof Error ? error.message : 'Network error'}`);
+			console.error(`Error: ${error instanceof Error ? error.message : 'Network error'}`);
 		}
 	};
 

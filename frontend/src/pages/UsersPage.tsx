@@ -7,6 +7,16 @@ import {
 } from "@/gql/graphql";
 import { useMutation, useQuery } from "@apollo/client/react";
 import { useState } from "react";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function UsersPage() {
 	const { user: currentUser } = useAuth();
@@ -14,48 +24,49 @@ export default function UsersPage() {
 	const [deleteUser] = useMutation(DeleteUserDocument, {
 		onCompleted: () => {
 			refetch();
-			alert("✅ User deleted successfully!");
+			console.log("✅ User deleted successfully!");
 		},
 		onError: (error) => {
-			alert(`❌ Failed to delete user: ${error.message}`);
+			console.error(`❌ Failed to delete user: ${error.message}`);
 		},
 	});
 	const [refreshToken] = useMutation(RefreshUserTokenDocument, {
 		onCompleted: () => {
-			alert("✅ Token refreshed successfully!");
+			console.log("✅ Token refreshed successfully!");
 		},
 		onError: (error) => {
-			alert(`❌ Failed to refresh token: ${error.message}`);
+			console.error(`❌ Failed to refresh token: ${error.message}`);
 		},
-		// Apollo automatically updates cache when mutation returns User with same ID
-		// No refetchQueries needed! 🎉
 	});
 	const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
 	const [refreshingUserId, setRefreshingUserId] = useState<string | null>(null);
+	const [showRefreshDialog, setShowRefreshDialog] = useState(false);
+	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+	const [userToRefresh, setUserToRefresh] = useState<{ id: string; name: string } | null>(null);
+	const [userToDelete, setUserToDelete] = useState<{ id: string; name: string; isSelf: boolean } | null>(null);
 
 	const handleRefreshToken = async (id: string, userName: string) => {
 		if (!currentUser?.isAdmin) {
-			alert("❌ You must be an admin to refresh tokens.");
+			console.error("❌ You must be an admin to refresh tokens.");
 			return;
 		}
 
-		if (
-			!confirm(
-				`🔄 Refresh Strava token for ${userName}?\n\nThis will request a new access token from Strava.`
-			)
-		) {
-			return;
-		}
+		setUserToRefresh({ id, name: userName });
+		setShowRefreshDialog(true);
+	};
 
+	const confirmRefreshToken = async () => {
+		if (!userToRefresh) return;
+		
+		setShowRefreshDialog(false);
 		try {
-			setRefreshingUserId(id);
+			setRefreshingUserId(userToRefresh.id);
 			await refreshToken({
-				variables: { id },
+				variables: { id: userToRefresh.id },
 				optimisticResponse: {
 					refreshUserToken: {
 						__typename: "User",
-						id,
-						// Optimistically set to 6 hours from now (Strava default)
+						id: userToRefresh.id,
 						tokenExpiresAt: Math.floor(Date.now() / 1000) + 6 * 60 * 60,
 						tokenIsExpired: false,
 					},
@@ -65,30 +76,30 @@ export default function UsersPage() {
 			console.error("Refresh token error:", error);
 		} finally {
 			setRefreshingUserId(null);
+			setUserToRefresh(null);
 		}
 	};
 
 	const handleDeleteUser = async (id: string, userName: string) => {
 		if (!currentUser?.isAdmin) {
-			alert("❌ You must be an admin to delete users.");
+			console.error("❌ You must be an admin to delete users.");
 			return;
 		}
 
 		const isDeletingSelf = id === currentUser?.id;
-		const confirmMessage = isDeletingSelf
-			? `⚠️ WARNING: You are about to delete YOUR OWN ACCOUNT!\n\nUser: ${userName}\n\nThis will:\n- Log you out immediately\n- Delete your account permanently\n- Delete all your data\n\nThis cannot be undone!\n\nAre you absolutely sure?`
-			: `⚠️ Are you sure you want to delete ${userName}?\n\nThis will permanently delete:\n- Their user account\n- All their data\n\nThis cannot be undone!`;
+		setUserToDelete({ id, name: userName, isSelf: isDeletingSelf });
+		setShowDeleteDialog(true);
+	};
 
-		if (!confirm(confirmMessage)) {
-			return;
-		}
-
+	const confirmDeleteUser = async () => {
+		if (!userToDelete) return;
+		
+		setShowDeleteDialog(false);
 		try {
-			setDeletingUserId(id);
-			await deleteUser({ variables: { id } });
+			setDeletingUserId(userToDelete.id);
+			await deleteUser({ variables: { id: userToDelete.id } });
 
-			// If deleting self, log out
-			if (isDeletingSelf) {
+			if (userToDelete.isSelf) {
 				localStorage.removeItem("getout_auth_token");
 				localStorage.removeItem("getout_user");
 				window.location.href = "/";
@@ -97,6 +108,7 @@ export default function UsersPage() {
 			console.error("Delete error:", error);
 		} finally {
 			setDeletingUserId(null);
+			setUserToDelete(null);
 		}
 	};
 
@@ -251,6 +263,69 @@ export default function UsersPage() {
 						</div>
 					)}
 				</div>
+
+				<AlertDialog open={showRefreshDialog} onOpenChange={setShowRefreshDialog}>
+					<AlertDialogContent>
+						<AlertDialogHeader>
+							<AlertDialogTitle>Refresh Strava Token</AlertDialogTitle>
+							<AlertDialogDescription>
+								Refresh Strava token for {userToRefresh?.name}?
+								<br /><br />
+								This will request a new access token from Strava.
+							</AlertDialogDescription>
+						</AlertDialogHeader>
+						<AlertDialogFooter>
+							<AlertDialogCancel>Cancel</AlertDialogCancel>
+							<AlertDialogAction onClick={confirmRefreshToken}>
+								Refresh
+							</AlertDialogAction>
+						</AlertDialogFooter>
+					</AlertDialogContent>
+				</AlertDialog>
+
+				<AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+					<AlertDialogContent>
+						<AlertDialogHeader>
+							<AlertDialogTitle>
+								{userToDelete?.isSelf ? "Delete Your Own Account" : "Delete User"}
+							</AlertDialogTitle>
+							<AlertDialogDescription>
+								{userToDelete?.isSelf ? (
+									<>
+										<strong>WARNING: You are about to delete YOUR OWN ACCOUNT!</strong>
+										<br /><br />
+										User: {userToDelete?.name}
+										<br /><br />
+										This will:
+										<br />• Log you out immediately
+										<br />• Delete your account permanently
+										<br />• Delete all your data
+										<br /><br />
+										This cannot be undone!
+										<br /><br />
+										Are you absolutely sure?
+									</>
+								) : (
+									<>
+										Are you sure you want to delete {userToDelete?.name}?
+										<br /><br />
+										This will permanently delete:
+										<br />• Their user account
+										<br />• All their data
+										<br /><br />
+										This cannot be undone!
+									</>
+								)}
+							</AlertDialogDescription>
+						</AlertDialogHeader>
+						<AlertDialogFooter>
+							<AlertDialogCancel>Cancel</AlertDialogCancel>
+							<AlertDialogAction onClick={confirmDeleteUser} className={userToDelete?.isSelf ? "bg-orange-600 hover:bg-orange-700" : "bg-red-600 hover:bg-red-700"}>
+								{userToDelete?.isSelf ? "Delete My Account" : "Delete User"}
+							</AlertDialogAction>
+						</AlertDialogFooter>
+					</AlertDialogContent>
+				</AlertDialog>
 			</div>
 		</div>
 	);

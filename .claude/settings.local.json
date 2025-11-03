@@ -64,7 +64,8 @@
       "Bash(tree:*)",
       "Bash(find:*)",
       "Bash(npx tsc:*)",
-      "WebFetch(domain:visgl.github.io)"
+      "WebFetch(domain:visgl.github.io)",
+      "Bash(node scripts/check-webhook.js:*)"
     ],
     "deny": [
       "Bash(git commit:*)",

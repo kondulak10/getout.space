@@ -54,24 +54,19 @@ export function useStravaAuth() {
 			if (data.success && data.token && data.user) {
 				console.log('✅ Authentication successful!');
 				console.log('👤 User:', data.user);
+				console.log(`✅ Successfully logged in as ${data.user.profile.firstname} ${data.user.profile.lastname}!`);
 
-				// Store JWT token and user data in auth context
 				login(data.token, data.user);
 
-				// Clean URL
 				window.history.replaceState({}, document.title, '/');
-
-				alert(
-					`✅ Successfully logged in as ${data.user.profile.firstname} ${data.user.profile.lastname}!`
-				);
 			} else {
 				const errorMsg = data.error || data.details || 'Unknown error';
 				console.error('❌ Authentication failed:', errorMsg);
-				alert(`❌ Login failed: ${errorMsg}`);
+				console.error(`Login failed: ${errorMsg}`);
 			}
 		} catch (error) {
 			console.error('❌ Token exchange failed:', error);
-			alert(`❌ Login error: ${error instanceof Error ? error.message : 'Network error'}`);
+			console.error(`Login error: ${error instanceof Error ? error.message : 'Network error'}`);
 		} finally {
 			setIsAuthenticating(false);
 		}

@@ -23,23 +23,19 @@ export function useStoredActivities() {
 
 			if (result.success) {
 				console.log(`✅ Activity deleted successfully!`);
+				console.log(`📊 Hexagons: ↩️ ${result.hexagons.restored} restored to previous owners, 🗑️ ${result.hexagons.deleted} removed (no previous owner)`);
 
-				// Refetch activities list
 				await refetch();
-
-				alert(
-					`✅ Activity deleted!\n\n📊 Hexagons:\n↩️ ${result.hexagons.restored} restored to previous owners\n🗑️ ${result.hexagons.deleted} removed (no previous owner)`
-				);
 
 				return true;
 			} else {
 				console.error('❌ Error:', result.error);
-				alert(`❌ Failed to delete activity: ${result.error || result.details || 'Unknown error'}`);
+				console.error(`Failed to delete activity: ${result.error || result.details || 'Unknown error'}`);
 				return false;
 			}
 		} catch (err) {
 			console.error('❌ Failed to delete activity:', err);
-			alert(`❌ Error: ${err instanceof Error ? err.message : 'Network error'}`);
+			console.error(`Error: ${err instanceof Error ? err.message : 'Network error'}`);
 			return false;
 		}
 	};

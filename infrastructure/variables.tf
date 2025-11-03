@@ -51,3 +51,10 @@ variable "encryption_key" {
   type        = string
   sensitive   = true
 }
+
+variable "slack_webhook_url" {
+  description = "Slack webhook URL for activity notifications (optional)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}

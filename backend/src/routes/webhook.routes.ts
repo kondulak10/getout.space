@@ -1,4 +1,7 @@
 import { Request, Response, Router } from 'express';
+import { User } from '../models/User';
+import { processActivity } from '../services/activityProcessing.service';
+import { sendSlackNotification } from '../services/slack.service';
 
 const router = Router();
 
@@ -54,6 +57,13 @@ router.post('/api/strava/webhook', (req: Request, res: Response) => {
 
 	// Broadcast event to all connected SSE clients
 	broadcastToClients(event);
+
+	// Process activity asynchronously (don't block webhook response)
+	if (event.object_type === 'activity' && event.aspect_type === 'create') {
+		handleNewActivity(event.owner_id, event.object_id).catch((error) => {
+			console.error('❌ Error handling new activity:', error);
+		});
+	}
 });
 
 // SSE endpoint for real-time updates to frontend
@@ -95,6 +105,42 @@ function broadcastToClients(event: any) {
 			console.error('Error broadcasting to client:', error);
 		}
 	});
+}
+
+// Handle new activity from webhook
+async function handleNewActivity(stravaOwnerId: number, stravaActivityId: number) {
+	try {
+		console.log(`🏃 Processing new activity ${stravaActivityId} for Strava user ${stravaOwnerId}`);
+
+		// Find user by Strava ID
+		const user = await User.findOne({ stravaId: stravaOwnerId });
+		if (!user) {
+			console.error(`❌ User not found for Strava ID: ${stravaOwnerId}`);
+			return;
+		}
+
+		// Process the activity
+		const result = await processActivity(stravaActivityId, user, user._id.toString());
+
+		// Send Slack notification
+		const message = [
+			`🎉 *New Activity Processed!*`,
+			`👤 User: ${user.stravaProfile.firstname} ${user.stravaProfile.lastname}`,
+			`🏃 Activity: ${result.activity.name}`,
+			`📏 Distance: ${(result.activity.distance / 1000).toFixed(2)} km`,
+			`🔷 Hexagons: ${result.hexagons.created} created, ${result.hexagons.updated} updated`,
+		].join('\n');
+
+		await sendSlackNotification(message);
+
+		console.log(`✅ Successfully processed activity ${stravaActivityId}`);
+	} catch (error) {
+		console.error(`❌ Failed to process activity ${stravaActivityId}:`, error);
+		// Send error notification to Slack
+		await sendSlackNotification(
+			`❌ *Failed to process activity ${stravaActivityId}*\nError: ${error instanceof Error ? error.message : 'Unknown error'}`
+		);
+	}
 }
 
 export default router;

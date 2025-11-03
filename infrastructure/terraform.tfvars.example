@@ -1,4 +1,13 @@
-# Copy this file to terraform.tfvars and update with your domain name
+# Copy this file to terraform.tfvars and update with your values
 domain_name = "getout.space"
 aws_region  = "eu-north-1"
 environment = "production"
+
+# Backend configuration (replace with your actual values)
+mongodb_uri                   = "mongodb+srv://user:password@cluster.mongodb.net/?appName=YourApp"
+strava_client_id              = "your_strava_client_id"
+strava_client_secret          = "your_strava_client_secret"
+strava_webhook_verify_token   = "your_webhook_verify_token"
+jwt_secret                    = "your_64_char_hex_jwt_secret"
+encryption_key                = "your_64_char_hex_encryption_key"
+slack_webhook_url             = "https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
