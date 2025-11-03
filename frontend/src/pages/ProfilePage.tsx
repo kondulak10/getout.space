@@ -114,7 +114,12 @@ export function ProfilePage() {
 					) : (
 						<>
 							<div className="space-y-2 max-h-96 overflow-y-auto">
-								{storedActivities.map((activity) => (
+								{storedActivities.map((activity) => {
+									// Debug logging
+									if (activity.startDateLocal === undefined || activity.startDateLocal === null) {
+										console.error('Missing startDateLocal for activity:', activity);
+									}
+									return (
 									<div
 										key={activity.id}
 										className="flex items-center justify-between gap-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
@@ -143,7 +148,8 @@ export function ProfilePage() {
 											)}
 										</button>
 									</div>
-								))}
+									);
+								})}
 							</div>
 							<div className="mt-4 pt-4 border-t text-center text-sm text-gray-600">
 								Total: {storedActivities.length}{' '}

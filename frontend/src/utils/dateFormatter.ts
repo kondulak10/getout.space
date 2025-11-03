@@ -13,12 +13,17 @@ export function formatDate(
 	}
 ): string {
 	if (!dateString) {
+		console.warn('formatDate called with empty value:', dateString);
 		return 'N/A';
 	}
 
 	const date = new Date(dateString);
 	if (isNaN(date.getTime())) {
-		console.error('Invalid date:', dateString);
+		console.error('Invalid date string:', {
+			value: dateString,
+			type: typeof dateString,
+			parsed: date,
+		});
 		return 'Invalid Date';
 	}
 

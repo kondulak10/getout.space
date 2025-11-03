@@ -16,8 +16,8 @@ export const activitySchema = gql`
     type: String!
     sportType: String
     description: String
-    startDate: String!
-    startDateLocal: String!
+    startDate: Date!
+    startDateLocal: Date!
     timezone: String
     movingTime: Int!
     elapsedTime: Int!
@@ -29,8 +29,8 @@ export const activitySchema = gql`
     summaryPolyline: String
     isManual: Boolean!
     isPrivate: Boolean!
-    createdAt: String!
-    updatedAt: String!
+    createdAt: Date!
+    updatedAt: Date!
   }
 
   extend type Query {

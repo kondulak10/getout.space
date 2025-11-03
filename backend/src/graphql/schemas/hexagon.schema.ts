@@ -6,7 +6,7 @@ export const hexagonSchema = gql`
     stravaId: Int!
     activityId: ID!
     stravaActivityId: Float!
-    capturedAt: String!
+    capturedAt: Date!
     activityType: String!
   }
 
@@ -20,14 +20,14 @@ export const hexagonSchema = gql`
     currentActivity: Activity
     currentStravaActivityId: Float!
     captureCount: Int!
-    firstCapturedAt: String!
+    firstCapturedAt: Date!
     firstCapturedBy: User
-    lastCapturedAt: String!
+    lastCapturedAt: Date!
     activityType: String!
     routeType: String
     captureHistory: [CaptureHistoryEntry!]!
-    createdAt: String!
-    updatedAt: String!
+    createdAt: Date!
+    updatedAt: Date!
   }
 
   extend type Query {

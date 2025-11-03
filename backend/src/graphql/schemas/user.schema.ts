@@ -19,8 +19,8 @@ export const userSchema = gql`
     stravaProfile: StravaProfile!
     tokenExpiresAt: Int!
     tokenIsExpired: Boolean!
-    createdAt: String!
-    updatedAt: String!
+    createdAt: Date!
+    updatedAt: Date!
   }
 
   extend type Query {
