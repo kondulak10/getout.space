@@ -32,7 +32,7 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install build and runtime dependencies for canvas
+# Install build and runtime dependencies for canvas + curl for health checks
 RUN apk add --no-cache \
     build-base \
     cairo-dev \
@@ -45,7 +45,8 @@ RUN apk add --no-cache \
     pango \
     jpeg \
     giflib \
-    pixman
+    pixman \
+    curl
 
 # Copy package files
 COPY package*.json ./
