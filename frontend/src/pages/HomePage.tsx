@@ -38,9 +38,9 @@ export function HomePage() {
 	};
 
 	return (
-		<div className="relative w-full h-screen bg-black">
-			{/* Map container */}
-			<div ref={mapContainerRef} className="w-full h-full" />
+		<div className="relative w-full h-[100dvh] md:h-screen bg-black">
+			{/* Map container - adjusted for mobile bottom nav */}
+			<div ref={mapContainerRef} className="w-full h-[calc(100dvh-90px)] md:h-full" />
 
 			{/* UI Overlays */}
 			<VersionBadge />

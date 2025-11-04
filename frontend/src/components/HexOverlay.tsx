@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useAuth } from "@/contexts/useAuth";
 import { useActivitiesManager } from "@/hooks/useActivitiesManager";
 import { useUserActivities } from "@/hooks/useUserActivities";
@@ -15,6 +16,7 @@ interface HexOverlayProps {
 export function HexOverlay({ view, onViewChange, onActivityChanged }: HexOverlayProps) {
 	const { user } = useAuth();
 	const { latestActivity } = useUserActivities();
+	const [mobileExpanded, setMobileExpanded] = useState(false);
 	const {
 		showModal,
 		activities,
@@ -55,54 +57,55 @@ export function HexOverlay({ view, onViewChange, onActivityChanged }: HexOverlay
 
 	return (
 		<>
-			<div className="absolute top-4 right-4 z-10">
-				<div className="bg-[rgba(10,10,10,0.9)] backdrop-blur-md border border-white/10 rounded-xl p-4 min-w-80 shadow-2xl">
+			{/* Desktop Layout - Top Right */}
+			<div className="hidden md:block absolute top-4 right-4 z-10">
+				<div className="bg-[rgba(10,10,10,0.9)] backdrop-blur-md border border-white/10 rounded-xl p-3 min-w-72 shadow-2xl">
 					{/* User Profile Section */}
-					<div className="flex items-center gap-3 mb-4">
+					<div className="flex items-center gap-2 mb-3">
 						<img
 							src={user.profile.imghex || user.profile.profile}
 							alt={`${user.profile.firstname} ${user.profile.lastname}`}
-							className="w-14 h-14 object-cover hex-clip"
+							className="w-12 h-12 object-cover hex-clip"
 						/>
-						<div className="flex-1">
-							<div className="font-semibold text-sm text-gray-100">
+						<div className="flex-1 min-w-0">
+							<div className="font-semibold text-sm text-gray-100 truncate">
 								{user.profile.firstname} {user.profile.lastname}
 							</div>
 							<div className="text-xs text-gray-400">ID: {user.stravaId}</div>
 						</div>
 						<button
 							onClick={() => navigate("/profile")}
-							className="bg-white/5 border border-white/10 text-gray-300 p-2 rounded-md transition-all cursor-pointer hover:bg-white/10 hover:border-white/20 hover:text-white"
+							className="bg-white/5 border border-white/10 text-gray-300 p-1.5 rounded-md transition-all cursor-pointer hover:bg-white/10 hover:border-white/20 hover:text-white"
 							title="Settings"
 						>
-							<FontAwesomeIcon icon="cog" className="w-4 h-4" />
+							<FontAwesomeIcon icon="cog" className="w-3.5 h-3.5" />
 						</button>
 					</div>
 
 					{/* View Toggle Section */}
-					<div className="mb-4">
-						<div className="relative flex bg-white/5 border border-white/10 rounded-lg p-1 overflow-hidden">
+					<div className="mb-3">
+						<div className="relative flex bg-white/5 border border-white/10 rounded-lg p-0.5 overflow-hidden">
 							<div
-								className={`hex-switch-slider absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-md transition-all z-0 animate-holographic ${
-									view === "only-you" ? "left-1/2" : "left-1"
+								className={`hex-switch-slider absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] rounded-md transition-all z-0 animate-holographic ${
+									view === "only-you" ? "left-1/2" : "left-0.5"
 								}`}
 							></div>
 							<button
 								onClick={() => onViewChange(view === "battle" ? "only-you" : "battle")}
-								className={`flex-1 relative z-10 flex items-center justify-center px-3 py-2 text-[13px] font-medium bg-transparent border-0 transition-all cursor-pointer ${
+								className={`flex-1 relative z-10 flex items-center justify-center px-2 py-1.5 text-xs font-medium bg-transparent border-0 transition-all cursor-pointer ${
 									view === "battle" ? "text-white" : "text-white/30"
 								}`}
 							>
-								<FontAwesomeIcon icon="swords" className="w-3 h-3 mr-2" />
+								<FontAwesomeIcon icon="swords" className="w-3 h-3 mr-1.5" />
 								Battle
 							</button>
 							<button
 								onClick={() => onViewChange(view === "only-you" ? "battle" : "only-you")}
-								className={`flex-1 relative z-10 flex items-center justify-center px-3 py-2 text-[13px] font-medium bg-transparent border-0 transition-all cursor-pointer ${
+								className={`flex-1 relative z-10 flex items-center justify-center px-2 py-1.5 text-xs font-medium bg-transparent border-0 transition-all cursor-pointer ${
 									view === "only-you" ? "text-white" : "text-white/30"
 								}`}
 							>
-								<FontAwesomeIcon icon="user" className="w-3 h-3 mr-2" />
+								<FontAwesomeIcon icon="user" className="w-3 h-3 mr-1.5" />
 								Solo
 							</button>
 						</div>
@@ -110,16 +113,15 @@ export function HexOverlay({ view, onViewChange, onActivityChanged }: HexOverlay
 
 					{/* Latest Activity Section */}
 					{latestActivity && (
-						<div className="pt-3 border-t border-white/10 mb-4">
-							<div className="text-xs text-gray-400 mb-1 flex items-center gap-2">
-								<FontAwesomeIcon icon="location-dot" className="w-3 h-3" />
+						<div className="pt-2 border-t border-white/10 mb-3">
+							<div className="text-[11px] text-gray-400 mb-1">
 								Latest: {formatDate(latestActivity.startDate)}
 							</div>
 							<div className="flex items-center justify-between gap-2">
 								<div className="text-sm font-medium text-gray-200 truncate flex-1">
 									{latestActivity.name}
 								</div>
-								<div className="text-sm text-gray-300 whitespace-nowrap">
+								<div className="text-xs text-gray-300 whitespace-nowrap">
 									{formatDistance(latestActivity.distance)}
 								</div>
 							</div>
@@ -146,6 +148,119 @@ export function HexOverlay({ view, onViewChange, onActivityChanged }: HexOverlay
 				</div>
 			</div>
 
+			{/* Mobile Layout - Bottom Navigation */}
+			<div className="md:hidden fixed bottom-0 left-0 right-0 z-10 safe-area-bottom">
+				{/* Expanded Content */}
+				<div
+					className={`bg-[rgba(10,10,10,0.95)] backdrop-blur-md border-t border-white/10 transition-all duration-300 ${
+						mobileExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0 overflow-hidden"
+					}`}
+				>
+					<div className="p-3 space-y-3">
+						{/* User Profile */}
+						<div className="flex items-center gap-2">
+							<img
+								src={user.profile.imghex || user.profile.profile}
+								alt={user.profile.firstname}
+								className="w-10 h-10 object-cover hex-clip"
+							/>
+							<div className="flex-1 min-w-0">
+								<div className="font-semibold text-xs text-gray-100 truncate">
+									{user.profile.firstname} {user.profile.lastname}
+								</div>
+							</div>
+							<button
+								onClick={() => navigate("/profile")}
+								className="bg-white/5 border border-white/10 text-gray-300 p-1.5 rounded-md cursor-pointer"
+								title="Settings"
+							>
+								<FontAwesomeIcon icon="cog" className="w-3.5 h-3.5" />
+							</button>
+						</div>
+
+						{/* Latest Activity Details */}
+						{latestActivity && (
+							<div className="pt-2 border-t border-white/10">
+								<div className="text-[10px] text-gray-400 mb-1">
+									Latest: {formatDate(latestActivity.startDate)}
+								</div>
+								<div className="flex items-center justify-between gap-2">
+									<div className="text-xs font-medium text-gray-200 truncate flex-1">
+										{latestActivity.name}
+									</div>
+									<div className="text-xs text-gray-300">
+										{formatDistance(latestActivity.distance)}
+									</div>
+								</div>
+							</div>
+						)}
+
+						{/* Fetch from Strava */}
+						<button
+							onClick={openModal}
+							disabled={loading}
+							className="w-full text-[#FC5200] text-sm font-medium underline cursor-pointer py-2"
+						>
+							{loading ? "Loading..." : "Fetch from Strava"}
+						</button>
+					</div>
+				</div>
+
+				{/* Bottom Bar - Always Visible */}
+				<div className="bg-[rgba(10,10,10,0.95)] backdrop-blur-md border-t border-white/10 p-2">
+					{/* First Row: Toggle and Menu Button */}
+					<div className="flex items-center justify-center gap-2">
+						{/* View Toggle - Horizontal Layout */}
+						<div className="flex-shrink-0 relative flex bg-white/5 border border-white/10 rounded-lg p-0.5 overflow-hidden" style={{ width: '180px', height: '44px' }}>
+							<div
+								className={`hex-switch-slider absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] rounded-md transition-all z-0 ${
+									view === "only-you" ? "left-1/2" : "left-0.5"
+								}`}
+							></div>
+							<button
+								onClick={() => onViewChange(view === "battle" ? "only-you" : "battle")}
+								className={`flex-1 relative z-10 flex items-center justify-center gap-1.5 py-2 text-xs font-medium bg-transparent border-0 cursor-pointer ${
+									view === "battle" ? "text-white" : "text-white/30"
+								}`}
+							>
+								<FontAwesomeIcon icon="swords" className="w-4 h-4" />
+								<span>Battle</span>
+							</button>
+							<button
+								onClick={() => onViewChange(view === "only-you" ? "battle" : "only-you")}
+								className={`flex-1 relative z-10 flex items-center justify-center gap-1.5 py-2 text-xs font-medium bg-transparent border-0 cursor-pointer ${
+									view === "only-you" ? "text-white" : "text-white/30"
+								}`}
+							>
+								<FontAwesomeIcon icon="user" className="w-4 h-4" />
+								<span>Solo</span>
+							</button>
+						</div>
+
+						{/* Toggle Expand/Collapse */}
+						<button
+							onClick={() => setMobileExpanded(!mobileExpanded)}
+							className="flex-shrink-0 bg-white/5 border border-white/10 text-gray-300 p-2.5 rounded-md cursor-pointer"
+							style={{ height: '44px' }}
+						>
+							<FontAwesomeIcon
+								icon={mobileExpanded ? "chevron-down" : "chevron-up"}
+								className="w-3.5 h-3.5"
+							/>
+						</button>
+					</div>
+
+					{/* Second Row: Synced Date */}
+					{latestActivity && (
+						<div className="mt-2 text-center">
+							<div className="text-xs text-gray-400">
+								Your latest activity: {formatDate(latestActivity.startDate)}
+							</div>
+						</div>
+					)}
+				</div>
+			</div>
+
 			{/* Activities Modal */}
 			<ActivitiesManagerModal
 				isOpen={showModal}
@@ -155,7 +270,6 @@ export function HexOverlay({ view, onViewChange, onActivityChanged }: HexOverlay
 				onProcess={handleSaveActivity}
 				onDelete={handleRemoveActivity}
 			/>
-
 		</>
 	);
 }
