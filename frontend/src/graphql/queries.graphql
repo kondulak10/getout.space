@@ -61,6 +61,30 @@ query HexagonsInBbox($south: Float!, $west: Float!, $north: Float!, $east: Float
   }
 }
 
+query MyHexagonsByParents($parentHexagonIds: [String!]!) {
+  myHexagonsByParents(parentHexagonIds: $parentHexagonIds) {
+    hexagonId
+    currentOwnerId
+    currentOwnerStravaId
+    currentStravaActivityId
+    activityType
+    captureCount
+    lastCapturedAt
+  }
+}
+
+query HexagonsByParents($parentHexagonIds: [String!]!) {
+  hexagonsByParents(parentHexagonIds: $parentHexagonIds) {
+    hexagonId
+    currentOwnerId
+    currentOwnerStravaId
+    currentStravaActivityId
+    activityType
+    captureCount
+    lastCapturedAt
+  }
+}
+
 query HexagonDetail($hexagonId: String!) {
   hexagon(hexagonId: $hexagonId) {
     hexagonId

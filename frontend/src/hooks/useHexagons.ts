@@ -1,9 +1,10 @@
-import { MyHexagonsInBboxDocument, HexagonsInBboxDocument, MyHexagonsCountDocument } from "@/gql/graphql";
+import { MyHexagonsByParentsDocument, HexagonsByParentsDocument, MyHexagonsCountDocument } from "@/gql/graphql";
 import { h3ToGeoJSON } from "@/utils/hexagonUtils";
 import { useLazyQuery, useQuery } from "@apollo/client/react";
 import type { Map as MapboxMap } from "mapbox-gl";
 import { useCallback, useEffect, useState } from "react";
 import React from "react";
+import { polygonToCells } from "h3-js";
 
 interface UseHexagonsOptions {
 	mapRef: React.RefObject<MapboxMap | null>;
@@ -59,12 +60,12 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 		skip: mode !== 'only-you',
 	});
 
-	// Lazy queries for both modes
-	const [fetchMyHexagons, { data: myHexagonsData, loading: myLoading }] = useLazyQuery(MyHexagonsInBboxDocument);
-	const [fetchAllHexagons, { data: allHexagonsData, loading: allLoading }] = useLazyQuery(HexagonsInBboxDocument);
+	// Lazy queries for both modes (OPTIMIZED - using parent hexagon IDs!)
+	const [fetchMyHexagons, { data: myHexagonsData, loading: myLoading }] = useLazyQuery(MyHexagonsByParentsDocument);
+	const [fetchAllHexagons, { data: allHexagonsData, loading: allLoading }] = useLazyQuery(HexagonsByParentsDocument);
 
 	// Select the appropriate data and loading state based on mode
-	const hexagonsData = mode === 'only-you' ? myHexagonsData?.myHexagonsInBbox : allHexagonsData?.hexagonsInBbox;
+	const hexagonsData = mode === 'only-you' ? myHexagonsData?.myHexagonsByParents : allHexagonsData?.hexagonsByParents;
 	const loading = mode === 'only-you' ? myLoading : allLoading;
 
 	// === ALL CALLBACKS DEFINED FIRST ===
@@ -206,7 +207,7 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 		);
 	}, []);
 
-	// Debounced function to update hexagons based on current viewport
+	// Debounced function to update hexagons based on current viewport (OPTIMIZED!)
 	const updateHexagons = useCallback(() => {
 		if (!mapRef.current) return;
 
@@ -235,14 +236,40 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 		// Debounce to avoid hammering the backend during panning/zooming
 		debounceTimeoutRef.current = setTimeout(() => {
 			const currentMode = modeRef.current; // Read current mode from ref
-			console.log(`📡 Fetching hexagons for ${currentMode} mode`);
+			console.log(`📡 Calculating visible H3 cells for ${currentMode} mode`);
 			lastFetchedBoundsRef.current = newBounds;
 
-			// Call the appropriate query based on current mode
-			if (currentMode === 'only-you') {
-				fetchMyHexagons({ variables: newBounds });
-			} else {
-				fetchAllHexagons({ variables: newBounds });
+			// Calculate PARENT H3 hexagons in viewport (resolution 6 ~3km)
+			// H3 expects [lat, lng] format, NOT [lng, lat]!
+			const bboxPolygon: [number, number][] = [
+				[newBounds.north, newBounds.west],  // top-left [lat, lng]
+				[newBounds.north, newBounds.east],  // top-right [lat, lng]
+				[newBounds.south, newBounds.east],  // bottom-right [lat, lng]
+				[newBounds.south, newBounds.west],  // bottom-left [lat, lng]
+				[newBounds.north, newBounds.west],  // close polygon
+			];
+
+			try {
+				// Get parent hexagons at resolution 6 (NOT resolution 10!)
+				const allParentHexagonIds = polygonToCells(bboxPolygon, 6);
+				console.log(`📊 Calculated ${allParentHexagonIds.length} parent hexagons (res 6) for viewport`);
+
+				// Safety limit: max 1000 parent hexagons (prevents massive queries when zoomed way out)
+				const MAX_PARENT_HEXAGONS = 1000;
+				const parentHexagonIds = allParentHexagonIds.slice(0, MAX_PARENT_HEXAGONS);
+
+				if (allParentHexagonIds.length > MAX_PARENT_HEXAGONS) {
+					console.warn(`⚠️  Limited from ${allParentHexagonIds.length} to ${MAX_PARENT_HEXAGONS} parent hexagons`);
+				}
+
+				// Call the appropriate query based on current mode
+				if (currentMode === 'only-you') {
+					fetchMyHexagons({ variables: { parentHexagonIds } });
+				} else {
+					fetchAllHexagons({ variables: { parentHexagonIds } });
+				}
+			} catch (error) {
+				console.error('Failed to calculate parent H3 cells:', error);
 			}
 		}, 300);
 	}, [mapRef, fetchMyHexagons, fetchAllHexagons, isWithinLastFetchedBounds]);

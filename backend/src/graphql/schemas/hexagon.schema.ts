@@ -60,6 +60,18 @@ export const hexagonSchema = gql`
     ): [Hexagon!]!
 
     """
+    Get hexagons owned by current user by parent H3 IDs (optimized viewport query)
+    Requires: Authentication
+    """
+    myHexagonsByParents(parentHexagonIds: [String!]!): [Hexagon!]!
+
+    """
+    Get hexagons from all users by parent H3 IDs (optimized viewport query)
+    Requires: Authentication
+    """
+    hexagonsByParents(parentHexagonIds: [String!]!): [Hexagon!]!
+
+    """
     Get total count of hexagons owned by current user
     Requires: Authentication
     """

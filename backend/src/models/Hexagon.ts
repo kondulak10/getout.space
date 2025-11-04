@@ -15,7 +15,8 @@ export interface IHexagon extends Document {
   _id: Types.ObjectId;
 
   // Unique hexagon identifier (H3 index)
-  hexagonId: string; // e.g., "8a2a1072b59ffff"
+  hexagonId: string; // e.g., "8a2a1072b59ffff" (resolution 10)
+  parentHexagonId: string; // Parent at resolution 6 for efficient querying
 
   // Current owner information
   currentOwnerId: Types.ObjectId; // User who currently owns this hex
@@ -51,6 +52,11 @@ const hexagonSchema = new Schema<IHexagon>(
       required: true,
       unique: true, // Global uniqueness - only one owner per hex
       index: true,
+    },
+    parentHexagonId: {
+      type: String,
+      required: false, // Optional for backward compatibility
+      index: true, // Index for fast parent-based queries
     },
     currentOwnerId: {
       type: Schema.Types.ObjectId,

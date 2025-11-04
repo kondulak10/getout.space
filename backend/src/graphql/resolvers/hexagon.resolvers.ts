@@ -137,6 +137,55 @@ export const hexagonResolvers = {
       }
     },
 
+    // Get hexagons owned by current user by parent H3 IDs (OPTIMIZED WITH PARENT HEXAGONS)
+    myHexagonsByParents: async (
+      _: any,
+      { parentHexagonIds }: { parentHexagonIds: string[] },
+      context: GraphQLContext
+    ) => {
+      const user = requireAuth(context);
+
+      try {
+        console.log(`📡 Fetching user hexagons under ${parentHexagonIds.length} parent hexagons`);
+
+        // Query by parent hexagon IDs - much smaller payload than child IDs!
+        const hexagons = await Hexagon.find({
+          parentHexagonId: { $in: parentHexagonIds },
+          currentOwnerId: user._id,
+        });
+
+        console.log(`✅ Fetched ${hexagons.length} user hexagons from ${parentHexagonIds.length} parents`);
+        return hexagons;
+      } catch (error) {
+        console.error('Error fetching user hexagons by parents:', error);
+        throw new GraphQLError('Failed to fetch hexagons by parent IDs');
+      }
+    },
+
+    // Get hexagons from all users by parent H3 IDs (OPTIMIZED WITH PARENT HEXAGONS)
+    hexagonsByParents: async (
+      _: any,
+      { parentHexagonIds }: { parentHexagonIds: string[] },
+      context: GraphQLContext
+    ) => {
+      requireAuth(context);
+
+      try {
+        console.log(`📡 Fetching all hexagons under ${parentHexagonIds.length} parent hexagons`);
+
+        // Query by parent hexagon IDs - much smaller payload than child IDs!
+        const hexagons = await Hexagon.find({
+          parentHexagonId: { $in: parentHexagonIds },
+        });
+
+        console.log(`✅ Fetched ${hexagons.length} hexagons from ${parentHexagonIds.length} parents`);
+        return hexagons;
+      } catch (error) {
+        console.error('Error fetching hexagons by parents:', error);
+        throw new GraphQLError('Failed to fetch hexagons by parent IDs');
+      }
+    },
+
     // Get total count of hexagons owned by current user
     myHexagonsCount: async (_: any, __: any, context: GraphQLContext) => {
       const user = requireAuth(context);
@@ -250,6 +299,9 @@ export const hexagonResolvers = {
 
         console.log(`🎯 Capturing ${hexagonIds.length} hexagons for activity ${activity.name}`);
 
+        // Import h3 for parent calculation
+        const h3 = require('h3-js');
+
         const capturedHexagons: IHexagon[] = [];
         let newCaptures = 0;
         let recaptures = 0;
@@ -259,10 +311,14 @@ export const hexagonResolvers = {
         for (const hexagonId of hexagonIds) {
           const existingHex = await Hexagon.findOne({ hexagonId });
 
+          // Calculate parent hexagon (resolution 6 for good balance)
+          const parentHexagonId = h3.cellToParent(hexagonId, 6);
+
           if (!existingHex) {
             // First capture - create new hexagon
             const newHex = new Hexagon({
               hexagonId,
+              parentHexagonId,
               currentOwnerId: currentUser._id,
               currentOwnerStravaId: currentUser.stravaId,
               currentActivityId: activity._id,

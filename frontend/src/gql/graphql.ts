@@ -173,6 +173,11 @@ export type Query = {
    */
   hexagons: Array<Hexagon>;
   /**
+   * Get hexagons from all users by parent H3 IDs (optimized viewport query)
+   * Requires: Authentication
+   */
+  hexagonsByParents: Array<Hexagon>;
+  /**
    * Get all hexagons from all users within a bounding box
    * Requires: Authentication
    */
@@ -192,6 +197,11 @@ export type Query = {
    * Requires: Authentication
    */
   myHexagons: Array<Hexagon>;
+  /**
+   * Get hexagons owned by current user by parent H3 IDs (optimized viewport query)
+   * Requires: Authentication
+   */
+  myHexagonsByParents: Array<Hexagon>;
   /**
    * Get total count of hexagons owned by current user
    * Requires: Authentication
@@ -252,6 +262,11 @@ export type QueryHexagonsArgs = {
 };
 
 
+export type QueryHexagonsByParentsArgs = {
+  parentHexagonIds: Array<Scalars['String']['input']>;
+};
+
+
 export type QueryHexagonsInBboxArgs = {
   east: Scalars['Float']['input'];
   north: Scalars['Float']['input'];
@@ -269,6 +284,11 @@ export type QueryMyActivitiesArgs = {
 export type QueryMyHexagonsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryMyHexagonsByParentsArgs = {
+  parentHexagonIds: Array<Scalars['String']['input']>;
 };
 
 
@@ -305,7 +325,7 @@ export type StravaProfile = {
   firstname: Scalars['String']['output'];
   imghex: Maybe<Scalars['String']['output']>;
   lastname: Scalars['String']['output'];
-  profile: Scalars['String']['output'];
+  profile: Maybe<Scalars['String']['output']>;
   sex: Maybe<Scalars['String']['output']>;
   state: Maybe<Scalars['String']['output']>;
   username: Maybe<Scalars['String']['output']>;
@@ -326,7 +346,7 @@ export type User = {
 export type GetUsersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetUsersQuery = { users: Array<{ __typename: 'User', id: string, stravaId: number, isAdmin: boolean, tokenExpiresAt: number, tokenIsExpired: boolean, createdAt: unknown, updatedAt: unknown, stravaProfile: { __typename: 'StravaProfile', firstname: string, lastname: string, profile: string, imghex: string | null, city: string | null, state: string | null, country: string | null, sex: string | null, username: string | null } }> };
+export type GetUsersQuery = { users: Array<{ __typename: 'User', id: string, stravaId: number, isAdmin: boolean, tokenExpiresAt: number, tokenIsExpired: boolean, createdAt: unknown, updatedAt: unknown, stravaProfile: { __typename: 'StravaProfile', firstname: string, lastname: string, profile: string | null, imghex: string | null, city: string | null, state: string | null, country: string | null, sex: string | null, username: string | null } }> };
 
 export type DeleteUserMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -369,6 +389,20 @@ export type HexagonsInBboxQueryVariables = Exact<{
 
 export type HexagonsInBboxQuery = { hexagonsInBbox: Array<{ __typename: 'Hexagon', hexagonId: string, currentOwnerId: string, currentOwnerStravaId: number, currentStravaActivityId: number, activityType: string, captureCount: number, lastCapturedAt: unknown }> };
 
+export type MyHexagonsByParentsQueryVariables = Exact<{
+  parentHexagonIds: Array<Scalars['String']['input']> | Scalars['String']['input'];
+}>;
+
+
+export type MyHexagonsByParentsQuery = { myHexagonsByParents: Array<{ __typename: 'Hexagon', hexagonId: string, currentOwnerId: string, currentOwnerStravaId: number, currentStravaActivityId: number, activityType: string, captureCount: number, lastCapturedAt: unknown }> };
+
+export type HexagonsByParentsQueryVariables = Exact<{
+  parentHexagonIds: Array<Scalars['String']['input']> | Scalars['String']['input'];
+}>;
+
+
+export type HexagonsByParentsQuery = { hexagonsByParents: Array<{ __typename: 'Hexagon', hexagonId: string, currentOwnerId: string, currentOwnerStravaId: number, currentStravaActivityId: number, activityType: string, captureCount: number, lastCapturedAt: unknown }> };
+
 export type HexagonDetailQueryVariables = Exact<{
   hexagonId: Scalars['String']['input'];
 }>;
@@ -401,6 +435,8 @@ export const RefreshUserTokenDocument = {"kind":"Document","definitions":[{"kind
 export const DeleteActivityDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteActivity"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteActivity"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}]}]}}]} as unknown as DocumentNode<DeleteActivityMutation, DeleteActivityMutationVariables>;
 export const MyHexagonsInBboxDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"MyHexagonsInBbox"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"south"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Float"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"west"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Float"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"north"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Float"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"east"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Float"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"myHexagonsInBbox"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"south"},"value":{"kind":"Variable","name":{"kind":"Name","value":"south"}}},{"kind":"Argument","name":{"kind":"Name","value":"west"},"value":{"kind":"Variable","name":{"kind":"Name","value":"west"}}},{"kind":"Argument","name":{"kind":"Name","value":"north"},"value":{"kind":"Variable","name":{"kind":"Name","value":"north"}}},{"kind":"Argument","name":{"kind":"Name","value":"east"},"value":{"kind":"Variable","name":{"kind":"Name","value":"east"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"hexagonId"}},{"kind":"Field","name":{"kind":"Name","value":"currentOwnerId"}},{"kind":"Field","name":{"kind":"Name","value":"currentOwnerStravaId"}},{"kind":"Field","name":{"kind":"Name","value":"currentStravaActivityId"}},{"kind":"Field","name":{"kind":"Name","value":"activityType"}},{"kind":"Field","name":{"kind":"Name","value":"captureCount"}},{"kind":"Field","name":{"kind":"Name","value":"lastCapturedAt"}}]}}]}}]} as unknown as DocumentNode<MyHexagonsInBboxQuery, MyHexagonsInBboxQueryVariables>;
 export const HexagonsInBboxDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"HexagonsInBbox"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"south"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Float"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"west"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Float"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"north"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Float"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"east"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Float"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"hexagonsInBbox"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"south"},"value":{"kind":"Variable","name":{"kind":"Name","value":"south"}}},{"kind":"Argument","name":{"kind":"Name","value":"west"},"value":{"kind":"Variable","name":{"kind":"Name","value":"west"}}},{"kind":"Argument","name":{"kind":"Name","value":"north"},"value":{"kind":"Variable","name":{"kind":"Name","value":"north"}}},{"kind":"Argument","name":{"kind":"Name","value":"east"},"value":{"kind":"Variable","name":{"kind":"Name","value":"east"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"hexagonId"}},{"kind":"Field","name":{"kind":"Name","value":"currentOwnerId"}},{"kind":"Field","name":{"kind":"Name","value":"currentOwnerStravaId"}},{"kind":"Field","name":{"kind":"Name","value":"currentStravaActivityId"}},{"kind":"Field","name":{"kind":"Name","value":"activityType"}},{"kind":"Field","name":{"kind":"Name","value":"captureCount"}},{"kind":"Field","name":{"kind":"Name","value":"lastCapturedAt"}}]}}]}}]} as unknown as DocumentNode<HexagonsInBboxQuery, HexagonsInBboxQueryVariables>;
+export const MyHexagonsByParentsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"MyHexagonsByParents"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"parentHexagonIds"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"myHexagonsByParents"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"parentHexagonIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"parentHexagonIds"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"hexagonId"}},{"kind":"Field","name":{"kind":"Name","value":"currentOwnerId"}},{"kind":"Field","name":{"kind":"Name","value":"currentOwnerStravaId"}},{"kind":"Field","name":{"kind":"Name","value":"currentStravaActivityId"}},{"kind":"Field","name":{"kind":"Name","value":"activityType"}},{"kind":"Field","name":{"kind":"Name","value":"captureCount"}},{"kind":"Field","name":{"kind":"Name","value":"lastCapturedAt"}}]}}]}}]} as unknown as DocumentNode<MyHexagonsByParentsQuery, MyHexagonsByParentsQueryVariables>;
+export const HexagonsByParentsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"HexagonsByParents"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"parentHexagonIds"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"hexagonsByParents"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"parentHexagonIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"parentHexagonIds"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"hexagonId"}},{"kind":"Field","name":{"kind":"Name","value":"currentOwnerId"}},{"kind":"Field","name":{"kind":"Name","value":"currentOwnerStravaId"}},{"kind":"Field","name":{"kind":"Name","value":"currentStravaActivityId"}},{"kind":"Field","name":{"kind":"Name","value":"activityType"}},{"kind":"Field","name":{"kind":"Name","value":"captureCount"}},{"kind":"Field","name":{"kind":"Name","value":"lastCapturedAt"}}]}}]}}]} as unknown as DocumentNode<HexagonsByParentsQuery, HexagonsByParentsQueryVariables>;
 export const HexagonDetailDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"HexagonDetail"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"hexagonId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"hexagon"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"hexagonId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"hexagonId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"hexagonId"}},{"kind":"Field","name":{"kind":"Name","value":"captureCount"}},{"kind":"Field","name":{"kind":"Name","value":"currentActivity"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"stravaActivityId"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"distance"}},{"kind":"Field","name":{"kind":"Name","value":"averageSpeed"}},{"kind":"Field","name":{"kind":"Name","value":"startDateLocal"}},{"kind":"Field","name":{"kind":"Name","value":"movingTime"}}]}}]}}]}}]} as unknown as DocumentNode<HexagonDetailQuery, HexagonDetailQueryVariables>;
 export const MyHexagonsCountDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"MyHexagonsCount"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"myHexagonsCount"}}]}}]} as unknown as DocumentNode<MyHexagonsCountQuery, MyHexagonsCountQueryVariables>;
 export const DeleteMyAccountDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteMyAccount"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteMyAccount"}}]}}]} as unknown as DocumentNode<DeleteMyAccountMutation, DeleteMyAccountMutationVariables>;
