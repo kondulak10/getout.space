@@ -1,0 +1,23 @@
+/* Only styles that can't be easily done with inline utilities */
+
+.hex-clip {
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+
+.hex-switch-slider {
+  background: linear-gradient(135deg,
+    #8B5CF6 0%,
+    #C084FC 25%,
+    #06B6D4 50%,
+    #60A5FA 75%,
+    #8B5CF6 100%
+  );
+  background-size: 200% 200%;
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+}
+
+.strava-link:hover:not(:disabled) {
+  text-decoration-thickness: 2px;
+}
+
+/* Strava official orange: #FC5200 */

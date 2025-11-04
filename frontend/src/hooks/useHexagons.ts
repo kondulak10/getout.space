@@ -254,6 +254,7 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 			}
 		} catch (error) {
 			// Silently fail cleanup
+			console.error(error);
 		}
 
 		// Clear cached center hex so we fetch fresh data next time
@@ -319,6 +320,7 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 				}
 			} catch (error) {
 				// Silently fail
+				console.error(error);
 			}
 		}, 300);
 	}, [mapRef, fetchMyHexagons, fetchAllHexagons, updateParentVisualization]);

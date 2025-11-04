@@ -1,77 +1,39 @@
-import { useStravaAuth } from '@/hooks/useStravaAuth';
-import { Button } from '@/components/ui/button';
+import { useStravaAuth } from "@/hooks/useStravaAuth";
 
 export function LandingOverlay() {
 	const { loginWithStrava } = useStravaAuth();
 
 	return (
-		<div className="absolute inset-0 z-20 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-			<div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full p-8 md:p-12">
+		<div className="absolute inset-0 z-20 flex items-center justify-center p-4">
+			<div className="max-w-6xl w-full space-y-12 text-center">
 				{/* Hero Section */}
-				<div className="text-center mb-12">
-					<h1 className="text-5xl font-bold text-gray-900 mb-4">
-						GetOut.space
+				<div className="space-y-6">
+					<h1
+						className="text-7xl md:text-9xl font-black text-white tracking-tight uppercase flex items-center justify-center gap-2"
+						style={{ fontFamily: "Bebas Neue, sans-serif" }}
+					>
+						<span>GetOut␣</span>
 					</h1>
-					<p className="text-xl text-gray-600">
-						Sync your activities to battle for territory
+					<p
+						className="text-xl md:text-3xl font-bold text-gray-300 max-w-3xl mx-auto uppercase"
+						style={{ fontFamily: "Bebas Neue, sans-serif", letterSpacing: "0.05em" }}
+					>
+						Turn every run into conquered territory
 					</p>
-				</div>
-
-				{/* Features Grid */}
-				<div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
-					{/* Feature 1 */}
-					<div className="text-center">
-						<div className="mb-4 mx-auto w-32 h-32 bg-gradient-to-br from-orange-400 to-pink-500 rounded-lg flex items-center justify-center">
-							<span className="text-6xl">🏃</span>
-						</div>
-						<h3 className="font-semibold text-lg text-gray-900 mb-2">
-							Track Your Runs
-						</h3>
-						<p className="text-sm text-gray-600">
-							Connect your Strava account and sync all your running activities automatically
-						</p>
-					</div>
-
-					{/* Feature 2 */}
-					<div className="text-center">
-						<div className="mb-4 mx-auto w-32 h-32 bg-gradient-to-br from-blue-400 to-cyan-500 rounded-lg flex items-center justify-center">
-							<span className="text-6xl">🗺️</span>
-						</div>
-						<h3 className="font-semibold text-lg text-gray-900 mb-2">
-							Claim Territory
-						</h3>
-						<p className="text-sm text-gray-600">
-							Every route you run claims hexagonal territory on the map for your team
-						</p>
-					</div>
-
-					{/* Feature 3 */}
-					<div className="text-center">
-						<div className="mb-4 mx-auto w-32 h-32 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg flex items-center justify-center">
-							<span className="text-6xl">⚔️</span>
-						</div>
-						<h3 className="font-semibold text-lg text-gray-900 mb-2">
-							Battle for Control
-						</h3>
-						<p className="text-sm text-gray-600">
-							Compete with other runners to dominate the map and expand your territory
-						</p>
-					</div>
+					<p className="text-base md:text-lg text-gray-400 max-w-2xl mx-auto">
+						Automatic sync from Strava, battle your friends or fellow runners
+					</p>
 				</div>
 
 				{/* CTA Button */}
-				<div className="text-center">
-					<Button
+				<div className="space-y-4">
+					<img
+						src="/btn_strava_connect_with_orange.svg"
+						alt="Connect with Strava"
 						onClick={loginWithStrava}
-						size="lg"
-						className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-6 text-lg font-semibold"
-					>
-						<span className="mr-2">🏃</span>
-						Connect with Strava
-					</Button>
-					<p className="mt-4 text-xs text-gray-500">
-						Free to join • Secure OAuth authentication
-					</p>
+						className="inline-block cursor-pointer hover:opacity-90 transition-opacity h-12 md:h-14"
+					/>
+					<p className="text-sm text-gray-500">Made by Mapheim & Powered by Strava</p>
 				</div>
 			</div>
 		</div>

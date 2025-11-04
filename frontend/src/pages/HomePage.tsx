@@ -3,8 +3,7 @@ import { useHexagons } from '@/hooks/useHexagons';
 import { useMapView } from '@/hooks/useMapView';
 import { useHexagonSelection } from '@/hooks/useHexagonSelection';
 import { useActivityProfileImages } from '@/hooks/useActivityProfileImages';
-import { UserOverlay } from '@/components/UserOverlay';
-import { MapViewToggle } from '@/components/MapViewToggle';
+import { HexOverlay } from '@/components/HexOverlay';
 import { HexagonLoadingIndicator } from '@/components/HexagonLoadingIndicator';
 import { HexagonDetailModal } from '@/components/HexagonDetailModal';
 import { VersionBadge } from '@/components/VersionBadge';
@@ -39,14 +38,13 @@ export function HomePage() {
 	};
 
 	return (
-		<div className="relative w-full h-screen">
+		<div className="relative w-full h-screen bg-black">
 			{/* Map container */}
 			<div ref={mapContainerRef} className="w-full h-full" />
 
 			{/* UI Overlays */}
 			<VersionBadge />
-			<MapViewToggle view={mapView} onViewChange={setMapView} />
-			<UserOverlay onActivityChanged={handleActivityChanged} />
+			<HexOverlay view={mapView} onViewChange={setMapView} onActivityChanged={handleActivityChanged} />
 			<HexagonLoadingIndicator isLoading={loading} />
 
 			{/* Hexagon Detail Modal */}

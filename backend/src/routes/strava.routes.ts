@@ -78,6 +78,9 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 		// Find or create user
 		let user = await User.findOne({ stravaId: data.athlete.id });
 
+		// Track if this is a new user
+		const isNewUser = !user;
+
 		// Create temporary user to get ID for S3 path (for new users)
 		// For existing users, we'll use their existing ID
 		let tempUserId: string;
@@ -169,6 +172,7 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 			success: true,
 			message: 'Authentication successful',
 			token,
+			isNewUser,
 			user: {
 				id: user._id,
 				stravaId: user.stravaId,

@@ -46,6 +46,19 @@ export default {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
+        strava: {
+          DEFAULT: '#FC5200',
+          hover: '#E34402'
+        }
+      },
+      keyframes: {
+        holographic: {
+          '0%, 100%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' }
+        }
+      },
+      animation: {
+        holographic: 'holographic 3s ease infinite'
       }
     }
   },

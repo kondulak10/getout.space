@@ -30,6 +30,7 @@ function createAuthHeaders(): HeadersInit {
 export interface AuthResponse {
 	success: boolean;
 	token?: string;
+	isNewUser?: boolean;
 	user?: {
 		id: string;
 		stravaId: number;

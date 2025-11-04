@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Trash2, Loader2, Save } from 'lucide-react';
+import { X, Trash2, Loader2, Activity } from 'lucide-react';
 import type { StravaActivity } from '@/services/stravaApi.service';
 import {
 	AlertDialog,
@@ -72,14 +72,20 @@ export function CompactActivitiesModal({
 
 
 	return (
-		<div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-			<div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[80vh] flex flex-col">
+		<div
+			className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+			onClick={onClose}
+		>
+			<div
+				className="bg-[rgba(10,10,10,0.95)] border border-white/10 rounded-xl shadow-2xl max-w-3xl w-full max-h-[90dvh] flex flex-col"
+				onClick={(e) => e.stopPropagation()}
+			>
 				{/* Header */}
-				<div className="flex items-center justify-between p-4 border-b">
-					<h2 className="text-lg font-semibold">Your Strava Activities</h2>
+				<div className="flex items-center justify-between p-4 border-b border-white/10">
+					<h2 className="text-lg font-semibold text-gray-100">Your Strava Activities</h2>
 					<button
 						onClick={onClose}
-						className="text-gray-400 hover:text-gray-600 transition-colors"
+						className="text-gray-400 hover:text-gray-200 transition-colors cursor-pointer"
 					>
 						<X className="w-5 h-5" />
 					</button>
@@ -92,7 +98,7 @@ export function CompactActivitiesModal({
 							<Loader2 className="w-8 h-8 animate-spin text-gray-400" />
 						</div>
 					) : activities.length === 0 ? (
-						<div className="text-center py-12 text-gray-500">
+						<div className="text-center py-12 text-gray-400">
 							No activities found.
 							<br />
 							Try syncing your Strava account!
@@ -102,11 +108,11 @@ export function CompactActivitiesModal({
 							{activities.map((activity) => (
 								<div
 									key={activity.id}
-									className="flex items-center justify-between gap-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+									className="flex items-center justify-between gap-4 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
 								>
 									<div className="flex-1 min-w-0">
-										<div className="font-medium text-sm truncate">{activity.name}</div>
-										<div className="text-xs text-gray-500 flex items-center gap-2">
+										<div className="font-medium text-sm truncate text-gray-100">{activity.name}</div>
+										<div className="text-xs text-gray-400 flex items-center gap-2">
 											<span>{formatDistance(activity.distance)}</span>
 											<span>•</span>
 											<span>{formatDate(activity.start_date_local)}</span>
@@ -116,13 +122,13 @@ export function CompactActivitiesModal({
 									<div className="flex items-center gap-2">
 										{activity.isStored ? (
 											<>
-												<span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+												<span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/30">
 													✓ Processed
 												</span>
 												<button
 													onClick={(e) => handleDelete(activity.id, e)}
 													disabled={deletingIds.has(activity.id)}
-													className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
+													className="p-2 text-red-400 hover:bg-red-500/10 rounded transition-colors disabled:opacity-50 cursor-pointer"
 													title="Delete activity"
 												>
 													{deletingIds.has(activity.id) ? (
@@ -136,8 +142,8 @@ export function CompactActivitiesModal({
 											<button
 												onClick={(e) => handleProcess(activity.id, e)}
 												disabled={processingIds.has(activity.id)}
-												className="px-3 py-1.5 text-xs font-medium bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white rounded transition-colors"
-												title="Process activity"
+												className="px-3 py-1.5 text-xs font-medium bg-[#FC5200] hover:bg-[#E34402] disabled:bg-gray-600 text-white rounded transition-colors cursor-pointer"
+												title="Process from Strava"
 											>
 												{processingIds.has(activity.id) ? (
 													<>
@@ -146,8 +152,8 @@ export function CompactActivitiesModal({
 													</>
 												) : (
 													<>
-														<Save className="w-3 h-3 inline mr-1" />
-														Process
+														<Activity className="w-3 h-3 inline mr-1" />
+														Process from Strava
 													</>
 												)}
 											</button>
@@ -161,7 +167,7 @@ export function CompactActivitiesModal({
 
 				{/* Footer */}
 				{!loading && activities.length > 0 && (
-					<div className="p-4 border-t bg-gray-50 text-center text-sm text-gray-600">
+					<div className="p-4 border-t border-white/10 bg-white/5 text-center text-sm text-gray-400">
 						Total: {activities.length} {activities.length === 1 ? 'activity' : 'activities'}
 						{' • '}
 						{activities.filter((a) => a.isStored).length} processed
@@ -170,22 +176,18 @@ export function CompactActivitiesModal({
 			</div>
 
 			<AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-				<AlertDialogContent>
+				<AlertDialogContent className="bg-[rgba(10,10,10,0.95)] border border-white/10 text-gray-100">
 					<AlertDialogHeader>
-						<AlertDialogTitle>Delete Activity</AlertDialogTitle>
-						<AlertDialogDescription>
-							Are you sure you want to delete this activity?
-							<br /><br />
-							This will:
-							<br />• Remove the activity from the database
-							<br />• Restore previous owners of captured hexagons (or delete hexagons if no previous owner)
-							<br /><br />
-							The activity will remain in your Strava account.
+						<AlertDialogTitle className="text-gray-100">Delete Activity</AlertDialogTitle>
+						<AlertDialogDescription className="text-gray-400">
+							Are you sure? This will remove the activity and restore previous hexagon owners.
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
-						<AlertDialogCancel>Cancel</AlertDialogCancel>
-						<AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+						<AlertDialogCancel className="bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:text-white cursor-pointer">
+							Cancel
+						</AlertDialogCancel>
+						<AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700 text-white cursor-pointer">
 							Delete
 						</AlertDialogAction>
 					</AlertDialogFooter>
