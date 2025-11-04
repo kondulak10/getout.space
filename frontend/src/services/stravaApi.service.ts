@@ -41,6 +41,10 @@ export interface AuthResponse {
 			profile: string;
 			imghex?: string;
 		};
+		tokenExpiresAt: number;
+		tokenIsExpired: boolean;
+		createdAt: string;
+		updatedAt: string;
 	};
 	error?: string;
 	details?: string;

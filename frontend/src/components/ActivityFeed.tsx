@@ -56,7 +56,7 @@ export function ActivityFeed({ onActivityClick }: ActivityFeedProps) {
 			}
 		};
 
-		eventSource.onerror = (error) => {
+		eventSource.onerror = () => {
 			setIsConnected(false);
 		};
 

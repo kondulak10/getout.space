@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useState } from "react";
 import { useQuery } from "@apollo/client/react";
-import { MeDocument, MeQuery } from "@/gql/graphql";
+import { MeDocument } from "@/gql/graphql";
 import { AuthContext, AuthContextType, User } from "./auth.types";
 
 const TOKEN_KEY = "getout_auth_token";

@@ -100,7 +100,7 @@ export function useStravaAuth() {
 
 				window.history.replaceState({}, document.title, '/');
 			} else {
-				const errorMsg = data.error || data.details || 'Unknown error';
+				console.error('Authentication failed:', data.error || data.details || 'Unknown error');
 			}
 		} catch (error) {
 		} finally {

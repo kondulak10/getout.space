@@ -25,13 +25,13 @@ export default function UsersPage() {
 		onCompleted: () => {
 			refetch();
 		},
-		onError: (error) => {
+		onError: () => {
 		},
 	});
 	const [refreshToken] = useMutation(RefreshUserTokenDocument, {
 		onCompleted: () => {
 		},
-		onError: (error) => {
+		onError: () => {
 		},
 	});
 	const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
@@ -158,7 +158,7 @@ export default function UsersPage() {
 									<td className="px-6 py-4">
 										<div className="flex items-center gap-3">
 											<img
-												src={user.stravaProfile.imghex || user.stravaProfile.profile}
+												src={user.stravaProfile.imghex ?? user.stravaProfile.profile ?? ''}
 												alt={`${user.stravaProfile.firstname} ${user.stravaProfile.lastname}`}
 												className="h-12 w-12 object-cover flex-shrink-0"
 												style={{ clipPath: user.stravaProfile.imghex ? 'none' : 'circle(50%)' }}
