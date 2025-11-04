@@ -1,14 +1,16 @@
-import { useEffect, useRef } from 'react';
-import mapboxgl from 'mapbox-gl';
-import { MAP_VIEWPORTS, DEFAULT_VIEWPORT, type ViewportKey } from '@/config/mapViewports';
+import { DEFAULT_VIEWPORT, MAP_VIEWPORTS, type ViewportKey } from "@/config/mapViewports";
+import mapboxgl from "mapbox-gl";
+import { useEffect, useRef } from "react";
+import { configureMapStyle } from "@/utils/mapStyleConfig";
 
 interface UseMapboxOptions {
 	viewport?: ViewportKey;
 	style?: string;
+	enableCustomStyling?: boolean;
 }
 
 export const useMapbox = (options: UseMapboxOptions = {}) => {
-	const { viewport = DEFAULT_VIEWPORT, style = 'mapbox://styles/mapbox/outdoors-v12' } = options;
+	const { viewport = DEFAULT_VIEWPORT, style = 'mapbox://styles/mapbox/dark-v11', enableCustomStyling = true } = options;
 
 	const mapContainerRef = useRef<HTMLDivElement>(null);
 	const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -26,7 +28,17 @@ export const useMapbox = (options: UseMapboxOptions = {}) => {
 			style,
 			center: viewportConfig.center,
 			zoom: viewportConfig.zoom,
+			pitch: 0, // Force flat map
+			bearing: 0,
+			dragRotate: false, // Disable rotation
+			pitchWithRotate: false, // Disable pitch
+			touchPitch: false, // Disable touch pitch
 		});
+
+		// Apply custom dark monochrome flat styling
+		if (enableCustomStyling) {
+			configureMapStyle(map);
+		}
 
 		mapRef.current = map;
 
@@ -34,7 +46,7 @@ export const useMapbox = (options: UseMapboxOptions = {}) => {
 			map.remove();
 			mapRef.current = null;
 		};
-	}, [mapboxToken, viewport, style]);
+	}, [mapboxToken, viewport, style, enableCustomStyling]);
 
 	return {
 		mapContainerRef,

@@ -128,8 +128,8 @@ export function useActivityProfileImages(
 						[rotatedCoords[3][0], rotatedCoords[3][1]], // bottom-left
 					];
 
-					// Add cache-busting parameter to help with image loading issues
-					const imageUrl = `${user.profile.imghex}?t=${Date.now()}`;
+					// Use image URL directly without cache-busting (S3 website hosting doesn't handle query params)
+					const imageUrl = user.profile.imghex;
 
 					// Add image source with error handling
 					if (!map.getSource(sourceId)) {
@@ -174,6 +174,9 @@ export function useActivityProfileImages(
 						});
 
 						layersAddedRef.current.add(layerId);
+					} else {
+						// If layer exists, ensure it's on top by moving it
+						map.moveLayer(layerId);
 					}
 				} catch (error) {
 					// Silently fail

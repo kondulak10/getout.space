@@ -1,36 +1,44 @@
-import { MyHexagonsByParentsDocument, HexagonsByParentsDocument, MyHexagonsCountDocument } from "@/gql/graphql";
+import {
+	HexagonsByParentsDocument,
+	MyHexagonsByParentsDocument,
+	MyHexagonsCountDocument,
+} from "@/gql/graphql";
 import { h3ToGeoJSON } from "@/utils/hexagonUtils";
 import { useLazyQuery, useQuery } from "@apollo/client/react";
+import { gridDisk, latLngToCell } from "h3-js";
 import type { Map as MapboxMap } from "mapbox-gl";
-import { useCallback, useEffect, useState } from "react";
-import React from "react";
-import { latLngToCell, gridDisk } from "h3-js";
+import React, { useCallback, useEffect, useState } from "react";
 
 interface UseHexagonsOptions {
 	mapRef: React.RefObject<MapboxMap | null>;
-	mode: 'only-you' | 'battle';
+	mode: "only-you" | "battle";
 	onHexagonClick?: (hexagonId: string) => void;
 }
 
-interface BoundingBox {
-	south: number;
-	west: number;
-	north: number;
-	east: number;
-}
+// Custom color palette for hexagons
+const HEXAGON_COLORS = [
+	"#411EFD",
+	"#79C5FE",
+	"#99FC8D",
+	"#F1D619",
+	"#D62026",
+	"#D84B00",
+	"#85DD22",
+	"#D62190",
+	"#CB5FFC",
+	"#7B33DC",
+];
 
 /**
- * Generate a consistent color for a user ID
+ * Generate a consistent color for a user ID using custom palette
  */
 function getUserColor(userId: string): string {
 	let hash = 0;
 	for (let i = 0; i < userId.length; i++) {
 		hash = userId.charCodeAt(i) + ((hash << 5) - hash);
 	}
-	const hue = Math.abs(hash % 360);
-	const saturation = 65 + (Math.abs(hash) % 20);
-	const lightness = 50 + (Math.abs(hash >> 8) % 15);
-	return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+	const colorIndex = Math.abs(hash) % HEXAGON_COLORS.length;
+	return HEXAGON_COLORS[colorIndex];
 }
 
 /**
@@ -57,16 +65,20 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 
 	// Get total hex count (only for 'only-you' mode)
 	const { data: countData } = useQuery(MyHexagonsCountDocument, {
-		skip: mode !== 'only-you',
+		skip: mode !== "only-you",
 	});
 
 	// Lazy queries for both modes (OPTIMIZED - using parent hexagon IDs!)
-	const [fetchMyHexagons, { data: myHexagonsData, loading: myLoading }] = useLazyQuery(MyHexagonsByParentsDocument);
-	const [fetchAllHexagons, { data: allHexagonsData, loading: allLoading }] = useLazyQuery(HexagonsByParentsDocument);
+	const [fetchMyHexagons, { data: myHexagonsData, loading: myLoading }] = useLazyQuery(
+		MyHexagonsByParentsDocument
+	);
+	const [fetchAllHexagons, { data: allHexagonsData, loading: allLoading }] =
+		useLazyQuery(HexagonsByParentsDocument);
 
 	// Select the appropriate data and loading state based on mode
-	const hexagonsData = mode === 'only-you' ? myHexagonsData?.myHexagonsByParents : allHexagonsData?.hexagonsByParents;
-	const loading = mode === 'only-you' ? myLoading : allLoading;
+	const hexagonsData =
+		mode === "only-you" ? myHexagonsData?.myHexagonsByParents : allHexagonsData?.hexagonsByParents;
+	const loading = mode === "only-you" ? myLoading : allLoading;
 
 	// === ALL CALLBACKS DEFINED FIRST ===
 
@@ -96,7 +108,7 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 			source: "hexagons",
 			paint: {
 				"fill-color": ["get", "color"],
-				"fill-opacity": 0.5,
+				"fill-opacity": 0.3, // Reduced by 30%
 			},
 		});
 
@@ -106,9 +118,9 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 			type: "line",
 			source: "hexagons",
 			paint: {
-				"line-color": "#1E40AF",
+				"line-color": "#000000", // White border for all hexagons
 				"line-width": 1.5,
-				"line-opacity": 0.7,
+				"line-opacity": 0.7, // Reduced by 30%
 			},
 		});
 
@@ -162,37 +174,40 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 			type: "line",
 			source: "parent-hexagons",
 			paint: {
-				"line-color": "#6B7280", // Grey color
+				"line-color": "#FFFFFF", // White color for visibility on dark map
 				"line-width": 2,
-				"line-opacity": 0.5,
+				"line-opacity": 0.6,
 			},
 		});
 	}, [mapRef]);
 
 	// Update parent hexagon visualization
-	const updateParentVisualization = useCallback((parentHexagonIds: string[]) => {
-		if (!mapRef.current) return;
-		const map = mapRef.current;
+	const updateParentVisualization = useCallback(
+		(parentHexagonIds: string[]) => {
+			if (!mapRef.current) return;
+			const map = mapRef.current;
 
-		const source = map.getSource("parent-hexagons") as import("mapbox-gl").GeoJSONSource;
-		if (!source) {
-			setupParentLayer(); // Ensure layer exists
-			setTimeout(() => updateParentVisualization(parentHexagonIds), 100);
-			return;
-		}
+			const source = map.getSource("parent-hexagons") as import("mapbox-gl").GeoJSONSource;
+			if (!source) {
+				setupParentLayer(); // Ensure layer exists
+				setTimeout(() => updateParentVisualization(parentHexagonIds), 100);
+				return;
+			}
 
-		// Convert parent hexagon IDs to GeoJSON
-		const features = parentHexagonIds.map(parentId => {
-			return h3ToGeoJSON(parentId);
-		});
+			// Convert parent hexagon IDs to GeoJSON
+			const features = parentHexagonIds.map((parentId) => {
+				return h3ToGeoJSON(parentId);
+			});
 
-		const geojson: GeoJSON.FeatureCollection = {
-			type: "FeatureCollection",
-			features,
-		};
+			const geojson: GeoJSON.FeatureCollection = {
+				type: "FeatureCollection",
+				features,
+			};
 
-		source.setData(geojson);
-	}, [mapRef, setupParentLayer]);
+			source.setData(geojson);
+		},
+		[mapRef, setupParentLayer]
+	);
 
 	// Cleanup hex layers
 	const cleanupHexagonLayer = useCallback(() => {
@@ -297,7 +312,7 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 				updateParentVisualization(parentHexagonIds);
 
 				// Call the appropriate query based on current mode
-				if (currentMode === 'only-you') {
+				if (currentMode === "only-you") {
 					fetchMyHexagons({ variables: { parentHexagonIds } });
 				} else {
 					fetchAllHexagons({ variables: { parentHexagonIds } });
@@ -328,8 +343,8 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 		}
 
 		// Track unique users (for battle mode)
-		if (mode === 'battle') {
-			const uniqueUsers = new Set(hexagonsData.map(hex => hex.currentOwnerId));
+		if (mode === "battle") {
+			const uniqueUsers = new Set(hexagonsData.map((hex) => hex.currentOwnerId));
 			setUserCount(uniqueUsers.size);
 		}
 
@@ -337,10 +352,8 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 		const features = hexagonsData.map((hex) => {
 			const feature = h3ToGeoJSON(hex.hexagonId);
 
-			// Apply color based on mode
-			const color = mode === 'only-you'
-				? '#3B82F6' // Blue for user's hexes
-				: getUserColor(hex.currentOwnerId); // Unique color per user in battle mode
+			// Apply color based on mode (always use custom palette)
+			const color = getUserColor(hex.currentOwnerId); // Consistent color per user
 
 			return {
 				...feature,
@@ -400,18 +413,18 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 			if (map.loaded() && !map.isMoving()) {
 				setTimeout(doInitialFetch, 100);
 			} else {
-				map.once('idle', doInitialFetch);
+				map.once("idle", doInitialFetch);
 			}
 
 			// Set up listeners ONCE - they stay active and use modeRef for current mode
-			map.on('moveend', updateHexagons);
-			map.on('zoomend', updateHexagons);
+			map.on("moveend", updateHexagons);
+			map.on("zoomend", updateHexagons);
 		};
 
 		if (map.loaded()) {
 			initializeHexagons();
 		} else {
-			map.once('load', initializeHexagons);
+			map.once("load", initializeHexagons);
 		}
 
 		return () => {
@@ -428,16 +441,23 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 			const currentMap = mapRef.current;
 			if (currentMap && currentMap.getStyle()) {
 				try {
-					currentMap.off('moveend', updateHexagons);
-					currentMap.off('zoomend', updateHexagons);
+					currentMap.off("moveend", updateHexagons);
+					currentMap.off("zoomend", updateHexagons);
 				} catch (error) {
-					// Silently fail
+					console.error(error);
 				}
 			}
 
 			cleanupHexagonLayer();
 		};
-	}, [mapRef, setupHexagonLayer, setupParentLayer, updateHexagons, cleanupHexagonLayer, clearCenterCache]);
+	}, [
+		mapRef,
+		setupHexagonLayer,
+		setupParentLayer,
+		updateHexagons,
+		cleanupHexagonLayer,
+		clearCenterCache,
+	]);
 
 	// When mode changes, just clear cache and refetch
 	useEffect(() => {

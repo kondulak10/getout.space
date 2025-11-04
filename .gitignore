@@ -49,3 +49,5 @@ Thumbs.db
 *.tar.gz
 infrastructure/nul
 backend/nul
+nul
+frontend/src/version.ts

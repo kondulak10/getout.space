@@ -70,7 +70,13 @@
       "Bash(gh run list:*)",
       "Bash(git log:*)",
       "Bash(git show:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(nul)",
+      "Bash(findstr:*)",
+      "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\pages\\TestPage.tsx\")",
+      "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\components\\StravaSection.tsx\")",
+      "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\components\\RouteHexMapView.tsx\")",
+      "Bash(ls \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\pages\"\" | grep -E \"TestPage \")"
     ],
     "deny": [
       "Bash(git commit:*)",

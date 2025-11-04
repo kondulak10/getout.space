@@ -20,7 +20,7 @@ export function HomePage() {
 
 	const { mapContainerRef, mapRef } = useMapbox({
 		viewport: 'ostrava',
-		style: 'mapbox://styles/mapbox/light-v11',
+		// Uses dark-v11 with custom monochrome flat styling + 3D buildings
 	});
 
 	// Unified hexagon hook - mode changes based on view
