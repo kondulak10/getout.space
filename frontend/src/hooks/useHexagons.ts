@@ -108,7 +108,7 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 			source: "hexagons",
 			paint: {
 				"fill-color": ["get", "color"],
-				"fill-opacity": 0.3, // Reduced by 30%
+				"fill-opacity": 0.35, // Reduced by 30%
 			},
 		});
 

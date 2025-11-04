@@ -24,6 +24,13 @@ jobs:
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
+      - name: Configure Font Awesome Pro registry
+        working-directory: ./frontend
+        run: |
+          echo "@awesome.me:registry=https://npm.fontawesome.com/" > .npmrc
+          echo "@fortawesome:registry=https://npm.fontawesome.com/" >> .npmrc
+          echo "//npm.fontawesome.com/:_authToken=${{ secrets.FONTAWESOME_TOKEN }}" >> .npmrc
+
       - name: Install dependencies
         working-directory: ./frontend
         run: npm ci

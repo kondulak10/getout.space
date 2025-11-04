@@ -20,6 +20,11 @@
 	},
 	"dependencies": {
 		"@apollo/client": "^4.0.8",
+		"@fortawesome/fontawesome-svg-core": "^7.1.0",
+		"@fortawesome/pro-light-svg-icons": "^7.1.0",
+		"@fortawesome/pro-regular-svg-icons": "^7.1.0",
+		"@fortawesome/pro-solid-svg-icons": "^7.1.0",
+		"@fortawesome/react-fontawesome": "^3.1.0",
 		"@graphql-typed-document-node/core": "^3.2.0",
 		"@mapbox/polyline": "^1.2.1",
 		"@radix-ui/react-alert-dialog": "^1.1.15",
