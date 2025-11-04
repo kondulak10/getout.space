@@ -24,18 +24,14 @@ export default function UsersPage() {
 	const [deleteUser] = useMutation(DeleteUserDocument, {
 		onCompleted: () => {
 			refetch();
-			console.log("✅ User deleted successfully!");
 		},
 		onError: (error) => {
-			console.error(`❌ Failed to delete user: ${error.message}`);
 		},
 	});
 	const [refreshToken] = useMutation(RefreshUserTokenDocument, {
 		onCompleted: () => {
-			console.log("✅ Token refreshed successfully!");
 		},
 		onError: (error) => {
-			console.error(`❌ Failed to refresh token: ${error.message}`);
 		},
 	});
 	const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
@@ -47,7 +43,6 @@ export default function UsersPage() {
 
 	const handleRefreshToken = async (id: string, userName: string) => {
 		if (!currentUser?.isAdmin) {
-			console.error("❌ You must be an admin to refresh tokens.");
 			return;
 		}
 
@@ -73,7 +68,6 @@ export default function UsersPage() {
 				},
 			});
 		} catch (error) {
-			console.error("Refresh token error:", error);
 		} finally {
 			setRefreshingUserId(null);
 			setUserToRefresh(null);
@@ -82,7 +76,6 @@ export default function UsersPage() {
 
 	const handleDeleteUser = async (id: string, userName: string) => {
 		if (!currentUser?.isAdmin) {
-			console.error("❌ You must be an admin to delete users.");
 			return;
 		}
 
@@ -105,7 +98,6 @@ export default function UsersPage() {
 				window.location.href = "/";
 			}
 		} catch (error) {
-			console.error("Delete error:", error);
 		} finally {
 			setDeletingUserId(null);
 			setUserToDelete(null);

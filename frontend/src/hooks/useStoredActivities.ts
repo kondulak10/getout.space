@@ -17,25 +17,18 @@ export function useStoredActivities() {
 	 */
 	const removeActivity = async (activityId: number): Promise<boolean> => {
 		try {
-			console.log(`🗑️ Deleting activity ${activityId}...`);
 
 			const result = await deleteActivity(activityId);
 
 			if (result.success) {
-				console.log(`✅ Activity deleted successfully!`);
-				console.log(`📊 Hexagons: ↩️ ${result.hexagons.restored} restored to previous owners, 🗑️ ${result.hexagons.deleted} removed (no previous owner)`);
 
 				await refetch();
 
 				return true;
 			} else {
-				console.error('❌ Error:', result.error);
-				console.error(`Failed to delete activity: ${result.error || result.details || 'Unknown error'}`);
 				return false;
 			}
 		} catch (err) {
-			console.error('❌ Failed to delete activity:', err);
-			console.error(`Error: ${err instanceof Error ? err.message : 'Network error'}`);
 			return false;
 		}
 	};

@@ -24,27 +24,19 @@ export function RouteHexMapView({ coordinates, className, showBackgroundHexagons
 			return { hexagons: [], type: 'line' as RouteType };
 		}
 
-		console.log('🗺️ ========== ROUTE ANALYSIS ==========');
-		console.log(`📍 Total route points: ${coordinates.length}`);
 
 		// Use all GPS points for maximum accuracy
 		// Only sample if route is extremely long (>5000 points)
 		let sampled: [number, number][];
 		if (coordinates.length > 5000) {
 			sampled = sampleRouteCoordinates(coordinates, 2); // Very light sampling
-			console.log(`📍 Large route detected, lightly sampled: ${coordinates.length} → ${sampled.length} points`);
 		} else {
 			sampled = coordinates;
-			console.log(`📍 Using all ${coordinates.length} GPS points for maximum accuracy`);
 		}
 
 		// Analyze and convert
 		const result = analyzeRouteAndConvertToHexagons(sampled);
 
-		console.log(`🔷 Route type: ${result.type.toUpperCase()}`);
-		console.log(`🔷 Total hexagons: ${result.hexagons.length}`);
-		console.log(`🔷 Hexagon list:`, result.hexagons);
-		console.log('=====================================');
 
 		return result;
 	}, [coordinates]);
@@ -217,7 +209,6 @@ export function RouteHexMapView({ coordinates, className, showBackgroundHexagons
 			);
 
 			// Final map render log
-			console.log(`🗺️ Map rendered with ${routeData.hexagons.length} ${routeData.type} hexagons`);
 		});
 
 		// Cleanup

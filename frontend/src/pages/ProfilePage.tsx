@@ -64,11 +64,9 @@ export function ProfilePage() {
 
 		try {
 			await deleteMyAccount();
-			console.log('✅ Account deleted successfully');
 			logout();
 			navigate('/');
 		} catch (error) {
-			console.error('Failed to delete account:', error);
 		}
 	};
 
@@ -117,7 +115,6 @@ export function ProfilePage() {
 								{storedActivities.map((activity) => {
 									// Debug logging
 									if (activity.startDateLocal === undefined || activity.startDateLocal === null) {
-										console.error('Missing startDateLocal for activity:', activity);
 									}
 									return (
 									<div

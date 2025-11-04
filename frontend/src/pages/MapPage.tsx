@@ -13,8 +13,6 @@ export function MapPage() {
 
 	// Handle hexagon click
 	const handleHexClick = useCallback((hex: string, data: HexagonData | undefined) => {
-		console.log("🔷 Clicked hexagon:", hex);
-		console.log("Data:", data);
 	}, []);
 
 	// Map instance

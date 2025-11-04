@@ -4,7 +4,7 @@ import { useLazyQuery, useQuery } from "@apollo/client/react";
 import type { Map as MapboxMap } from "mapbox-gl";
 import { useCallback, useEffect, useState } from "react";
 import React from "react";
-import { polygonToCells } from "h3-js";
+import { latLngToCell, gridDisk } from "h3-js";
 
 interface UseHexagonsOptions {
 	mapRef: React.RefObject<MapboxMap | null>;
@@ -42,7 +42,7 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 	const [userCount, setUserCount] = useState(0);
 	const debounceTimeoutRef = React.useRef<number | null>(null);
 	const onHexagonClickRef = React.useRef(onHexagonClick);
-	const lastFetchedBoundsRef = React.useRef<BoundingBox | null>(null);
+	const lastCenterHexRef = React.useRef<string | null>(null); // Track center parent hex
 	const modeRef = React.useRef(mode); // Use ref so callbacks don't need to change
 	const isMountedRef = React.useRef(true); // Track if component is mounted
 	const clickHandlerRef = React.useRef<((e: mapboxgl.MapMouseEvent) => void) | null>(null);
@@ -77,11 +77,8 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 
 		// Check if source already exists
 		if (map.getSource("hexagons")) {
-			console.log(`✓ Hexagon layers already exist`);
 			return;
 		}
-
-		console.log(`🎨 Setting up hexagon layers`);
 
 		// Add hexagon source
 		map.addSource("hexagons", {
@@ -143,6 +140,60 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 		map.on("mouseleave", "hexagon-fills", handleMouseLeave);
 	}, [mapRef]);
 
+	// Setup parent hexagon visualization layer
+	const setupParentLayer = useCallback(() => {
+		if (!mapRef.current) return;
+		const map = mapRef.current;
+
+		if (map.getSource("parent-hexagons")) {
+			return; // Already exists
+		}
+
+		map.addSource("parent-hexagons", {
+			type: "geojson",
+			data: {
+				type: "FeatureCollection",
+				features: [],
+			},
+		});
+
+		map.addLayer({
+			id: "parent-hexagon-borders",
+			type: "line",
+			source: "parent-hexagons",
+			paint: {
+				"line-color": "#6B7280", // Grey color
+				"line-width": 2,
+				"line-opacity": 0.5,
+			},
+		});
+	}, [mapRef]);
+
+	// Update parent hexagon visualization
+	const updateParentVisualization = useCallback((parentHexagonIds: string[]) => {
+		if (!mapRef.current) return;
+		const map = mapRef.current;
+
+		const source = map.getSource("parent-hexagons") as import("mapbox-gl").GeoJSONSource;
+		if (!source) {
+			setupParentLayer(); // Ensure layer exists
+			setTimeout(() => updateParentVisualization(parentHexagonIds), 100);
+			return;
+		}
+
+		// Convert parent hexagon IDs to GeoJSON
+		const features = parentHexagonIds.map(parentId => {
+			return h3ToGeoJSON(parentId);
+		});
+
+		const geojson: GeoJSON.FeatureCollection = {
+			type: "FeatureCollection",
+			features,
+		};
+
+		source.setData(geojson);
+	}, [mapRef, setupParentLayer]);
+
 	// Cleanup hex layers
 	const cleanupHexagonLayer = useCallback(() => {
 		if (!mapRef.current) return;
@@ -150,11 +201,8 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 
 		// Check if map is still valid before cleaning up
 		if (!map.getStyle()) {
-			console.log(`⚠️ Map already destroyed, skipping layer cleanup`);
 			return;
 		}
-
-		console.log(`🧹 Cleaning up hexagon layers`);
 
 		try {
 			// Remove event handlers first (before removing layers)
@@ -181,33 +229,28 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 			if (map.getSource("hexagons")) {
 				map.removeSource("hexagons");
 			}
+
+			// Remove parent hexagon visualization
+			if (map.getLayer("parent-hexagon-borders")) {
+				map.removeLayer("parent-hexagon-borders");
+			}
+			if (map.getSource("parent-hexagons")) {
+				map.removeSource("parent-hexagons");
+			}
 		} catch (error) {
-			console.warn(`Failed to cleanup hexagon layers:`, error);
+			// Silently fail cleanup
 		}
 
-		// Clear cached bounds so we fetch fresh data next time
-		lastFetchedBoundsRef.current = null;
+		// Clear cached center hex so we fetch fresh data next time
+		lastCenterHexRef.current = null;
 	}, [mapRef]);
 
-	// Clear bounds cache
-	const clearBoundsCache = useCallback(() => {
-		lastFetchedBoundsRef.current = null;
+	// Clear center hex cache
+	const clearCenterCache = useCallback(() => {
+		lastCenterHexRef.current = null;
 	}, []);
 
-	// Check if new bounds are within previously fetched bounds
-	const isWithinLastFetchedBounds = useCallback((newBounds: BoundingBox): boolean => {
-		const lastBounds = lastFetchedBoundsRef.current;
-		if (!lastBounds) return false;
-
-		return (
-			newBounds.south >= lastBounds.south &&
-			newBounds.north <= lastBounds.north &&
-			newBounds.west >= lastBounds.west &&
-			newBounds.east <= lastBounds.east
-		);
-	}, []);
-
-	// Debounced function to update hexagons based on current viewport (OPTIMIZED!)
+	// Debounced function to update hexagons based on center parent hex + 1 ring (7 total)
 	const updateHexagons = useCallback(() => {
 		if (!mapRef.current) return;
 
@@ -216,18 +259,6 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 
 		if (!bounds) return;
 
-		const newBounds: BoundingBox = {
-			south: bounds.getSouth(),
-			west: bounds.getWest(),
-			north: bounds.getNorth(),
-			east: bounds.getEast(),
-		};
-
-		// Skip if new bounds are within last fetched bounds (zoom in case)
-		if (isWithinLastFetchedBounds(newBounds)) {
-			return;
-		}
-
 		// Clear previous timeout
 		if (debounceTimeoutRef.current) {
 			clearTimeout(debounceTimeoutRef.current);
@@ -235,32 +266,35 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 
 		// Debounce to avoid hammering the backend during panning/zooming
 		debounceTimeoutRef.current = setTimeout(() => {
-			const currentMode = modeRef.current; // Read current mode from ref
-			console.log(`📡 Calculating visible H3 cells for ${currentMode} mode`);
-			lastFetchedBoundsRef.current = newBounds;
-
-			// Calculate PARENT H3 hexagons in viewport (resolution 6 ~3km)
-			// H3 expects [lat, lng] format, NOT [lng, lat]!
-			const bboxPolygon: [number, number][] = [
-				[newBounds.north, newBounds.west],  // top-left [lat, lng]
-				[newBounds.north, newBounds.east],  // top-right [lat, lng]
-				[newBounds.south, newBounds.east],  // bottom-right [lat, lng]
-				[newBounds.south, newBounds.west],  // bottom-left [lat, lng]
-				[newBounds.north, newBounds.west],  // close polygon
-			];
+			const currentMode = modeRef.current;
 
 			try {
-				// Get parent hexagons at resolution 6 (NOT resolution 10!)
-				const allParentHexagonIds = polygonToCells(bboxPolygon, 6);
-				console.log(`📊 Calculated ${allParentHexagonIds.length} parent hexagons (res 6) for viewport`);
+				// Get viewport center
+				const centerLat = (bounds.getNorth() + bounds.getSouth()) / 2;
+				const centerLng = (bounds.getEast() + bounds.getWest()) / 2;
 
-				// Safety limit: max 1000 parent hexagons (prevents massive queries when zoomed way out)
-				const MAX_PARENT_HEXAGONS = 1000;
-				const parentHexagonIds = allParentHexagonIds.slice(0, MAX_PARENT_HEXAGONS);
+				// Get parent hexagon at center (resolution 6)
+				const centerParentHex = latLngToCell(centerLat, centerLng, 6);
 
-				if (allParentHexagonIds.length > MAX_PARENT_HEXAGONS) {
-					console.warn(`⚠️  Limited from ${allParentHexagonIds.length} to ${MAX_PARENT_HEXAGONS} parent hexagons`);
+				// Check if center parent hex changed
+				if (lastCenterHexRef.current === centerParentHex) {
+					return; // No change, skip fetch
 				}
+
+				// Update cache
+				lastCenterHexRef.current = centerParentHex;
+
+				// Get parent hexagons using gridDisk: center + 1 ring = 7 total
+				const parentHexagonIds = gridDisk(centerParentHex, 1);
+
+				// OPTIONAL: Expand to ring 2 (19 hexagons) based on zoom level
+				// Uncomment below to enable larger coverage when zoomed out:
+				// const zoom = map.getZoom();
+				// const ringSize = zoom >= 12 ? 1 : 2;
+				// const parentHexagonIds = gridDisk(centerParentHex, ringSize);
+
+				// Visualize the parent hexagons being queried
+				updateParentVisualization(parentHexagonIds);
 
 				// Call the appropriate query based on current mode
 				if (currentMode === 'only-you') {
@@ -269,17 +303,16 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 					fetchAllHexagons({ variables: { parentHexagonIds } });
 				}
 			} catch (error) {
-				console.error('Failed to calculate parent H3 cells:', error);
+				// Silently fail
 			}
 		}, 300);
-	}, [mapRef, fetchMyHexagons, fetchAllHexagons, isWithinLastFetchedBounds]);
+	}, [mapRef, fetchMyHexagons, fetchAllHexagons, updateParentVisualization]);
 
 	// Force refresh hexagons (clears cache and refetches)
 	const refetchHexagons = useCallback(() => {
-		console.log('🔄 Force refreshing hexagons...');
-		clearBoundsCache();
+		clearCenterCache();
 		updateHexagons();
-	}, [updateHexagons, clearBoundsCache]);
+	}, [updateHexagons, clearCenterCache]);
 
 	// === ALL EFFECTS COME AFTER CALLBACKS ===
 
@@ -331,7 +364,6 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 		// Update the map source
 		const source = map.getSource("hexagons") as import("mapbox-gl").GeoJSONSource;
 		if (source) {
-			console.log(`✅ Updating map with ${hexagonsData.length} hexagons`);
 			source.setData(geojson);
 			setVisibleHexCount(hexagonsData.length);
 		}
@@ -345,27 +377,22 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 		// Reset mounted flag (important for React strict mode)
 		isMountedRef.current = true;
 
-		console.log(`🎬 Initial setup`);
-
 		const initializeHexagons = () => {
 			// Check if component is still mounted
 			if (!isMountedRef.current) {
-				console.log(`⚠️ Component unmounted, skipping initialization`);
 				return;
 			}
 
-			console.log(`🗺️ Setting up layers and listeners`);
-
 			// Setup layers
 			setupHexagonLayer();
+			setupParentLayer();
 
 			// Fetch initial hexagons
 			const doInitialFetch = () => {
 				// Double-check component is still mounted
 				if (!isMountedRef.current) return;
 
-				console.log(`📡 Fetching initial hexagons...`);
-				clearBoundsCache();
+				clearCenterCache();
 				updateHexagons();
 			};
 
@@ -377,7 +404,6 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 			}
 
 			// Set up listeners ONCE - they stay active and use modeRef for current mode
-			console.log(`➕ Adding map event listeners (permanent)`);
 			map.on('moveend', updateHexagons);
 			map.on('zoomend', updateHexagons);
 		};
@@ -389,8 +415,6 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 		}
 
 		return () => {
-			console.log(`🧹 Component unmounting - final cleanup`);
-
 			// Mark component as unmounted to prevent race conditions
 			isMountedRef.current = false;
 
@@ -407,24 +431,21 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 					currentMap.off('moveend', updateHexagons);
 					currentMap.off('zoomend', updateHexagons);
 				} catch (error) {
-					console.warn(`Failed to remove event listeners:`, error);
+					// Silently fail
 				}
 			}
 
 			cleanupHexagonLayer();
 		};
-	}, [mapRef, setupHexagonLayer, updateHexagons, cleanupHexagonLayer, clearBoundsCache]);
+	}, [mapRef, setupHexagonLayer, setupParentLayer, updateHexagons, cleanupHexagonLayer, clearCenterCache]);
 
 	// When mode changes, just clear cache and refetch
 	useEffect(() => {
 		if (!mapRef.current) return;
 
-		console.log(`🔄 Mode changed to: ${mode}`);
-		console.log(`♻️ Clearing cache and refetching hexagons...`);
-
-		clearBoundsCache();
+		clearCenterCache();
 		updateHexagons();
-	}, [mode, clearBoundsCache, updateHexagons]);
+	}, [mode, clearCenterCache, updateHexagons]);
 
 	return {
 		totalHexCount: countData?.myHexagonsCount ?? 0, // Only meaningful in 'only-you' mode

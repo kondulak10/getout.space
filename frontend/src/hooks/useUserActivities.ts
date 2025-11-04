@@ -26,10 +26,8 @@ export function useUserActivities() {
 			if (data.success) {
 				setLatestActivity(data.activity);
 			} else {
-				console.error('Failed to fetch latest activity:', data.error);
 			}
 		} catch (err) {
-			console.error('Error fetching latest activity:', err);
 		}
 	};
 
@@ -49,7 +47,6 @@ export function useUserActivities() {
 			}
 		} catch (err) {
 			setError(err instanceof Error ? err.message : 'Network error');
-			console.error('Error fetching Strava activities:', err);
 		} finally {
 			setLoading(false);
 		}
@@ -60,13 +57,10 @@ export function useUserActivities() {
 	 */
 	const saveActivity = async (activityId: number): Promise<void> => {
 		try {
-			console.log(`💾 Processing activity ${activityId}...`);
 
 			const data = await processActivity(activityId);
 
 			if (data.success) {
-				console.log(`✅ Activity processed successfully!`);
-				console.log(`📊 Hexagons: ${data.hexagons.totalParsed} total, ✨ ${data.hexagons.created} created, 🎯 ${data.hexagons.updated} captured, ⏭️ ${data.hexagons.couldNotUpdate} skipped`);
 
 				setStravaActivities((prev) =>
 					prev.map((activity) =>
@@ -76,12 +70,8 @@ export function useUserActivities() {
 
 				await loadLatestActivity();
 			} else {
-				console.error('❌ Error:', data.error);
-				console.error(`Failed to process activity: ${data.error || data.details || 'Unknown error'}`);
 			}
 		} catch (err) {
-			console.error('❌ Failed to process activity:', err);
-			console.error(`Error: ${err instanceof Error ? err.message : 'Network error'}`);
 		}
 	};
 
@@ -90,13 +80,10 @@ export function useUserActivities() {
 	 */
 	const removeActivity = async (activityId: number): Promise<void> => {
 		try {
-			console.log(`🗑️ Deleting activity ${activityId}...`);
 
 			const data = await deleteActivity(activityId);
 
 			if (data.success) {
-				console.log(`✅ Activity deleted successfully!`);
-				console.log(`📊 Hexagons: ↩️ ${data.hexagons.restored} restored to previous owners, 🗑️ ${data.hexagons.deleted} removed (no previous owner)`);
 
 				setStravaActivities((prev) =>
 					prev.map((activity) =>
@@ -106,12 +93,8 @@ export function useUserActivities() {
 
 				await loadLatestActivity();
 			} else {
-				console.error('❌ Error:', data.error);
-				console.error(`Failed to delete activity: ${data.error || data.details || 'Unknown error'}`);
 			}
 		} catch (err) {
-			console.error('❌ Failed to delete activity:', err);
-			console.error(`Error: ${err instanceof Error ? err.message : 'Network error'}`);
 		}
 	};
 

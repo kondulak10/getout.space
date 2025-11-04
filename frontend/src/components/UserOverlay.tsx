@@ -10,14 +10,27 @@ interface UserOverlayProps {
 }
 
 export function UserOverlay({ onActivityChanged }: UserOverlayProps) {
-	const { isAuthenticated, user } = useAuth();
+	const { user } = useAuth();
 	const { latestActivity } = useUserActivities();
 	const { showModal, activities, loading, openModal, closeModal, handleSaveActivity, handleRemoveActivity } =
 		useActivitiesManager(onActivityChanged);
 	const navigate = useNavigate();
 
-	if (!isAuthenticated || !user) {
-		return null;
+	// User data is loading from GraphQL - show skeleton
+	if (!user) {
+		return (
+			<div className="absolute top-4 right-4 z-10">
+				<div className="bg-white rounded-lg shadow-lg p-4 min-w-[320px] animate-pulse">
+					<div className="flex items-center gap-3">
+						<div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+						<div className="flex-1">
+							<div className="h-4 bg-gray-200 rounded w-32 mb-2"></div>
+							<div className="h-3 bg-gray-200 rounded w-24"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		);
 	}
 
 	const formatDistance = (meters: number) => {

@@ -3,7 +3,7 @@ import { createContext } from 'react';
 interface StravaProfile {
   firstname: string;
   lastname: string;
-  profile: string;
+  profile?: string;
   imghex?: string;
   city?: string;
   state?: string;
@@ -17,7 +17,10 @@ interface User {
   stravaId: number;
   isAdmin: boolean;
   profile: StravaProfile;
-  createdAt?: string;
+  tokenExpiresAt: number;
+  tokenIsExpired: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface AuthContextType {

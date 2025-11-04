@@ -29,14 +29,11 @@ export function TestPage() {
 	const testBackend = async () => {
 		setLoading(true);
 		try {
-			console.log('🔍 Testing backend at:', backendUrl);
 
 			const response = await fetch(`${backendUrl}/api/test`);
 			const data = await response.json();
 
-			console.log('✅ Backend response:', data);
 		} catch (error) {
-			console.error('❌ Backend error:', error);
 		} finally {
 			setLoading(false);
 		}
@@ -45,15 +42,12 @@ export function TestPage() {
 	const testBackendUsers = async () => {
 		setUsersLoading(true);
 		try {
-			console.log('🔍 Fetching users from:', backendUrl);
 
 			const response = await fetch(`${backendUrl}/api/users`);
 			const data = await response.json();
 
-			console.log('✅ Users response:', data);
 			setUsers(data.users || []);
 		} catch (error) {
-			console.error('❌ Backend users error:', error);
 			setUsers([]);
 		} finally {
 			setUsersLoading(false);

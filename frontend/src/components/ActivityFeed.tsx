@@ -30,13 +30,11 @@ export function ActivityFeed({ onActivityClick }: ActivityFeedProps) {
 	const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:4001";
 
 	useEffect(() => {
-		console.log("🔌 Connecting to activity feed...");
 
 		// Create EventSource for SSE
 		const eventSource = new EventSource(`${backendUrl}/api/strava/events`);
 
 		eventSource.onopen = () => {
-			console.log("✅ Connected to activity feed");
 			setIsConnected(true);
 		};
 
@@ -46,30 +44,24 @@ export function ActivityFeed({ onActivityClick }: ActivityFeedProps) {
 
 				// Check if it's a connection message
 				if ("type" in data && data.type === "connected") {
-					console.log("📡", data.message);
 					return;
 				}
 
 				// It's a webhook event
 				const webhookEvent = data as WebhookEvent;
-				console.log("📥 New activity event received:");
-				console.log(webhookEvent);
 
 				// Add event to the list (newest first)
 				setEvents((prev) => [webhookEvent, ...prev]);
 			} catch (error) {
-				console.error("Error parsing event:", error);
 			}
 		};
 
 		eventSource.onerror = (error) => {
-			console.error("❌ SSE connection error:", error);
 			setIsConnected(false);
 		};
 
 		// Cleanup on unmount
 		return () => {
-			console.log("🔌 Disconnecting from activity feed");
 			eventSource.close();
 		};
 	}, [backendUrl]);

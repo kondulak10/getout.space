@@ -94,7 +94,6 @@ export const routeToHexagonsArea = (coordinates: [number, number][]): string[] =
 		const hexagons = polygonToCells([h3Polygon], H3_RESOLUTION, true);
 		return hexagons;
 	} catch (error) {
-		console.error('Error converting polygon to cells:', error);
 		// Fallback to line mode
 		return routeToHexagonsLine(coordinates);
 	}
@@ -123,10 +122,8 @@ export const analyzeRouteAndConvertToHexagons = (
 	// Calculate distance between first and last point
 	const distance = calculateDistance(firstPoint, lastPoint);
 
-	console.log(`📏 Distance between start and end: ${distance.toFixed(2)}m`);
 
 	if (distance <= closeThreshold) {
-		console.log(`✅ Closed loop detected (within ${closeThreshold}m threshold)`);
 
 		// Get area hexagons (filled polygon)
 		const areaHexagons = routeToHexagonsArea(coordinates);
@@ -138,17 +135,13 @@ export const analyzeRouteAndConvertToHexagons = (
 		const combinedHexSet = new Set([...areaHexagons, ...lineHexagons]);
 		const hexagons = Array.from(combinedHexSet);
 
-		console.log(`📊 Area hexagons: ${areaHexagons.length}, Line hexagons: ${lineHexagons.length}, Combined: ${hexagons.length}`);
 
 		return {
 			hexagons,
 			type: 'area',
 		};
 	} else {
-		console.log(`➡️ Linear route detected (${distance.toFixed(2)}m > ${closeThreshold}m)`);
-		console.log(`🔗 Filling gaps between GPS points using gridPathCells...`);
 		const hexagons = routeToHexagonsLine(coordinates, true); // true = fill gaps
-		console.log(`✅ Gap filling complete`);
 		return {
 			hexagons,
 			type: 'line',

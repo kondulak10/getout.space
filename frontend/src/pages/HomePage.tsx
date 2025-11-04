@@ -35,7 +35,6 @@ export function HomePage() {
 
 	// Callback for when activities change
 	const handleActivityChanged = () => {
-		console.log('🔄 Activity changed, refreshing hexagons...');
 		refetchHexagons();
 	};
 

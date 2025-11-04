@@ -12,7 +12,6 @@ export function VersionBadge() {
 				const data = await response.json();
 				setBackendVersion(data.versionString);
 			} catch (error) {
-				console.error('Failed to fetch backend version:', error);
 				setBackendVersion('unknown');
 			}
 		};

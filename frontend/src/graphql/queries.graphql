@@ -1,3 +1,26 @@
+query Me {
+  me {
+    id
+    stravaId
+    isAdmin
+    stravaProfile {
+      firstname
+      lastname
+      profile
+      imghex
+      city
+      state
+      country
+      sex
+      username
+    }
+    tokenExpiresAt
+    tokenIsExpired
+    createdAt
+    updatedAt
+  }
+}
+
 query GetUsers {
   users {
     id

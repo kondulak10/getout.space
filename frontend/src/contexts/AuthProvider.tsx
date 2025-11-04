@@ -1,66 +1,78 @@
 import { ReactNode, useEffect, useState } from "react";
+import { useQuery } from "@apollo/client/react";
+import { MeDocument, MeQuery } from "@/gql/graphql";
 import { AuthContext, AuthContextType, User } from "./auth.types";
 
 const TOKEN_KEY = "getout_auth_token";
-const USER_KEY = "getout_user";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
 	const [token, setToken] = useState<string | null>(null);
 	const [user, setUser] = useState<User | null>(null);
-	const [isLoading, setIsLoading] = useState(true);
+	const [isInitialized, setIsInitialized] = useState(false);
 
-	// Load auth data from localStorage on mount
+	// Load token from localStorage on mount
 	useEffect(() => {
-		console.log('🔍 AuthProvider: Loading auth from localStorage...');
 		const storedToken = localStorage.getItem(TOKEN_KEY);
-		const storedUser = localStorage.getItem(USER_KEY);
-
-		console.log('Token exists:', !!storedToken);
-		console.log('User exists:', !!storedUser);
-
-		if (storedToken && storedUser) {
-			try {
-				const parsedUser = JSON.parse(storedUser);
-				setToken(storedToken);
-				setUser(parsedUser);
-				console.log(`✅ Auth restored: ${parsedUser.profile.firstname} ${parsedUser.profile.lastname}${parsedUser.isAdmin ? ' 👑' : ''}`);
-				console.log(`🖼️ Profile: ${parsedUser.profile.profile || 'Not set'}`);
-				console.log(`🔷 Hexagon: ${parsedUser.profile.imghex || 'Not set'}`);
-			} catch (error) {
-				console.error("Failed to parse stored user data:", error);
-				// Clear invalid data
-				localStorage.removeItem(TOKEN_KEY);
-				localStorage.removeItem(USER_KEY);
-			}
-		} else {
-			console.log('⚠️ No auth data in localStorage');
+		if (storedToken) {
+			setToken(storedToken);
 		}
-
-		setIsLoading(false);
+		setIsInitialized(true);
 	}, []);
+
+	// Fetch user data when we have a token
+	const { data: userData, loading: userLoading, error: userError } = useQuery(MeDocument, {
+		skip: !token || !isInitialized,
+	});
+
+	// Update user state when GraphQL data arrives
+	useEffect(() => {
+		if (userData?.me) {
+			setUser({
+				id: userData.me.id,
+				stravaId: userData.me.stravaId,
+				isAdmin: userData.me.isAdmin,
+				profile: {
+					firstname: userData.me.stravaProfile.firstname,
+					lastname: userData.me.stravaProfile.lastname,
+					profile: userData.me.stravaProfile.profile || undefined,
+					imghex: userData.me.stravaProfile.imghex || undefined,
+					city: userData.me.stravaProfile.city || undefined,
+					state: userData.me.stravaProfile.state || undefined,
+					country: userData.me.stravaProfile.country || undefined,
+					sex: userData.me.stravaProfile.sex || undefined,
+					username: userData.me.stravaProfile.username || undefined,
+				},
+				tokenExpiresAt: userData.me.tokenExpiresAt,
+				tokenIsExpired: userData.me.tokenIsExpired,
+				createdAt: String(userData.me.createdAt),
+				updatedAt: String(userData.me.updatedAt),
+			});
+		} else if (userError) {
+			// Token is invalid, clear it
+			setToken(null);
+			setUser(null);
+			localStorage.removeItem(TOKEN_KEY);
+		}
+	}, [userData, userError]);
 
 	const login = (newToken: string, newUser: User) => {
 		setToken(newToken);
 		setUser(newUser);
 		localStorage.setItem(TOKEN_KEY, newToken);
-		localStorage.setItem(USER_KEY, JSON.stringify(newUser));
-		console.log("✅ User logged in:", newUser.profile.firstname);
 	};
 
 	const logout = () => {
 		setToken(null);
 		setUser(null);
 		localStorage.removeItem(TOKEN_KEY);
-		localStorage.removeItem(USER_KEY);
-		console.log("👋 User logged out");
 	};
 
 	const value: AuthContextType = {
 		user,
 		token,
-		isAuthenticated: !!token && !!user,
+		isAuthenticated: !!token, // Token presence = authenticated (user data may still be loading)
 		isAdmin: user?.isAdmin ?? false,
-		isLoading,
+		isLoading: !isInitialized || userLoading,
 		login,
 		logout,
 		setUser,

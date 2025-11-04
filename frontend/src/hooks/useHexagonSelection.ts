@@ -43,7 +43,6 @@ export function useHexagonSelection() {
 				});
 			}
 		} catch (error) {
-			console.error('Failed to fetch hexagon details:', error);
 		}
 	};
 
