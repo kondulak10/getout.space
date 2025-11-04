@@ -179,15 +179,23 @@ export function useActivityProfileImages(
 			markersRef.current = [];
 
 			// Cleanup layers when component unmounts
-			layersAddedRef.current.forEach((layerId) => {
-				if (map.getLayer(layerId)) {
-					map.removeLayer(layerId);
-				}
-				const sourceId = layerId.replace('profile-image-', 'profile-image-source-');
-				if (map.getSource(sourceId)) {
-					map.removeSource(sourceId);
-				}
-			});
+			// Check if map is still valid before cleaning up
+			const currentMap = mapRef.current;
+			if (currentMap && currentMap.getStyle()) {
+				layersAddedRef.current.forEach((layerId) => {
+					try {
+						if (currentMap.getLayer(layerId)) {
+							currentMap.removeLayer(layerId);
+						}
+						const sourceId = layerId.replace('profile-image-', 'profile-image-source-');
+						if (currentMap.getSource(sourceId)) {
+							currentMap.removeSource(sourceId);
+						}
+					} catch (error) {
+						console.warn(`Failed to remove layer ${layerId}:`, error);
+					}
+				});
+			}
 			layersAddedRef.current.clear();
 		};
 	}, [mapRef, hexagonsData, user?.profile.imghex]);

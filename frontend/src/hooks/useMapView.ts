@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 export type MapView = 'only-you' | 'battle';
 
-export function useMapView(initialView: MapView = 'only-you') {
+export function useMapView(initialView: MapView = 'battle') {
 	const [mapView, setMapView] = useState<MapView>(initialView);
 
 	return {

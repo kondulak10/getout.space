@@ -43,6 +43,10 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 	const onHexagonClickRef = React.useRef(onHexagonClick);
 	const lastFetchedBoundsRef = React.useRef<BoundingBox | null>(null);
 	const modeRef = React.useRef(mode); // Use ref so callbacks don't need to change
+	const isMountedRef = React.useRef(true); // Track if component is mounted
+	const clickHandlerRef = React.useRef<((e: mapboxgl.MapMouseEvent) => void) | null>(null);
+	const mouseEnterHandlerRef = React.useRef<(() => void) | null>(null);
+	const mouseLeaveHandlerRef = React.useRef<(() => void) | null>(null);
 
 	// Keep refs updated
 	useEffect(() => {
@@ -120,16 +124,22 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 			}
 		};
 
-		map.on("click", "hexagon-fills", handleHexagonClick);
-
-		// Change cursor on hover
-		map.on("mouseenter", "hexagon-fills", () => {
+		const handleMouseEnter = () => {
 			map.getCanvas().style.cursor = "pointer";
-		});
+		};
 
-		map.on("mouseleave", "hexagon-fills", () => {
+		const handleMouseLeave = () => {
 			map.getCanvas().style.cursor = "";
-		});
+		};
+
+		// Store handlers in refs for cleanup
+		clickHandlerRef.current = handleHexagonClick;
+		mouseEnterHandlerRef.current = handleMouseEnter;
+		mouseLeaveHandlerRef.current = handleMouseLeave;
+
+		map.on("click", "hexagon-fills", handleHexagonClick);
+		map.on("mouseenter", "hexagon-fills", handleMouseEnter);
+		map.on("mouseleave", "hexagon-fills", handleMouseLeave);
 	}, [mapRef]);
 
 	// Cleanup hex layers
@@ -137,16 +147,41 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 		if (!mapRef.current) return;
 		const map = mapRef.current;
 
+		// Check if map is still valid before cleaning up
+		if (!map.getStyle()) {
+			console.log(`⚠️ Map already destroyed, skipping layer cleanup`);
+			return;
+		}
+
 		console.log(`🧹 Cleaning up hexagon layers`);
 
-		if (map.getLayer("hexagon-fills")) {
-			map.removeLayer("hexagon-fills");
-		}
-		if (map.getLayer("hexagon-outlines")) {
-			map.removeLayer("hexagon-outlines");
-		}
-		if (map.getSource("hexagons")) {
-			map.removeSource("hexagons");
+		try {
+			// Remove event handlers first (before removing layers)
+			if (clickHandlerRef.current) {
+				map.off("click", "hexagon-fills", clickHandlerRef.current);
+				clickHandlerRef.current = null;
+			}
+			if (mouseEnterHandlerRef.current) {
+				map.off("mouseenter", "hexagon-fills", mouseEnterHandlerRef.current);
+				mouseEnterHandlerRef.current = null;
+			}
+			if (mouseLeaveHandlerRef.current) {
+				map.off("mouseleave", "hexagon-fills", mouseLeaveHandlerRef.current);
+				mouseLeaveHandlerRef.current = null;
+			}
+
+			// Then remove layers
+			if (map.getLayer("hexagon-fills")) {
+				map.removeLayer("hexagon-fills");
+			}
+			if (map.getLayer("hexagon-outlines")) {
+				map.removeLayer("hexagon-outlines");
+			}
+			if (map.getSource("hexagons")) {
+				map.removeSource("hexagons");
+			}
+		} catch (error) {
+			console.warn(`Failed to cleanup hexagon layers:`, error);
 		}
 
 		// Clear cached bounds so we fetch fresh data next time
@@ -280,9 +315,18 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 		if (!mapRef.current) return;
 		const map = mapRef.current;
 
+		// Reset mounted flag (important for React strict mode)
+		isMountedRef.current = true;
+
 		console.log(`🎬 Initial setup`);
 
 		const initializeHexagons = () => {
+			// Check if component is still mounted
+			if (!isMountedRef.current) {
+				console.log(`⚠️ Component unmounted, skipping initialization`);
+				return;
+			}
+
 			console.log(`🗺️ Setting up layers and listeners`);
 
 			// Setup layers
@@ -290,6 +334,9 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 
 			// Fetch initial hexagons
 			const doInitialFetch = () => {
+				// Double-check component is still mounted
+				if (!isMountedRef.current) return;
+
 				console.log(`📡 Fetching initial hexagons...`);
 				clearBoundsCache();
 				updateHexagons();
@@ -316,8 +363,27 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 
 		return () => {
 			console.log(`🧹 Component unmounting - final cleanup`);
-			map.off('moveend', updateHexagons);
-			map.off('zoomend', updateHexagons);
+
+			// Mark component as unmounted to prevent race conditions
+			isMountedRef.current = false;
+
+			// Clear any pending debounce timeout
+			if (debounceTimeoutRef.current) {
+				clearTimeout(debounceTimeoutRef.current);
+				debounceTimeoutRef.current = null;
+			}
+
+			// Remove event listeners if map is still valid
+			const currentMap = mapRef.current;
+			if (currentMap && currentMap.getStyle()) {
+				try {
+					currentMap.off('moveend', updateHexagons);
+					currentMap.off('zoomend', updateHexagons);
+				} catch (error) {
+					console.warn(`Failed to remove event listeners:`, error);
+				}
+			}
+
 			cleanupHexagonLayer();
 		};
 	}, [mapRef, setupHexagonLayer, updateHexagons, cleanupHexagonLayer, clearBoundsCache]);
