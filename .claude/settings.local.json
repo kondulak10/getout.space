@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\components\\HexOverlay.module.css\")",
-      "Bash(node check-db.js:*)"
+      "Bash(node check-db.js:*)",
+      "Bash(node check-hexagons.js:*)",
+      "Bash(node check-parent-field.js:*)"
     ],
     "deny": [],
     "ask": []

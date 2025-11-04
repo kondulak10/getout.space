@@ -213,6 +213,7 @@ export async function processActivity(
  */
 interface HexagonCreateDoc {
 	hexagonId: string;
+	parentHexagonId: string;
 	currentOwnerId: mongoose.Types.ObjectId;
 	currentOwnerStravaId: number;
 	currentActivityId: mongoose.Types.ObjectId;
@@ -236,6 +237,9 @@ async function processHexagons(
 	routeType: 'line' | 'area',
 	session: mongoose.ClientSession
 ) {
+	// Import h3 for parent calculation
+	const h3 = require('h3-js');
+
 	// Step 1: Fetch all existing hexagons in one query
 	const existingHexagons = await Hexagon.find({
 		hexagonId: { $in: hexagons },
@@ -261,8 +265,12 @@ async function processHexagons(
 
 		if (!existingHex) {
 			// New hexagon - prepare for batch insert
+			// Calculate parent hexagon (resolution 6 for good balance)
+			const parentHexagonId = h3.cellToParent(hexagonId, 6);
+
 			hexagonsToCreate.push({
 				hexagonId,
+				parentHexagonId,
 				currentOwnerId: user._id,
 				currentOwnerStravaId: user.stravaId,
 				currentActivityId: activity._id,
