@@ -27,9 +27,37 @@ export async function refreshStravaToken(user: IUser): Promise<{
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    console.error('❌ Token refresh failed:', response.status, errorData);
-    throw new Error(`Token refresh failed: ${response.status}`);
+    let errorBody = '';
+    let errorData: any = {};
+
+    try {
+      errorBody = await response.text();
+      errorData = JSON.parse(errorBody);
+    } catch (e) {
+      // If we can't parse JSON, use the raw text
+      errorData = { raw: errorBody };
+    }
+
+    // Log detailed error information
+    console.error('❌ Token refresh failed:', {
+      status: response.status,
+      statusText: response.statusText,
+      userId: user._id,
+      stravaId: user.stravaId,
+      userName: `${user.stravaProfile.firstname} ${user.stravaProfile.lastname}`,
+      errorData,
+      tokenExpiresAt: user.tokenExpiresAt,
+      tokenExpiresAtDate: new Date(user.tokenExpiresAt * 1000).toISOString(),
+      refreshTokenPrefix: user.refreshToken.length >= 10 ? user.refreshToken.substring(0, 10) + '...' : '[short]',
+      refreshTokenLength: user.refreshToken.length,
+    });
+
+    // Special handling for 401 - likely means refresh token was already used or revoked
+    if (response.status === 401) {
+      throw new Error(`Token refresh failed with 401 - refresh token may have been already used or user revoked access (user: ${user.stravaProfile.firstname})`);
+    }
+
+    throw new Error(`Token refresh failed: ${response.status} ${response.statusText}`);
   }
 
   const data = (await response.json()) as {

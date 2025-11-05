@@ -51,3 +51,6 @@ infrastructure/nul
 backend/nul
 nul
 frontend/src/version.ts
+
+# NPM configuration files with tokens
+**/.npmrc

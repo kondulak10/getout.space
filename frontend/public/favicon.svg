@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF6B35;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F7931E;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <circle cx="32" cy="32" r="32" fill="url(#grad)"/>
+  <g fill="#FFFFFF">
+    <circle cx="38" cy="16" r="5">
+      <animate attributeName="cy" values="16;15;16" dur="0.6s" repeatCount="indefinite"/>
+    </circle>
+    <path d="M 35 23 L 36 28 L 38 35 L 40 28 L 41 23 Z">
+      <animate attributeName="d" values="M 35 23 L 36 28 L 38 35 L 40 28 L 41 23 Z;M 35 23 L 36 27 L 38 34 L 40 27 L 41 23 Z;M 35 23 L 36 28 L 38 35 L 40 28 L 41 23 Z" dur="0.6s" repeatCount="indefinite"/>
+    </path>
+    <g id="leftArm">
+      <path d="M 36 26 L 30 24 L 28 28">
+        <animate attributeName="d" values="M 36 26 L 30 24 L 28 28;M 36 26 L 32 30 L 30 34;M 36 26 L 30 24 L 28 28" dur="0.6s" repeatCount="indefinite"/>
+      </path>
+    </g>
+    <g id="rightArm">
+      <path d="M 40 26 L 46 28 L 48 32">
+        <animate attributeName="d" values="M 40 26 L 46 28 L 48 32;M 40 26 L 44 22 L 46 20;M 40 26 L 46 28 L 48 32" dur="0.6s" repeatCount="indefinite"/>
+      </path>
+    </g>
+    <g id="leftLeg">
+      <path d="M 37 35 L 34 42 L 32 48">
+        <animate attributeName="d" values="M 37 35 L 34 42 L 32 48;M 37 35 L 38 44 L 40 50;M 37 35 L 34 42 L 32 48" dur="0.6s" repeatCount="indefinite"/>
+      </path>
+    </g>
+    <g id="rightLeg">
+      <path d="M 39 35 L 42 44 L 44 50">
+        <animate attributeName="d" values="M 39 35 L 42 44 L 44 50;M 39 35 L 36 42 L 34 48;M 39 35 L 42 44 L 44 50" dur="0.6s" repeatCount="indefinite"/>
+      </path>
+    </g>
+  </g>
+</svg>
+

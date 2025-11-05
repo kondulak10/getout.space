@@ -15,6 +15,9 @@ dist-ssr
 # Auto-generated files
 src/version.ts
 
+# NPM configuration with sensitive tokens
+.npmrc
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -65,8 +65,8 @@ export async function processActivity(
 		// Get valid access token (auto-refreshes if needed)
 		const accessToken = await getValidAccessToken(userId);
 
-		// Fetch activity details from Strava
-		const stravaActivity = await fetchStravaActivity(stravaActivityId, accessToken);
+		// Fetch activity details from Strava (pass userId for 401 retry with token refresh)
+		const stravaActivity = await fetchStravaActivity(stravaActivityId, accessToken, userId);
 
 		// Validate activity type - only allow running activities
 		if (!isRunningActivity(stravaActivity)) {
