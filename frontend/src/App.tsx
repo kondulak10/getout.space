@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import { IndexPage } from '@/pages/IndexPage';
 import { ProfilePage } from '@/pages/ProfilePage';
+import { HexTestPage } from '@/pages/HexTestPage';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
 					</ProtectedRoute>
 				}
 			/>
+			<Route path="/hex-test" element={<HexTestPage />} />
 		</Routes>
 	);
 }

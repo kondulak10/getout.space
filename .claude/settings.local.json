@@ -5,7 +5,14 @@
       "Bash(node check-db.js:*)",
       "Bash(node check-hexagons.js:*)",
       "Bash(node check-parent-field.js:*)",
-      "WebFetch(domain:developers.strava.com)"
+      "WebFetch(domain:developers.strava.com)",
+      "Bash(npm run codegen:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run generate:testdata:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run build:*)",
+      "Bash(terraform plan:*)",
+      "Bash(aws cloudfront create-invalidation:*)"
     ],
     "deny": [],
     "ask": []

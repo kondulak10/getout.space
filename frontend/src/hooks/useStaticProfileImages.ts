@@ -1,41 +1,23 @@
 import { useEffect, useRef } from 'react';
 import type { Map as MapboxMap } from 'mapbox-gl';
 import { cellToBoundary } from 'h3-js';
-import { useAuth } from '@/contexts/useAuth';
 import * as turf from '@turf/turf';
-
-interface ActivityHexagons {
-	[activityId: string]: string[]; // activityId -> hexagonIds
-}
-
-interface SelectedHexagons {
-	[activityId: string]: string; // activityId -> selected hexagonId
-}
-
-const STORAGE_KEY = 'activity_profile_image_positions';
+import type { MockData } from '@/utils/mockHexData';
 
 /**
- * Hook to display user profile images on hexagons
- * - Regular users: Places one profile image per activity on a randomly selected hexagon
- * - Premium users: Places profile image on ALL their hexagons
+ * Hook to display profile images on hexagons for static test data
+ * - Premium users: 1 image per 5 hexagons, max 30 images per user
+ * - Regular users: No images (to keep it simple for testing)
  */
-export function useActivityProfileImages(
+export function useStaticProfileImages(
 	mapRef: React.RefObject<MapboxMap | null>,
-	hexagonsData: any[] | null
+	mockData: MockData | null
 ) {
-	const { user } = useAuth();
 	const layersAddedRef = useRef<Set<string>>(new Set());
-	const markersRef = useRef<mapboxgl.Marker[]>([]);
 
 	useEffect(() => {
 		const map = mapRef.current;
-		if (!map) {
-			return;
-		}
-		if (!hexagonsData) {
-			return;
-		}
-		if (!user?.profile.imghex) {
+		if (!map || !mockData) {
 			return;
 		}
 
@@ -100,7 +82,6 @@ export function useActivityProfileImages(
 						// Listen for source errors and clean up failed loads
 						const errorHandler = (e: any) => {
 							if (e.sourceId === sourceId || e.source?.id === sourceId) {
-								// Image loading failed, removing from map
 								try {
 									if (map.getLayer(layerId)) {
 										map.removeLayer(layerId);
@@ -140,96 +121,51 @@ export function useActivityProfileImages(
 				}
 			};
 
-			// Group hexagons by user and activity (using denormalized fields)
-			const userHexagons: { [userId: string]: { isPremium: boolean; imghex?: string; hexagons: any[] } } = {};
+			// Add images for premium users: 1 photo per 10 hexes, max 10 photos per user
+			const premiumHexagons = mockData.hexagons.filter(
+				hex => hex.currentOwnerIsPremium && hex.currentOwnerImghex
+			);
 
-			hexagonsData.forEach((hex: any) => {
-				// Use denormalized fields from hexagon directly
-				if (hex.currentOwnerImghex) {
-					const userId = hex.currentOwnerId;
-					if (!userHexagons[userId]) {
-						userHexagons[userId] = {
-							isPremium: hex.currentOwnerIsPremium || false,
-							imghex: hex.currentOwnerImghex,
-							hexagons: [],
-						};
-					}
-					userHexagons[userId].hexagons.push(hex);
+			// Group by user
+			const hexagonsByUser = new Map<string, typeof premiumHexagons>();
+			premiumHexagons.forEach(hex => {
+				if (!hexagonsByUser.has(hex.currentOwnerId)) {
+					hexagonsByUser.set(hex.currentOwnerId, []);
 				}
+				hexagonsByUser.get(hex.currentOwnerId)!.push(hex);
 			});
 
-			// Load or create selected hexagons for each activity (for non-premium users)
-			const storedSelections = localStorage.getItem(STORAGE_KEY);
-			const selectedHexagons: SelectedHexagons = storedSelections
-				? JSON.parse(storedSelections)
-				: {};
+			const maxImagesPerUser = 30;
+			const interval = 5;
+			let totalImages = 0;
 
-			// Process each user
-			Object.entries(userHexagons).forEach(([userId, userData]) => {
-				const { isPremium, imghex, hexagons: userHexes } = userData;
+			// For each premium user, select every 5th hexagon, max 30 images
+			hexagonsByUser.forEach((userHexes) => {
+				const selectedHexes = userHexes.filter((_, index) => index % interval === 0).slice(0, maxImagesPerUser);
 
-				if (!imghex) return;
-
-				if (isPremium) {
-					// Premium users: Add image to every 10th hexagon, max 10 images
-					const maxImages = 10;
-					const interval = 10;
-					const selectedHexes = userHexes.filter((_: any, index: number) => index % interval === 0).slice(0, maxImages);
-
-					selectedHexes.forEach((hex: any) => {
-						const uniqueId = `${userId}-${hex.hexagonId}`;
-						addProfileImage(hex.hexagonId, imghex, uniqueId);
-					});
-				} else {
-					// Non-premium users: Add image to one hexagon per activity
-					const activityHexagons: ActivityHexagons = {};
-
-					userHexes.forEach((hex: any) => {
-						if (hex.currentStravaActivityId) {
-							const activityId = hex.currentStravaActivityId.toString();
-							if (!activityHexagons[activityId]) {
-								activityHexagons[activityId] = [];
-							}
-							activityHexagons[activityId].push(hex.hexagonId);
-						}
-					});
-
-					// For each activity, pick one hexagon
-					Object.keys(activityHexagons).forEach((activityId) => {
-						const hexagons = activityHexagons[activityId];
-
-						// Check if we already have a selection for this activity
-						if (!selectedHexagons[activityId] || !hexagons.includes(selectedHexagons[activityId])) {
-							// Pick random hexagon from this activity
-							const randomIndex = Math.floor(Math.random() * hexagons.length);
-							selectedHexagons[activityId] = hexagons[randomIndex];
-						}
-
-						// Add image to selected hexagon
-						const hexagonId = selectedHexagons[activityId];
-						const uniqueId = `${userId}-${activityId}`;
-						addProfileImage(hexagonId, imghex, uniqueId);
-					});
-
-					// Save selections to localStorage
-					localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedHexagons));
-				}
+				selectedHexes.forEach((hex) => {
+					const uniqueId = `${hex.currentOwnerId}-${hex.hexagonId}`;
+					addProfileImage(hex.hexagonId, hex.currentOwnerImghex!, uniqueId);
+					totalImages++;
+				});
 			});
+
+			console.log(`🖼️ Added ${totalImages} profile images for ${hexagonsByUser.size} premium users (1 per 5 hexes, max 30 per user)`);
+			console.log(`   Total premium hexagons: ${premiumHexagons.length}, showing images on: ${totalImages}`);
 		};
 
 		// Map is ready if hexagons are loaded - just call onMapLoad
-		// The load event already fired when the map was first created
-		onMapLoad();
+		if (map.loaded()) {
+			// Wait a bit for hexagon layers to be added first
+			setTimeout(onMapLoad, 500);
+		} else {
+			map.once('load', () => {
+				setTimeout(onMapLoad, 500);
+			});
+		}
 
 		return () => {
-			// No need to clean up load event since we're not listening to it
-
-			// Cleanup markers
-			markersRef.current.forEach(marker => marker.remove());
-			markersRef.current = [];
-
 			// Cleanup layers when component unmounts
-			// Check if map is still valid before cleaning up
 			const currentMap = mapRef.current;
 			if (currentMap && currentMap.getStyle()) {
 				layersAddedRef.current.forEach((layerId) => {
@@ -248,5 +184,5 @@ export function useActivityProfileImages(
 			}
 			layersAddedRef.current.clear();
 		};
-	}, [mapRef, hexagonsData, user?.profile.imghex]);
+	}, [mapRef, mockData]);
 }

@@ -21,6 +21,8 @@ export interface IHexagon extends Document {
   // Current owner information
   currentOwnerId: Types.ObjectId; // User who currently owns this hex
   currentOwnerStravaId: number; // Strava ID of current owner
+  currentOwnerIsPremium: boolean; // Is current owner a premium user (denormalized for performance)
+  currentOwnerImghex?: string; // Current owner's profile image (denormalized for performance)
   currentActivityId: Types.ObjectId; // Activity that captured this hex
   currentStravaActivityId: number; // Strava activity ID
 
@@ -67,6 +69,16 @@ const hexagonSchema = new Schema<IHexagon>(
     currentOwnerStravaId: {
       type: Number,
       required: true,
+    },
+    currentOwnerIsPremium: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
+    currentOwnerImghex: {
+      type: String,
+      required: false,
+      default: undefined,
     },
     currentActivityId: {
       type: Schema.Types.ObjectId,

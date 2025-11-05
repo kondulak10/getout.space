@@ -22,6 +22,7 @@ export interface IUser extends Document {
   refreshToken: string;
   tokenExpiresAt: number;
   isAdmin: boolean;
+  isPremium: boolean;
   stravaProfile: IStravaProfile;
   createdAt: Date;
   updatedAt: Date;
@@ -64,6 +65,10 @@ const userSchema = new Schema<IUser>(
       required: true,
     },
     isAdmin: {
+      type: Boolean,
+      default: false,
+    },
+    isPremium: {
       type: Boolean,
       default: false,
     },

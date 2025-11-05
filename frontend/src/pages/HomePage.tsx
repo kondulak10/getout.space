@@ -3,6 +3,7 @@ import { useHexagons } from '@/hooks/useHexagons';
 import { useMapView } from '@/hooks/useMapView';
 import { useHexagonSelection } from '@/hooks/useHexagonSelection';
 import { useActivityProfileImages } from '@/hooks/useActivityProfileImages';
+import { useStravaAuth } from '@/hooks/useStravaAuth';
 import { HexOverlay } from '@/components/HexOverlay';
 import { HexagonLoadingIndicator } from '@/components/HexagonLoadingIndicator';
 import { HexagonDetailModal } from '@/components/HexagonDetailModal';
@@ -27,6 +28,11 @@ export function HomePage() {
 		mapRef,
 		mode: mapView,
 		onHexagonClick: handleHexagonClick,
+	});
+
+	// Setup Strava auth to refresh hexagons after registration activities are processed
+	useStravaAuth({
+		onActivitiesProcessed: refetchHexagons,
 	});
 
 	// Add profile images on hexagons

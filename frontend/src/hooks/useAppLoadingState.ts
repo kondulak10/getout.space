@@ -1,9 +1,15 @@
 import { useAuth } from '@/contexts/useAuth';
 import { useStravaAuth } from '@/hooks/useStravaAuth';
 
-export function useAppLoadingState() {
+interface UseAppLoadingStateOptions {
+	onActivitiesProcessed?: () => void;
+}
+
+export function useAppLoadingState(options?: UseAppLoadingStateOptions) {
 	const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
-	const { isAuthenticating } = useStravaAuth();
+	const { isAuthenticating } = useStravaAuth({
+		onActivitiesProcessed: options?.onActivitiesProcessed,
+	});
 
 	const showLoading = isAuthLoading || isAuthenticating;
 

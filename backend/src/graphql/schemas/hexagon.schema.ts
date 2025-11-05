@@ -16,6 +16,8 @@ export const hexagonSchema = gql`
     currentOwnerId: ID!
     currentOwner: User
     currentOwnerStravaId: Int!
+    currentOwnerIsPremium: Boolean
+    currentOwnerImghex: String
     currentActivityId: ID!
     currentActivity: Activity
     currentStravaActivityId: Float!

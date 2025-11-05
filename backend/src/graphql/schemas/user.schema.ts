@@ -17,6 +17,7 @@ export const userSchema = gql`
     id: ID!
     stravaId: Int!
     isAdmin: Boolean!
+    isPremium: Boolean!
     stravaProfile: StravaProfile!
     tokenExpiresAt: Int!
     tokenIsExpired: Boolean!

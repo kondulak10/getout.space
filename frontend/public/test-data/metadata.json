@@ -1,0 +1,124 @@
+{
+  "users": [
+    {
+      "id": "user-1",
+      "name": "User 1",
+      "isPremium": true,
+      "imghex": "https://getout.space/profile-images/690bc04570486177aae3957a/hexagon.png"
+    },
+    {
+      "id": "user-2",
+      "name": "User 2",
+      "isPremium": false,
+      "imghex": null
+    },
+    {
+      "id": "user-3",
+      "name": "User 3",
+      "isPremium": false,
+      "imghex": null
+    },
+    {
+      "id": "user-4",
+      "name": "User 4",
+      "isPremium": false,
+      "imghex": null
+    },
+    {
+      "id": "user-5",
+      "name": "User 5",
+      "isPremium": false,
+      "imghex": null
+    },
+    {
+      "id": "user-6",
+      "name": "User 6",
+      "isPremium": false,
+      "imghex": null
+    },
+    {
+      "id": "user-7",
+      "name": "User 7",
+      "isPremium": false,
+      "imghex": null
+    },
+    {
+      "id": "user-8",
+      "name": "User 8",
+      "isPremium": false,
+      "imghex": null
+    },
+    {
+      "id": "user-9",
+      "name": "User 9",
+      "isPremium": false,
+      "imghex": null
+    },
+    {
+      "id": "user-10",
+      "name": "User 10",
+      "isPremium": false,
+      "imghex": null
+    },
+    {
+      "id": "user-11",
+      "name": "User 11",
+      "isPremium": false,
+      "imghex": null
+    },
+    {
+      "id": "user-12",
+      "name": "User 12",
+      "isPremium": false,
+      "imghex": null
+    }
+  ],
+  "parentHexagons": [
+    "860999387ffffff",
+    "8609993b7ffffff",
+    "860999397ffffff",
+    "86099939fffffff",
+    "86099938fffffff",
+    "8609993afffffff",
+    "8609993a7ffffff"
+  ],
+  "parentData": [
+    {
+      "parentHexagonId": "860999387ffffff",
+      "hexagonCount": 1440,
+      "filename": "parent-0.json"
+    },
+    {
+      "parentHexagonId": "8609993b7ffffff",
+      "hexagonCount": 1440,
+      "filename": "parent-1.json"
+    },
+    {
+      "parentHexagonId": "860999397ffffff",
+      "hexagonCount": 1441,
+      "filename": "parent-2.json"
+    },
+    {
+      "parentHexagonId": "86099939fffffff",
+      "hexagonCount": 1440,
+      "filename": "parent-3.json"
+    },
+    {
+      "parentHexagonId": "86099938fffffff",
+      "hexagonCount": 1440,
+      "filename": "parent-4.json"
+    },
+    {
+      "parentHexagonId": "8609993afffffff",
+      "hexagonCount": 1440,
+      "filename": "parent-5.json"
+    },
+    {
+      "parentHexagonId": "8609993a7ffffff",
+      "hexagonCount": 1440,
+      "filename": "parent-6.json"
+    }
+  ],
+  "totalHexagons": 10081,
+  "generatedAt": "2025-11-05T22:50:30.420Z"
+}

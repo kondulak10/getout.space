@@ -4,6 +4,7 @@ import {
 	MyHexagonsCountDocument,
 } from "@/gql/graphql";
 import { h3ToGeoJSON } from "@/utils/hexagonUtils";
+import { getUserColor } from "@/constants/hexagonColors";
 import { useLazyQuery, useQuery } from "@apollo/client/react";
 import { gridDisk, latLngToCell } from "h3-js";
 import type { Map as MapboxMap } from "mapbox-gl";
@@ -13,32 +14,6 @@ interface UseHexagonsOptions {
 	mapRef: React.RefObject<MapboxMap | null>;
 	mode: "only-you" | "battle";
 	onHexagonClick?: (hexagonId: string) => void;
-}
-
-// Custom color palette for hexagons
-const HEXAGON_COLORS = [
-	"#411EFD",
-	"#79C5FE",
-	"#99FC8D",
-	"#F1D619",
-	"#D62026",
-	"#D84B00",
-	"#85DD22",
-	"#D62190",
-	"#CB5FFC",
-	"#7B33DC",
-];
-
-/**
- * Generate a consistent color for a user ID using custom palette
- */
-function getUserColor(userId: string): string {
-	let hash = 0;
-	for (let i = 0; i < userId.length; i++) {
-		hash = userId.charCodeAt(i) + ((hash << 5) - hash);
-	}
-	const colorIndex = Math.abs(hash) % HEXAGON_COLORS.length;
-	return HEXAGON_COLORS[colorIndex];
 }
 
 /**

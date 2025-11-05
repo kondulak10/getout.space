@@ -3,6 +3,7 @@ query Me {
     id
     stravaId
     isAdmin
+    isPremium
     stravaProfile {
       firstname
       lastname
@@ -89,6 +90,8 @@ query MyHexagonsByParents($parentHexagonIds: [String!]!) {
     hexagonId
     currentOwnerId
     currentOwnerStravaId
+    currentOwnerIsPremium
+    currentOwnerImghex
     currentStravaActivityId
     activityType
     captureCount
@@ -101,6 +104,8 @@ query HexagonsByParents($parentHexagonIds: [String!]!) {
     hexagonId
     currentOwnerId
     currentOwnerStravaId
+    currentOwnerIsPremium
+    currentOwnerImghex
     currentStravaActivityId
     activityType
     captureCount

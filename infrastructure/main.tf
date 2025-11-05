@@ -155,7 +155,7 @@ resource "aws_cloudfront_distribution" "website" {
 
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD", "OPTIONS"]
-    cached_methods   = ["GET", "HEAD"]
+    cached_methods   = ["GET", "HEAD", "OPTIONS"]
     target_origin_id = "S3-${var.domain_name}"
 
     forwarded_values {
@@ -163,7 +163,17 @@ resource "aws_cloudfront_distribution" "website" {
       cookies {
         forward = "none"
       }
-      headers = ["Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"]
+      # Forward Origin header to S3 and vary cache by it
+      # This ensures localhost and production get separate cached responses
+      # with their respective CORS headers
+      headers = [
+        "Origin",
+        "Access-Control-Request-Method",
+        "Access-Control-Request-Headers",
+        "Access-Control-Allow-Origin",
+        "Access-Control-Allow-Methods",
+        "Access-Control-Allow-Headers"
+      ]
     }
 
     viewer_protocol_policy = "redirect-to-https"

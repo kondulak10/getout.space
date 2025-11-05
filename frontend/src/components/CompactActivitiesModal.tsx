@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, Trash2, Loader2, Activity } from 'lucide-react';
+import { toast } from 'sonner';
 import type { StravaActivity } from '@/services/stravaApi.service';
 import {
 	AlertDialog,
@@ -38,6 +39,13 @@ export function CompactActivitiesModal({
 		setProcessingIds((prev) => new Set(prev).add(activityId));
 		try {
 			await onProcess(activityId);
+			toast.success('Activity processed successfully!', {
+				description: 'Your hexagons have been updated on the map.',
+			});
+		} catch (error) {
+			toast.error('Failed to process activity', {
+				description: error instanceof Error ? error.message : 'An error occurred',
+			});
 		} finally {
 			setProcessingIds((prev) => {
 				const next = new Set(prev);
@@ -55,11 +63,18 @@ export function CompactActivitiesModal({
 
 	const confirmDelete = async () => {
 		if (activityToDelete === null) return;
-		
+
 		setDeletingIds((prev) => new Set(prev).add(activityToDelete));
 		setShowDeleteDialog(false);
 		try {
 			await onDelete(activityToDelete);
+			toast.success('Activity deleted', {
+				description: 'Hexagons have been restored to previous owners.',
+			});
+		} catch (error) {
+			toast.error('Failed to delete activity', {
+				description: error instanceof Error ? error.message : 'An error occurred',
+			});
 		} finally {
 			setDeletingIds((prev) => {
 				const next = new Set(prev);

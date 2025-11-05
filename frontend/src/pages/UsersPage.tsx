@@ -3,7 +3,6 @@ import {
 	DeleteUserDocument,
 	GetUsersDocument,
 	RefreshUserTokenDocument,
-	User,
 } from "@/gql/graphql";
 import { useMutation, useQuery } from "@apollo/client/react";
 import { useState } from "react";
@@ -153,7 +152,7 @@ export default function UsersPage() {
 							</tr>
 						</thead>
 						<tbody className="bg-white divide-y divide-gray-200">
-							{data?.users?.map((user: User) => (
+							{data?.users?.map((user) => (
 								<tr key={user.id} className="hover:bg-gray-50">
 									<td className="px-6 py-4">
 										<div className="flex items-center gap-3">
