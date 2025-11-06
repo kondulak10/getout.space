@@ -22,7 +22,7 @@ const OSLO_LNG = 10.7522;
 const ACTIVITY_TYPES = ['Run', 'Ride', 'Walk', 'Hike', 'TrailRun'];
 
 // Profile photo for premium user (using permanent test image that won't be deleted)
-const PREMIUM_PHOTO = 'https://cdn.getout.space/permanent-test-images/test-user/hexagon.png';
+const PREMIUM_PHOTO = 'https://cdn.getout.space/permanent-test-images/premium-user/hexagon.png';
 
 // Generate 12 mock users (3 premium)
 function generateMockUsers() {

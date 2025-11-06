@@ -32,8 +32,8 @@ const OSLO_LNG = 10.7522;
 // Activity types for variety
 const ACTIVITY_TYPES = ['Run', 'Ride', 'Walk', 'Hike', 'TrailRun'];
 
-// Profile photo for premium user
-const PREMIUM_PHOTO = 'https://cdn.getout.space/profile-images/690bc04570486177aae3957a/hexagon.png';
+// Profile photo for premium user (permanent test image)
+const PREMIUM_PHOTO = 'https://cdn.getout.space/permanent-test-images/premium-user/hexagon.png';
 
 /**
  * Generate 12 mock users (3 premium)
