@@ -6,7 +6,7 @@ const s3Client = new S3Client({
 });
 
 const S3_BUCKET = 'getout-space-web';
-const CLOUDFRONT_DOMAIN = 'https://getout.space'; // Use custom domain instead of CloudFront directly
+const CLOUDFRONT_DOMAIN = 'https://cdn.getout.space'; // CDN subdomain for static assets (no SPA routing)
 
 /**
  * Upload image buffer to S3

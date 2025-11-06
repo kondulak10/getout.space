@@ -61,6 +61,15 @@ resource "aws_s3_bucket_policy" "website" {
         Principal = "*"
         Action    = "s3:GetObject"
         Resource  = "${aws_s3_bucket.website.arn}/*"
+      },
+      {
+        Sid    = "CloudFrontOAIAccess"
+        Effect = "Allow"
+        Principal = {
+          AWS = aws_cloudfront_origin_access_identity.oai.iam_arn
+        }
+        Action   = "s3:GetObject"
+        Resource = "${aws_s3_bucket.website.arn}/*"
       }
     ]
   })
@@ -75,7 +84,7 @@ resource "aws_s3_bucket_cors_configuration" "website" {
   cors_rule {
     allowed_headers = ["*"]
     allowed_methods = ["GET", "HEAD"]
-    allowed_origins = ["http://localhost:5173", "https://getout.space", "https://www.getout.space"]
+    allowed_origins = ["http://localhost:5173", "https://getout.space", "https://www.getout.space", "https://cdn.getout.space"]
     expose_headers  = ["ETag"]
     max_age_seconds = 3600
   }
@@ -93,7 +102,7 @@ resource "aws_acm_certificate" "cert" {
   domain_name       = var.domain_name
   validation_method = "DNS"
 
-  subject_alternative_names = ["www.${var.domain_name}"]
+  subject_alternative_names = ["www.${var.domain_name}", "cdn.${var.domain_name}"]
 
   lifecycle {
     create_before_destroy = true
@@ -270,6 +279,87 @@ resource "aws_route53_record" "www" {
   alias {
     name                   = aws_cloudfront_distribution.website.domain_name
     zone_id                = aws_cloudfront_distribution.website.hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
+# CloudFront distribution for CDN subdomain (static assets only)
+# This distribution serves ONLY static assets (images, etc.) without SPA routing fallback
+resource "aws_cloudfront_distribution" "cdn" {
+  provider = aws.main
+
+  origin {
+    domain_name = aws_s3_bucket.website.bucket_regional_domain_name
+    origin_id   = "S3-CDN-${var.domain_name}"
+
+    s3_origin_config {
+      origin_access_identity = aws_cloudfront_origin_access_identity.oai.cloudfront_access_identity_path
+    }
+  }
+
+  enabled         = true
+  is_ipv6_enabled = true
+  aliases         = ["cdn.${var.domain_name}"]
+
+  default_cache_behavior {
+    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
+    cached_methods   = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id = "S3-CDN-${var.domain_name}"
+
+    forwarded_values {
+      query_string = true # Enable cache-busting with ?t=timestamp
+
+      cookies {
+        forward = "none"
+      }
+
+      # Forward CORS headers
+      headers = [
+        "Origin",
+        "Access-Control-Request-Method",
+        "Access-Control-Request-Headers"
+      ]
+    }
+
+    viewer_protocol_policy = "redirect-to-https"
+    min_ttl                = 0
+    default_ttl            = 86400  # Cache for 24 hours
+    max_ttl                = 31536000 # Max 1 year
+    compress               = true
+  }
+
+  # NO custom_error_response blocks!
+  # Let 404s be 404s, don't redirect to index.html
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  viewer_certificate {
+    acm_certificate_arn      = aws_acm_certificate.cert.arn
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2021"
+  }
+
+  depends_on = [aws_acm_certificate_validation.cert]
+}
+
+# Note: S3 bucket policy already exists above (aws_s3_bucket_policy.website)
+# The existing policy allows public access which works for both distributions
+# The CDN distribution uses OAI, which is already covered by the existing policy
+
+# Route53 A record for cdn subdomain
+resource "aws_route53_record" "cdn" {
+  provider = aws.main
+  zone_id  = aws_route53_zone.main.zone_id
+  name     = "cdn.${var.domain_name}"
+  type     = "A"
+
+  alias {
+    name                   = aws_cloudfront_distribution.cdn.domain_name
+    zone_id                = aws_cloudfront_distribution.cdn.hosted_zone_id
     evaluate_target_health = false
   }
 }
