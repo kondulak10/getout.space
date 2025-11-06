@@ -302,6 +302,7 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 
 	// Force refresh hexagons (clears cache and refetches)
 	const refetchHexagons = useCallback(() => {
+		console.log('🔄 Refetching hexagons (cache cleared)...');
 		clearCenterCache();
 		updateHexagons();
 	}, [updateHexagons, clearCenterCache]);

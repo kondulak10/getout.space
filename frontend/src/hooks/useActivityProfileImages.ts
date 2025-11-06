@@ -140,17 +140,20 @@ export function useActivityProfileImages(
 				}
 			};
 
-			// Group hexagons by user and activity (using denormalized fields)
+			// Group hexagons by user (using denormalized fields from backend)
 			const userHexagons: { [userId: string]: { isPremium: boolean; imghex?: string; hexagons: any[] } } = {};
 
 			hexagonsData.forEach((hex: any) => {
-				// Use denormalized fields from hexagon directly
-				if (hex.currentOwnerImghex) {
-					const userId = hex.currentOwnerId;
+				const userId = hex.currentOwnerId;
+				const imghex = hex.currentOwnerImghex;
+				const isPremium = hex.currentOwnerIsPremium || false;
+
+				// Only include users who have profile images (denormalized in backend)
+				if (imghex) {
 					if (!userHexagons[userId]) {
 						userHexagons[userId] = {
-							isPremium: hex.currentOwnerIsPremium || false,
-							imghex: hex.currentOwnerImghex,
+							isPremium,
+							imghex,
 							hexagons: [],
 						};
 					}
@@ -165,36 +168,71 @@ export function useActivityProfileImages(
 				: {};
 
 			// Process each user
+			console.log(`🖼️ Processing profile images for ${Object.keys(userHexagons).length} users with images`);
+
+			let totalImagesAdded = 0;
+			const imageDetails: Array<{ userId: string; isPremium: boolean; imageUrl: string; count: number }> = [];
+
 			Object.entries(userHexagons).forEach(([userId, userData]) => {
 				const { isPremium, imghex, hexagons: userHexes } = userData;
 
 				if (!imghex) return;
 
+				// Group hexagons by activity for BOTH premium and non-premium users
+				const activityHexagons: ActivityHexagons = {};
+				userHexes.forEach((hex: any) => {
+					if (hex.currentStravaActivityId) {
+						const activityId = hex.currentStravaActivityId.toString();
+						if (!activityHexagons[activityId]) {
+							activityHexagons[activityId] = [];
+						}
+						activityHexagons[activityId].push(hex.hexagonId);
+					}
+				});
+
+				const activityCount = Object.keys(activityHexagons).length;
+				const cacheBustTimestamp = Date.now();
+				let userImageCount = 0;
+
 				if (isPremium) {
-					// Premium users: Add image to every 10th hexagon, max 10 images
-					const maxImages = 10;
-					const interval = 10;
-					const selectedHexes = userHexes.filter((_: any, index: number) => index % interval === 0).slice(0, maxImages);
+					// Premium users: Multiple images per activity (route)
+					// 1 image per 20 hexagons, max 5 images per activity
+					const intervalPerActivity = 20;
+					const maxImagesPerActivity = 5;
 
-					selectedHexes.forEach((hex: any) => {
-						const uniqueId = `${userId}-${hex.hexagonId}`;
-						addProfileImage(hex.hexagonId, imghex, uniqueId);
-					});
-				} else {
-					// Non-premium users: Add image to one hexagon per activity
-					const activityHexagons: ActivityHexagons = {};
+					Object.keys(activityHexagons).forEach((activityId) => {
+						const hexagons = activityHexagons[activityId];
+						const numImages = Math.min(
+							Math.ceil(hexagons.length / intervalPerActivity),
+							maxImagesPerActivity
+						);
 
-					userHexes.forEach((hex: any) => {
-						if (hex.currentStravaActivityId) {
-							const activityId = hex.currentStravaActivityId.toString();
-							if (!activityHexagons[activityId]) {
-								activityHexagons[activityId] = [];
-							}
-							activityHexagons[activityId].push(hex.hexagonId);
+						// Select evenly distributed hexagons across the activity
+						for (let i = 0; i < numImages; i++) {
+							const index = Math.floor((i * hexagons.length) / numImages);
+							const hexagonId = hexagons[index];
+							const uniqueId = `${userId}-${activityId}-${i}`;
+							const imageUrlWithCacheBust = `${imghex}?t=${cacheBustTimestamp}`;
+							addProfileImage(hexagonId, imageUrlWithCacheBust, uniqueId);
+							userImageCount++;
 						}
 					});
 
-					// For each activity, pick one hexagon
+					totalImagesAdded += userImageCount;
+					imageDetails.push({
+						userId,
+						isPremium: true,
+						imageUrl: `${imghex}?t=${cacheBustTimestamp}`,
+						count: userImageCount,
+					});
+
+					console.log(`  👑 Premium user ${userId}:`);
+					console.log(`     - Total hexagons: ${userHexes.length}`);
+					console.log(`     - Activities: ${activityCount}`);
+					console.log(`     - Images added: ${userImageCount} (1 per ${intervalPerActivity} hexes per activity, max ${maxImagesPerActivity} per activity)`);
+					console.log(`     - Image URL: ${imghex}?t=${cacheBustTimestamp}`);
+				} else {
+					// Non-premium users: 1 image per activity (randomly placed, persisted in localStorage)
 					Object.keys(activityHexagons).forEach((activityId) => {
 						const hexagons = activityHexagons[activityId];
 
@@ -208,12 +246,37 @@ export function useActivityProfileImages(
 						// Add image to selected hexagon
 						const hexagonId = selectedHexagons[activityId];
 						const uniqueId = `${userId}-${activityId}`;
-						addProfileImage(hexagonId, imghex, uniqueId);
+						const imageUrlWithCacheBust = `${imghex}?t=${cacheBustTimestamp}`;
+						addProfileImage(hexagonId, imageUrlWithCacheBust, uniqueId);
+						userImageCount++;
 					});
+
+					totalImagesAdded += userImageCount;
+					imageDetails.push({
+						userId,
+						isPremium: false,
+						imageUrl: `${imghex}?t=${cacheBustTimestamp}`,
+						count: userImageCount,
+					});
+
+					console.log(`  👤 Regular user ${userId}:`);
+					console.log(`     - Total hexagons: ${userHexes.length}`);
+					console.log(`     - Activities: ${activityCount}`);
+					console.log(`     - Images added: ${userImageCount} (1 per activity, randomly placed)`);
+					console.log(`     - Image URL: ${imghex}?t=${cacheBustTimestamp}`);
 
 					// Save selections to localStorage
 					localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedHexagons));
 				}
+			});
+
+			console.log(`\n📊 SUMMARY - Main Page Profile Images:`);
+			console.log(`   Total images rendered: ${totalImagesAdded}`);
+			console.log(`   Premium users: ${imageDetails.filter(d => d.isPremium).length}`);
+			console.log(`   Regular users: ${imageDetails.filter(d => !d.isPremium).length}`);
+			console.log(`\n📸 Image URLs:`);
+			imageDetails.forEach(detail => {
+				console.log(`   ${detail.isPremium ? '👑' : '👤'} ${detail.userId}: ${detail.imageUrl} (${detail.count} images)`);
 			});
 		};
 

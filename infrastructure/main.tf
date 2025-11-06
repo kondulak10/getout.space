@@ -153,6 +153,37 @@ resource "aws_cloudfront_distribution" "website" {
   default_root_object = "index.html"
   aliases             = [var.domain_name, "www.${var.domain_name}"]
 
+  # Specific cache behavior for profile images
+  # No error redirects to index.html - let 404s be 404s
+  ordered_cache_behavior {
+    path_pattern     = "/profile-images/*"
+    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
+    cached_methods   = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id = "S3-${var.domain_name}"
+
+    forwarded_values {
+      query_string = true  # Forward query strings to enable cache-busting with ?t=timestamp
+      cookies {
+        forward = "none"
+      }
+      # Forward CORS headers for profile images
+      headers = [
+        "Origin",
+        "Access-Control-Request-Method",
+        "Access-Control-Request-Headers",
+        "Access-Control-Allow-Origin",
+        "Access-Control-Allow-Methods",
+        "Access-Control-Allow-Headers"
+      ]
+    }
+
+    viewer_protocol_policy = "redirect-to-https"
+    min_ttl                = 0
+    default_ttl            = 86400  # Cache images for 24 hours
+    max_ttl                = 604800 # Max 7 days
+    compress               = true
+  }
+
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD", "OPTIONS"]
     cached_methods   = ["GET", "HEAD", "OPTIONS"]
@@ -184,16 +215,20 @@ resource "aws_cloudfront_distribution" "website" {
   }
 
   # Custom error response for SPA routing
+  # Note: This applies to ALL paths including images
+  # error_caching_min_ttl = 10 prevents long caching of errors (like deleted images)
   custom_error_response {
-    error_code         = 404
-    response_code      = 200
-    response_page_path = "/index.html"
+    error_code            = 404
+    response_code         = 200
+    response_page_path    = "/index.html"
+    error_caching_min_ttl = 10
   }
 
   custom_error_response {
-    error_code         = 403
-    response_code      = 200
-    response_page_path = "/index.html"
+    error_code            = 403
+    response_code         = 200
+    response_page_path    = "/index.html"
+    error_caching_min_ttl = 10
   }
 
   restrictions {

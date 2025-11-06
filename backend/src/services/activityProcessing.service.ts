@@ -216,6 +216,8 @@ interface HexagonCreateDoc {
 	parentHexagonId: string;
 	currentOwnerId: mongoose.Types.ObjectId;
 	currentOwnerStravaId: number;
+	currentOwnerIsPremium: boolean;
+	currentOwnerImghex?: string;
 	currentActivityId: mongoose.Types.ObjectId;
 	currentStravaActivityId: number;
 	captureCount: number;
@@ -273,6 +275,8 @@ async function processHexagons(
 				parentHexagonId,
 				currentOwnerId: user._id,
 				currentOwnerStravaId: user.stravaId,
+				currentOwnerIsPremium: user.isPremium || false,
+				currentOwnerImghex: user.stravaProfile?.imghex || undefined,
 				currentActivityId: activity._id,
 				currentStravaActivityId: activity.stravaActivityId,
 				captureCount: 1,
@@ -296,6 +300,8 @@ async function processHexagons(
 					$set: {
 						currentOwnerId: user._id,
 						currentOwnerStravaId: user.stravaId,
+						currentOwnerIsPremium: user.isPremium || false,
+						currentOwnerImghex: user.stravaProfile?.imghex || undefined,
 						currentActivityId: activity._id,
 						currentStravaActivityId: activity.stravaActivityId,
 						lastCapturedAt: activity.startDate,

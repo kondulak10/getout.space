@@ -25,9 +25,15 @@ export function useActivitiesManager(onActivityProcessed?: () => void) {
 	};
 
 	const handleSaveActivity = async (activityId: number) => {
-		await saveActivity(activityId);
-		if (onActivityProcessed) {
-			onActivityProcessed();
+		try {
+			await saveActivity(activityId);
+			console.log('✅ Activity saved successfully, triggering hexagon refetch...');
+			if (onActivityProcessed) {
+				onActivityProcessed();
+			}
+		} catch (error) {
+			console.error('❌ Failed to save activity:', error);
+			throw error; // Re-throw so the UI can handle it
 		}
 	};
 

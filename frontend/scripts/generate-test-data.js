@@ -24,13 +24,13 @@ const ACTIVITY_TYPES = ['Run', 'Ride', 'Walk', 'Hike', 'TrailRun'];
 // Profile photo for premium user
 const PREMIUM_PHOTO = 'https://getout.space/profile-images/690bc04570486177aae3957a/hexagon.png';
 
-// Generate 12 mock users (only 1 premium)
+// Generate 12 mock users (3 premium)
 function generateMockUsers() {
 	return Array.from({ length: 12 }, (_, i) => ({
 		id: `user-${i + 1}`,
 		name: `User ${i + 1}`,
-		isPremium: i === 0, // Only first user is premium
-		imghex: i === 0 ? PREMIUM_PHOTO : null, // Only premium user has photo
+		isPremium: i < 3, // First 3 users are premium
+		imghex: i < 3 ? PREMIUM_PHOTO : null, // Premium users have photos
 	}));
 }
 
@@ -64,7 +64,8 @@ function generateHexagonsForParent(parentHex, users, activityIdStart) {
 	while (usedHexagons.size < targetCount && usedHexagons.size < childHexagons.length - 1) {
 		const user = users[Math.floor(Math.random() * users.length)];
 		const activityType = ACTIVITY_TYPES[Math.floor(Math.random() * ACTIVITY_TYPES.length)];
-		const routeLength = Math.floor(Math.random() * 11) + 5;
+		// Pick route length (100-400 hexagons for extremely realistic long routes)
+		const routeLength = Math.floor(Math.random() * 301) + 100;
 
 		const availableHexagons = childHexagons.filter(h => !usedHexagons.has(h));
 		if (availableHexagons.length === 0) break;

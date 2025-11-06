@@ -121,7 +121,7 @@ export function useStaticProfileImages(
 				}
 			};
 
-			// Add images for premium users: 1 photo per 10 hexes, max 10 photos per user
+			// Add images for premium users: 1 photo per 5 hexes, max 30 photos per user
 			const premiumHexagons = mockData.hexagons.filter(
 				hex => hex.currentOwnerIsPremium && hex.currentOwnerImghex
 			);
@@ -139,19 +139,44 @@ export function useStaticProfileImages(
 			const interval = 5;
 			let totalImages = 0;
 
+			console.log(`🖼️ Processing test page profile images for ${hexagonsByUser.size} premium users`);
+			const imageDetails: Array<{ userId: string; imageUrl: string; count: number; totalHexagons: number }> = [];
+
 			// For each premium user, select every 5th hexagon, max 30 images
 			hexagonsByUser.forEach((userHexes) => {
 				const selectedHexes = userHexes.filter((_, index) => index % interval === 0).slice(0, maxImagesPerUser);
 
+				const cacheBustTimestamp = Date.now();
+				const firstHex = userHexes[0];
 				selectedHexes.forEach((hex) => {
 					const uniqueId = `${hex.currentOwnerId}-${hex.hexagonId}`;
-					addProfileImage(hex.hexagonId, hex.currentOwnerImghex!, uniqueId);
+					// Add cache-busting timestamp to prevent stale images
+					const imageUrlWithCacheBust = `${hex.currentOwnerImghex}?t=${cacheBustTimestamp}`;
+					addProfileImage(hex.hexagonId, imageUrlWithCacheBust, uniqueId);
 					totalImages++;
 				});
+
+				imageDetails.push({
+					userId: firstHex.currentOwnerId,
+					imageUrl: `${firstHex.currentOwnerImghex}?t=${cacheBustTimestamp}`,
+					count: selectedHexes.length,
+					totalHexagons: userHexes.length,
+				});
+
+				console.log(`  👑 Premium user ${firstHex.currentOwnerId}:`);
+				console.log(`     - Total hexagons: ${userHexes.length}`);
+				console.log(`     - Images added: ${selectedHexes.length} (1 per ${interval} hexes, max ${maxImagesPerUser})`);
+				console.log(`     - Image URL: ${firstHex.currentOwnerImghex}?t=${cacheBustTimestamp}`);
 			});
 
-			console.log(`🖼️ Added ${totalImages} profile images for ${hexagonsByUser.size} premium users (1 per 5 hexes, max 30 per user)`);
-			console.log(`   Total premium hexagons: ${premiumHexagons.length}, showing images on: ${totalImages}`);
+			console.log(`\n📊 SUMMARY - Test Page Profile Images:`);
+			console.log(`   Total images rendered: ${totalImages}`);
+			console.log(`   Total premium hexagons: ${premiumHexagons.length}`);
+			console.log(`   Premium users: ${hexagonsByUser.size}`);
+			console.log(`\n📸 Image URLs:`);
+			imageDetails.forEach(detail => {
+				console.log(`   👑 ${detail.userId}: ${detail.imageUrl} (${detail.count} images from ${detail.totalHexagons} hexagons)`);
+			});
 		};
 
 		// Map is ready if hexagons are loaded - just call onMapLoad
