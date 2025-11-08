@@ -45,6 +45,13 @@ export function HomePage() {
 
 	return (
 		<div className="relative w-full h-[100dvh] md:h-screen bg-black">
+			{/* Invite-only / Testing Mode Banner */}
+			<div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 px-4 py-2 bg-amber-500/90 backdrop-blur-sm rounded-lg shadow-lg border border-amber-400">
+				<p className="text-sm font-medium text-black text-center">
+					🔒 Invite-Only • Currently in Testing Mode
+				</p>
+			</div>
+
 			{/* Map container - adjusted for mobile bottom nav */}
 			<div ref={mapContainerRef} className="w-full h-[calc(100dvh-90px)] md:h-full" />
 
