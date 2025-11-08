@@ -23,6 +23,48 @@ function createAuthHeaders(): HeadersInit {
 	};
 }
 
+/**
+ * Custom fetch wrapper that handles 401 errors globally
+ * On 401: tries to refresh token, then reloads page
+ */
+async function authenticatedFetch(url: string, options?: RequestInit): Promise<Response> {
+	const response = await fetch(url, options);
+
+	// Handle 401 Unauthorized - token expired
+	if (response.status === 401) {
+		console.warn('⚠️ Got 401 - attempting token refresh...');
+
+		try {
+			// Try to refresh token
+			const refreshResponse = await fetch(`${BACKEND_URL}/api/auth/refresh-token`, {
+				method: 'POST',
+				headers: createAuthHeaders(),
+			});
+
+			if (refreshResponse.ok) {
+				console.log('✅ Token refreshed after 401, reloading page...');
+				// Token refreshed successfully, reload page to get fresh state
+				window.location.reload();
+				// Return a pending promise to prevent further execution
+				return new Promise(() => {});
+			} else {
+				// Refresh failed, user needs to re-authenticate
+				console.error('❌ Token refresh failed - logging out');
+				localStorage.removeItem('getout_auth_token');
+				window.location.href = '/';
+				return new Promise(() => {});
+			}
+		} catch (error) {
+			console.error('❌ Error during token refresh:', error);
+			localStorage.removeItem('getout_auth_token');
+			window.location.href = '/';
+			return new Promise(() => {});
+		}
+	}
+
+	return response;
+}
+
 // ============================================================
 // OAuth & Authentication
 // ============================================================
@@ -42,12 +84,13 @@ export interface AuthResponse {
 			imghex?: string;
 		};
 		tokenExpiresAt: number;
-		tokenIsExpired: boolean;
+		tokenIsExpired?: boolean;
 		createdAt: string;
-		updatedAt: string;
+		updatedAt?: string;
 	};
 	error?: string;
 	details?: string;
+	needsReauth?: boolean;
 }
 
 /**
@@ -70,6 +113,23 @@ export async function exchangeCodeForToken(code: string): Promise<AuthResponse> 
 		},
 		body: JSON.stringify({ code }),
 	});
+
+	return await response.json();
+}
+
+/**
+ * Refresh user's Strava token if needed
+ */
+export async function refreshToken(): Promise<AuthResponse> {
+	const response = await fetch(`${BACKEND_URL}/api/auth/refresh-token`, {
+		method: 'POST',
+		headers: createAuthHeaders(),
+	});
+
+	if (!response.ok) {
+		const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+		throw new Error(errorData.error || 'Failed to refresh token');
+	}
 
 	return await response.json();
 }
@@ -110,7 +170,7 @@ export async function fetchActivities(page: number = 1, perPage: number = 30): P
 	url.searchParams.set('page', page.toString());
 	url.searchParams.set('per_page', perPage.toString());
 
-	const response = await fetch(url.toString(), {
+	const response = await authenticatedFetch(url.toString(), {
 		headers: createAuthHeaders(),
 	});
 
@@ -139,7 +199,7 @@ export interface ActivityDetailsResponse {
  * Fetch single activity details
  */
 export async function fetchActivityDetails(activityId: number): Promise<ActivityDetailsResponse> {
-	const response = await fetch(`${BACKEND_URL}/api/strava/activities/${activityId}`, {
+	const response = await authenticatedFetch(`${BACKEND_URL}/api/strava/activities/${activityId}`, {
 		headers: createAuthHeaders(),
 	});
 
@@ -179,7 +239,7 @@ export interface ProcessActivityResponse {
  * Process (save) a Strava activity to the database
  */
 export async function processActivity(activityId: number): Promise<ProcessActivityResponse> {
-	const response = await fetch(`${BACKEND_URL}/api/strava/process-activity`, {
+	const response = await authenticatedFetch(`${BACKEND_URL}/api/strava/process-activity`, {
 		method: 'POST',
 		headers: createAuthHeaders(),
 		body: JSON.stringify({ activityId }),
@@ -203,7 +263,7 @@ export interface DeleteActivityResponse {
  * Delete an activity from the database
  */
 export async function deleteActivity(activityId: number): Promise<DeleteActivityResponse> {
-	const response = await fetch(`${BACKEND_URL}/api/strava/activities/${activityId}`, {
+	const response = await authenticatedFetch(`${BACKEND_URL}/api/strava/activities/${activityId}`, {
 		method: 'DELETE',
 		headers: createAuthHeaders(),
 	});
@@ -225,7 +285,7 @@ export interface StatsResponse {
  * Fetch athlete statistics
  */
 export async function fetchAthleteStats(): Promise<StatsResponse> {
-	const response = await fetch(`${BACKEND_URL}/api/strava/stats`, {
+	const response = await authenticatedFetch(`${BACKEND_URL}/api/strava/stats`, {
 		headers: createAuthHeaders(),
 	});
 
@@ -261,7 +321,7 @@ export interface AllActivitiesResponse {
  * Fetch latest activity from database
  */
 export async function fetchLatestActivity(): Promise<LatestActivityResponse> {
-	const response = await fetch(`${BACKEND_URL}/api/activities/latest`, {
+	const response = await authenticatedFetch(`${BACKEND_URL}/api/activities/latest`, {
 		headers: createAuthHeaders(),
 	});
 
@@ -272,7 +332,7 @@ export async function fetchLatestActivity(): Promise<LatestActivityResponse> {
  * Fetch all activities from database
  */
 export async function fetchAllActivities(): Promise<AllActivitiesResponse> {
-	const response = await fetch(`${BACKEND_URL}/api/activities/all`, {
+	const response = await authenticatedFetch(`${BACKEND_URL}/api/activities/all`, {
 		headers: createAuthHeaders(),
 	});
 

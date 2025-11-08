@@ -119,7 +119,7 @@ async function handleNewActivity(stravaOwnerId: number, stravaActivityId: number
 			return;
 		}
 
-		// Process the activity
+		// Process the activity (processActivity will handle token refresh if needed)
 		const result = await processActivity(stravaActivityId, user, user._id.toString());
 
 		// Send Slack notification

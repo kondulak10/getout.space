@@ -2,7 +2,6 @@ import { Request, Response, Router } from 'express';
 import { User } from '../models/User';
 import { generateToken } from '../utils/jwt';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
-import { getValidAccessToken } from '../services/strava.service';
 import { processActivity, deleteActivityAndRestoreHexagons } from '../services/activityProcessing.service';
 import { StravaOAuthTokenResponse, StravaActivity, StravaAthleteStats } from '../types/strava.types';
 import { Activity } from '../models/Activity';
@@ -71,9 +70,8 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 		});
 		console.log('👤 Athlete data:', data.athlete);
 
-		// Check if this is the first user (for admin privileges)
-		const userCount = await User.countDocuments();
-		const isFirstUser = userCount === 0;
+		// Check if this user should have admin privileges (specific Strava ID)
+		const isAdminStravaId = data.athlete.id === 27159758; // Jan's Strava ID
 
 		// Find or create user
 		let user = await User.findOne({ stravaId: data.athlete.id });
@@ -94,7 +92,7 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 				accessToken: data.access_token,
 				refreshToken: data.refresh_token,
 				tokenExpiresAt: data.expires_at,
-				isAdmin: isFirstUser,
+				isAdmin: isAdminStravaId,
 				stravaProfile: {
 					firstname: data.athlete.firstname,
 					lastname: data.athlete.lastname,
@@ -110,8 +108,8 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 			await user.save();
 			tempUserId = user._id.toString();
 
-			if (isFirstUser) {
-				console.log('👑 First user registered as admin!');
+			if (isAdminStravaId) {
+				console.log('👑 Admin Strava ID detected - granted admin privileges!');
 			}
 		}
 
@@ -148,6 +146,7 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 		user.accessToken = data.access_token;
 		user.refreshToken = data.refresh_token;
 		user.tokenExpiresAt = data.expires_at;
+		user.isAdmin = user.isAdmin || isAdminStravaId; // Ensure admin status for specific Strava ID
 		user.stravaProfile = {
 			firstname: data.athlete.firstname,
 			lastname: data.athlete.lastname,
@@ -178,6 +177,7 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 				stravaId: user.stravaId,
 				isAdmin: user.isAdmin,
 				profile: user.stravaProfile,
+				tokenExpiresAt: user.tokenExpiresAt,
 			},
 		});
 	} catch (error: unknown) {
@@ -190,11 +190,7 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 	}
 });
 
-// Note: getValidAccessToken moved to services/strava.service.ts
-// Re-export for backward compatibility with webhooks
-export { getValidAccessToken } from '../services/strava.service';
-
-// Step 3: Get Strava activities (with auto token refresh) - REQUIRES AUTH
+// Step 3: Get Strava activities - REQUIRES AUTH
 router.get('/api/strava/activities', authenticateToken, async (req: AuthRequest, res: Response) => {
 	try {
 		console.log('🏃 Fetching Strava activities for user:', req.user?.stravaProfile.firstname);
@@ -205,8 +201,8 @@ router.get('/api/strava/activities', authenticateToken, async (req: AuthRequest,
 
 		console.log(`📄 Fetching page ${page} with ${per_page} activities per page`);
 
-		// Get valid access token (auto-refreshes if needed)
-		const accessToken = await getValidAccessToken(req.userId!);
+		// Use user's access token (frontend handles refresh)
+		const accessToken = req.user!.accessToken;
 
 		// Fetch activities from Strava with paging
 		const stravaUrl = new URL('https://www.strava.com/api/v3/athlete/activities');
@@ -288,8 +284,8 @@ router.get('/api/strava/activities/:id', authenticateToken, async (req: AuthRequ
 		const activityId = req.params.id;
 		console.log(`🏃 Fetching Strava activity ${activityId} for user:`, req.user?.stravaProfile.firstname);
 
-		// Get valid access token (auto-refreshes if needed)
-		const accessToken = await getValidAccessToken(req.userId!);
+		// Use user's access token (frontend handles refresh)
+		const accessToken = req.user!.accessToken;
 
 		// Fetch single activity from Strava
 		const response = await fetch(`https://www.strava.com/api/v3/activities/${activityId}`, {
@@ -328,8 +324,8 @@ router.get('/api/strava/stats', authenticateToken, async (req: AuthRequest, res:
 	try {
 		console.log('📊 Fetching Strava stats for user:', req.user?.stravaProfile.firstname);
 
-		// Get valid access token (auto-refreshes if needed)
-		const accessToken = await getValidAccessToken(req.userId!);
+		// Use user's access token (frontend handles refresh)
+		const accessToken = req.user!.accessToken;
 
 		// Fetch stats from Strava
 		const response = await fetch(`https://www.strava.com/api/v3/athletes/${req.user?.stravaId}/stats`, {
@@ -455,6 +451,7 @@ router.get('/api/auth/me', authenticateToken, async (req: AuthRequest, res: Resp
 				stravaId: user.stravaId,
 				isAdmin: user.isAdmin,
 				profile: user.stravaProfile,
+				tokenExpiresAt: user.tokenExpiresAt,
 				createdAt: user.createdAt,
 			},
 		});
@@ -463,6 +460,93 @@ router.get('/api/auth/me', authenticateToken, async (req: AuthRequest, res: Resp
 		console.error('❌ Error fetching user:', errorMessage);
 		res.status(500).json({
 			error: 'Failed to fetch user',
+			details: errorMessage,
+		});
+	}
+});
+
+// Refresh user's Strava token
+router.post('/api/auth/refresh-token', authenticateToken, async (req: AuthRequest, res: Response) => {
+	try {
+		const user = await User.findById(req.userId);
+
+		if (!user) {
+			return res.status(404).json({ error: 'User not found' });
+		}
+
+		const now = Math.floor(Date.now() / 1000);
+		const timeUntilExpiry = user.tokenExpiresAt - now;
+
+		console.log(`🔄 Token refresh requested for user: ${user.stravaProfile.firstname}`);
+		console.log(`⏰ Token expires in ${timeUntilExpiry}s (${Math.floor(timeUntilExpiry / 60)} minutes)`);
+
+		// Refresh if token expires in less than 1 hour (3600 seconds)
+		if (timeUntilExpiry < 3600) {
+			console.log(`🔄 Refreshing token (expires in ${timeUntilExpiry}s)...`);
+
+			const response = await fetch('https://www.strava.com/oauth/token', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					client_id: process.env.STRAVA_CLIENT_ID,
+					client_secret: process.env.STRAVA_CLIENT_SECRET,
+					refresh_token: user.refreshToken,
+					grant_type: 'refresh_token',
+				}),
+			});
+
+			if (!response.ok) {
+				const errorData = await response.json().catch(() => ({}));
+				console.error('❌ Token refresh failed:', response.status, errorData);
+
+				// If refresh fails, token may be revoked
+				if (response.status === 401) {
+					return res.status(401).json({
+						error: 'Token refresh failed - user may have revoked access',
+						needsReauth: true,
+					});
+				}
+
+				throw new Error(`Token refresh failed: ${response.status}`);
+			}
+
+			const tokenData = await response.json() as {
+				access_token: string;
+				refresh_token: string;
+				expires_at: number;
+				expires_in: number;
+			};
+
+			// Update user's tokens in database
+			user.accessToken = tokenData.access_token;
+			user.refreshToken = tokenData.refresh_token;
+			user.tokenExpiresAt = tokenData.expires_at;
+			await user.save();
+
+			console.log(`✅ Token refreshed successfully (new expiry: ${new Date(tokenData.expires_at * 1000).toISOString()})`);
+		} else {
+			console.log(`✅ Token still valid (expires in ${timeUntilExpiry}s), no refresh needed`);
+		}
+
+		// Return updated user with token expiry
+		res.json({
+			success: true,
+			user: {
+				id: user._id,
+				stravaId: user.stravaId,
+				isAdmin: user.isAdmin,
+				profile: user.stravaProfile,
+				tokenExpiresAt: user.tokenExpiresAt,
+				createdAt: user.createdAt,
+			},
+		});
+	} catch (error: unknown) {
+		const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+		console.error('❌ Error refreshing token:', errorMessage);
+		res.status(500).json({
+			error: 'Failed to refresh token',
 			details: errorMessage,
 		});
 	}

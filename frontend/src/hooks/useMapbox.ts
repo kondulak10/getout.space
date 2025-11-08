@@ -33,7 +33,7 @@ export const useMapbox = (options: UseMapboxOptions = {}) => {
 			dragRotate: false, // Disable rotation
 			pitchWithRotate: false, // Disable pitch
 			touchPitch: false, // Disable touch pitch
-			projection: 'mercator', // Use flat Mercator projection instead of globe
+			projection: 'equalEarth', // Equal-area projection for uniform hexagons
 		});
 
 		// Apply custom dark monochrome flat styling

@@ -62,11 +62,11 @@ export async function processActivity(
 	try {
 		console.log(`🎯 Processing Strava activity ${stravaActivityId} for user: ${user.stravaProfile.firstname}`);
 
-		// Get valid access token (auto-refreshes if needed)
+		// Get valid access token (refreshes if needed - used for webhook flow)
 		const accessToken = await getValidAccessToken(userId);
 
-		// Fetch activity details from Strava (pass userId for 401 retry with token refresh)
-		const stravaActivity = await fetchStravaActivity(stravaActivityId, accessToken, userId);
+		// Fetch activity details from Strava
+		const stravaActivity = await fetchStravaActivity(stravaActivityId, accessToken);
 
 		// Validate activity type - only allow running activities
 		if (!isRunningActivity(stravaActivity)) {

@@ -93,7 +93,6 @@ export default function UsersPage() {
 
 			if (userToDelete.isSelf) {
 				localStorage.removeItem("getout_auth_token");
-				localStorage.removeItem("getout_user");
 				window.location.href = "/";
 			}
 		} catch (error) {

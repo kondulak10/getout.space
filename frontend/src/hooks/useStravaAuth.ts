@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import confetti from 'canvas-confetti';
 import { useAuth } from '@/contexts/useAuth';
 import { getStravaAuthUrl, exchangeCodeForToken, fetchActivities, processActivity } from '@/services/stravaApi.service';
 
@@ -18,18 +19,22 @@ export function useStravaAuth(options?: UseStravaAuthOptions) {
 
 	// Handle OAuth callback on component mount
 	useEffect(() => {
+		// OAuth codes can only be used once!
+		// Use ref to prevent double execution in StrictMode
+		if (hasExchangedCode.current) {
+			return;
+		}
+
 		const urlParams = new URLSearchParams(window.location.search);
 		const code = urlParams.get('code');
 		const scope = urlParams.get('scope');
 
-		// OAuth codes can only be used once!
-		// Prevent double execution with ref guard
-		if (code && scope && !isAuthenticated && !hasExchangedCode.current) {
+		if (code && scope && !isAuthenticated) {
 			hasExchangedCode.current = true;
 			setIsAuthenticating(true);
 			handleOAuthCallback(code);
 		}
-	}, [isAuthenticated]);
+	}, []); // Empty deps - only run once on mount
 
 	/**
 	 * Initiate Strava login flow
@@ -135,8 +140,49 @@ export function useStravaAuth(options?: UseStravaAuthOptions) {
 
 				login(data.token, data.user);
 
-				// If this is a new user, auto-process their 3 latest runs
+				// If this is a new user, show welcome celebration
 				if (data.isNewUser) {
+					// Trigger fullscreen confetti celebration
+					const duration = 3000; // 3 seconds
+					const animationEnd = Date.now() + duration;
+
+					const randomInRange = (min: number, max: number) => {
+						return Math.random() * (max - min) + min;
+					};
+
+					const interval = setInterval(() => {
+						const timeLeft = animationEnd - Date.now();
+
+						if (timeLeft <= 0) {
+							clearInterval(interval);
+							return;
+						}
+
+						const particleCount = 50 * (timeLeft / duration);
+
+						// Launch confetti from both sides
+						confetti({
+							particleCount,
+							angle: 60,
+							spread: 55,
+							origin: { x: 0 },
+							colors: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8']
+						});
+						confetti({
+							particleCount,
+							angle: 120,
+							spread: 55,
+							origin: { x: 1 },
+							colors: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8']
+						});
+					}, 250);
+
+					// Show welcome toast
+					toast.success('🎉 Welcome to GetOut!', {
+						description: 'Start running to conquer the territory',
+						duration: 5000,
+					});
+
 					// Run in background, don't block the login flow
 					autoProcessLatestRuns().catch(err => {
 						console.error('Failed to auto-process activities:', err);
