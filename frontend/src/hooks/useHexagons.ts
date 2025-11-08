@@ -267,16 +267,23 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 				// Get parent hexagon at center (resolution 6)
 				const centerParentHex = latLngToCell(centerLat, centerLng, 6);
 
+				console.log(`🔍 Map center: [${centerLat.toFixed(4)}, ${centerLng.toFixed(4)}] → Parent hex: ${centerParentHex}`);
+
 				// Check if center parent hex changed
 				if (lastCenterHexRef.current === centerParentHex) {
+					console.log(`⏭️ Same parent hex (${centerParentHex}), skipping fetch`);
 					return; // No change, skip fetch
 				}
+
+				console.log(`✨ Parent hex changed: ${lastCenterHexRef.current} → ${centerParentHex}`);
 
 				// Update cache
 				lastCenterHexRef.current = centerParentHex;
 
 				// Get parent hexagons using gridDisk: center + 1 ring = 7 total
 				const parentHexagonIds = gridDisk(centerParentHex, 1);
+
+				console.log(`📦 Fetching hexagons for ${parentHexagonIds.length} parent hexes (mode: ${currentMode})`);
 
 				// OPTIONAL: Expand to ring 2 (19 hexagons) based on zoom level
 				// Uncomment below to enable larger coverage when zoomed out:
@@ -295,7 +302,7 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 				}
 			} catch (error) {
 				// Silently fail
-				console.error(error);
+				console.error('❌ Error in updateHexagons:', error);
 			}
 		}, 300);
 	}, [mapRef, fetchMyHexagons, fetchAllHexagons, updateParentVisualization]);

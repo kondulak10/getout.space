@@ -24,6 +24,7 @@ export interface IUser extends Document {
   isAdmin: boolean;
   isPremium: boolean;
   stravaProfile: IStravaProfile;
+  lastHex?: string; // Resolution 6 parent hex from most recent activity
   createdAt: Date;
   updatedAt: Date;
 }
@@ -75,6 +76,10 @@ const userSchema = new Schema<IUser>(
     stravaProfile: {
       type: stravaProfileSchema,
       required: true,
+    },
+    lastHex: {
+      type: String,
+      required: false,
     },
   },
   {

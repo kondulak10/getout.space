@@ -8,29 +8,36 @@ interface UseStravaAuthOptions {
 	onActivitiesProcessed?: () => void;
 }
 
+// GLOBAL flag to prevent multiple hook instances from exchanging the same code
+// This is necessary because the hook is used in multiple components
+let globalCodeExchangeInProgress = false;
+let globalCodeExchanged = '';
+
 /**
  * Hook for managing Strava OAuth authentication flow
  */
 export function useStravaAuth(options?: UseStravaAuthOptions) {
 	const { isAuthenticated, login, user } = useAuth();
-	const hasExchangedCode = useRef(false);
 	const [isAuthenticating, setIsAuthenticating] = useState(false);
 	const onActivitiesProcessedRef = useRef(options?.onActivitiesProcessed);
 
 	// Handle OAuth callback on component mount
 	useEffect(() => {
-		// OAuth codes can only be used once!
-		// Use ref to prevent double execution in StrictMode
-		if (hasExchangedCode.current) {
-			return;
-		}
-
 		const urlParams = new URLSearchParams(window.location.search);
 		const code = urlParams.get('code');
 		const scope = urlParams.get('scope');
 
+		// OAuth codes can only be used once!
+		// Use GLOBAL flag to prevent multiple hook instances from exchanging the same code
 		if (code && scope && !isAuthenticated) {
-			hasExchangedCode.current = true;
+			// Check if this exact code has already been exchanged or is in progress
+			if (globalCodeExchanged === code || globalCodeExchangeInProgress) {
+				console.log('⏭️ OAuth code already exchanged or in progress, skipping...');
+				return;
+			}
+
+			globalCodeExchangeInProgress = true;
+			globalCodeExchanged = code;
 			setIsAuthenticating(true);
 			handleOAuthCallback(code);
 		}
@@ -132,12 +139,9 @@ export function useStravaAuth(options?: UseStravaAuthOptions) {
 	 */
 	const handleOAuthCallback = async (code: string) => {
 		try {
-
 			const data = await exchangeCodeForToken(code);
 
-
 			if (data.success && data.token && data.user) {
-
 				login(data.token, data.user);
 
 				// If this is a new user, show welcome celebration
@@ -145,10 +149,6 @@ export function useStravaAuth(options?: UseStravaAuthOptions) {
 					// Trigger fullscreen confetti celebration
 					const duration = 3000; // 3 seconds
 					const animationEnd = Date.now() + duration;
-
-					const randomInRange = (min: number, max: number) => {
-						return Math.random() * (max - min) + min;
-					};
 
 					const interval = setInterval(() => {
 						const timeLeft = animationEnd - Date.now();
@@ -194,8 +194,10 @@ export function useStravaAuth(options?: UseStravaAuthOptions) {
 				console.error('Authentication failed:', data.error || data.details || 'Unknown error');
 			}
 		} catch (error) {
+			console.error('OAuth callback error:', error);
 		} finally {
 			setIsAuthenticating(false);
+			globalCodeExchangeInProgress = false; // Reset flag when done
 		}
 	};
 

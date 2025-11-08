@@ -1,8 +1,8 @@
-import { useEffect, useRef } from 'react';
-import type { Map as MapboxMap } from 'mapbox-gl';
-import { cellToBoundary } from 'h3-js';
-import { useAuth } from '@/contexts/useAuth';
-import * as turf from '@turf/turf';
+import { useAuth } from "@/contexts/useAuth";
+import * as turf from "@turf/turf";
+import { cellToBoundary } from "h3-js";
+import type { Map as MapboxMap } from "mapbox-gl";
+import { useEffect, useRef } from "react";
 
 interface ActivityHexagons {
 	[activityId: string]: string[]; // activityId -> hexagonIds
@@ -12,7 +12,7 @@ interface SelectedHexagons {
 	[activityId: string]: string; // activityId -> selected hexagonId
 }
 
-const STORAGE_KEY = 'activity_profile_image_positions';
+const STORAGE_KEY = "activity_profile_image_positions";
 
 /**
  * Hook to display user profile images on hexagons
@@ -55,8 +55,10 @@ export function useActivityProfileImages(
 					const boundary = cellToBoundary(hexagonId, true); // GeoJSON format = [lng, lat]
 
 					// Calculate bounding box from the 6 vertices
-					let minLat = Infinity, maxLat = -Infinity;
-					let minLng = Infinity, maxLng = -Infinity;
+					let minLat = Infinity,
+						maxLat = -Infinity;
+					let minLng = Infinity,
+						maxLng = -Infinity;
 
 					boundary.forEach(([lng, lat]) => {
 						minLat = Math.min(minLat, lat);
@@ -66,13 +68,15 @@ export function useActivityProfileImages(
 					});
 
 					// Create bounding box polygon
-					const bbox = turf.polygon([[
-						[minLng, maxLat], // top-left
-						[maxLng, maxLat], // top-right
-						[maxLng, minLat], // bottom-right
-						[minLng, minLat], // bottom-left
-						[minLng, maxLat], // close the polygon
-					]]);
+					const bbox = turf.polygon([
+						[
+							[minLng, maxLat], // top-left
+							[maxLng, maxLat], // top-right
+							[maxLng, minLat], // bottom-right
+							[minLng, minLat], // bottom-left
+							[minLng, maxLat], // close the polygon
+						],
+					]);
 
 					// Scale down by 10% (make it 90% of original size)
 					const scaledBbox = turf.transformScale(bbox, 0.9);
@@ -82,7 +86,12 @@ export function useActivityProfileImages(
 
 					// Extract the rotated coordinates (first 4 points, excluding the closing point)
 					const rotatedCoords = rotatedBbox.geometry.coordinates[0];
-					const imageBounds: [[number, number], [number, number], [number, number], [number, number]] = [
+					const imageBounds: [
+						[number, number],
+						[number, number],
+						[number, number],
+						[number, number],
+					] = [
 						[rotatedCoords[0][0], rotatedCoords[0][1]], // top-left
 						[rotatedCoords[1][0], rotatedCoords[1][1]], // top-right
 						[rotatedCoords[2][0], rotatedCoords[2][1]], // bottom-right
@@ -92,7 +101,7 @@ export function useActivityProfileImages(
 					// Add image source with error handling
 					if (!map.getSource(sourceId)) {
 						map.addSource(sourceId, {
-							type: 'image',
+							type: "image",
 							url: imageUrl,
 							coordinates: imageBounds,
 						});
@@ -109,24 +118,24 @@ export function useActivityProfileImages(
 										map.removeSource(sourceId);
 									}
 									layersAddedRef.current.delete(layerId);
-									map.off('error', errorHandler);
+									map.off("error", errorHandler);
 								} catch (cleanupError) {
 									// Silently fail
 								}
 							}
 						};
 
-						map.on('error', errorHandler);
+						map.on("error", errorHandler);
 					}
 
 					// Add image layer (make sure it's on top)
 					if (!map.getLayer(layerId)) {
 						map.addLayer({
 							id: layerId,
-							type: 'raster',
+							type: "raster",
 							source: sourceId,
 							paint: {
-								'raster-opacity': 0.9,
+								"raster-opacity": 0.9,
 							},
 						});
 
@@ -141,7 +150,9 @@ export function useActivityProfileImages(
 			};
 
 			// Group hexagons by user (using denormalized fields from backend)
-			const userHexagons: { [userId: string]: { isPremium: boolean; imghex?: string; hexagons: any[] } } = {};
+			const userHexagons: {
+				[userId: string]: { isPremium: boolean; imghex?: string; hexagons: any[] };
+			} = {};
 
 			hexagonsData.forEach((hex: any) => {
 				const userId = hex.currentOwnerId;
@@ -167,12 +178,6 @@ export function useActivityProfileImages(
 				? JSON.parse(storedSelections)
 				: {};
 
-			// Process each user
-			console.log(`🖼️ Processing profile images for ${Object.keys(userHexagons).length} users with images`);
-
-			let totalImagesAdded = 0;
-			const imageDetails: Array<{ userId: string; isPremium: boolean; imageUrl: string; count: number }> = [];
-
 			Object.entries(userHexagons).forEach(([userId, userData]) => {
 				const { isPremium, imghex, hexagons: userHexes } = userData;
 
@@ -190,9 +195,7 @@ export function useActivityProfileImages(
 					}
 				});
 
-				const activityCount = Object.keys(activityHexagons).length;
 				const cacheBustTimestamp = Date.now();
-				let userImageCount = 0;
 
 				if (isPremium) {
 					// Premium users: Multiple images per activity (route)
@@ -214,23 +217,8 @@ export function useActivityProfileImages(
 							const uniqueId = `${userId}-${activityId}-${i}`;
 							const imageUrlWithCacheBust = `${imghex}?t=${cacheBustTimestamp}`;
 							addProfileImage(hexagonId, imageUrlWithCacheBust, uniqueId);
-							userImageCount++;
 						}
 					});
-
-					totalImagesAdded += userImageCount;
-					imageDetails.push({
-						userId,
-						isPremium: true,
-						imageUrl: `${imghex}?t=${cacheBustTimestamp}`,
-						count: userImageCount,
-					});
-
-					console.log(`  👑 Premium user ${userId}:`);
-					console.log(`     - Total hexagons: ${userHexes.length}`);
-					console.log(`     - Activities: ${activityCount}`);
-					console.log(`     - Images added: ${userImageCount} (1 per ${intervalPerActivity} hexes per activity, max ${maxImagesPerActivity} per activity)`);
-					console.log(`     - Image URL: ${imghex}?t=${cacheBustTimestamp}`);
 				} else {
 					// Non-premium users: 1 image per activity (randomly placed, persisted in localStorage)
 					Object.keys(activityHexagons).forEach((activityId) => {
@@ -248,35 +236,11 @@ export function useActivityProfileImages(
 						const uniqueId = `${userId}-${activityId}`;
 						const imageUrlWithCacheBust = `${imghex}?t=${cacheBustTimestamp}`;
 						addProfileImage(hexagonId, imageUrlWithCacheBust, uniqueId);
-						userImageCount++;
 					});
-
-					totalImagesAdded += userImageCount;
-					imageDetails.push({
-						userId,
-						isPremium: false,
-						imageUrl: `${imghex}?t=${cacheBustTimestamp}`,
-						count: userImageCount,
-					});
-
-					console.log(`  👤 Regular user ${userId}:`);
-					console.log(`     - Total hexagons: ${userHexes.length}`);
-					console.log(`     - Activities: ${activityCount}`);
-					console.log(`     - Images added: ${userImageCount} (1 per activity, randomly placed)`);
-					console.log(`     - Image URL: ${imghex}?t=${cacheBustTimestamp}`);
 
 					// Save selections to localStorage
 					localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedHexagons));
 				}
-			});
-
-			console.log(`\n📊 SUMMARY - Main Page Profile Images:`);
-			console.log(`   Total images rendered: ${totalImagesAdded}`);
-			console.log(`   Premium users: ${imageDetails.filter(d => d.isPremium).length}`);
-			console.log(`   Regular users: ${imageDetails.filter(d => !d.isPremium).length}`);
-			console.log(`\n📸 Image URLs:`);
-			imageDetails.forEach(detail => {
-				console.log(`   ${detail.isPremium ? '👑' : '👤'} ${detail.userId}: ${detail.imageUrl} (${detail.count} images)`);
 			});
 		};
 
@@ -288,7 +252,7 @@ export function useActivityProfileImages(
 			// No need to clean up load event since we're not listening to it
 
 			// Cleanup markers
-			markersRef.current.forEach(marker => marker.remove());
+			markersRef.current.forEach((marker) => marker.remove());
 			markersRef.current = [];
 
 			// Cleanup layers when component unmounts
@@ -300,7 +264,7 @@ export function useActivityProfileImages(
 						if (currentMap.getLayer(layerId)) {
 							currentMap.removeLayer(layerId);
 						}
-						const sourceId = layerId.replace('profile-image-', 'profile-image-source-');
+						const sourceId = layerId.replace("profile-image-", "profile-image-source-");
 						if (currentMap.getSource(sourceId)) {
 							currentMap.removeSource(sourceId);
 						}

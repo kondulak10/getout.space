@@ -172,6 +172,14 @@ export async function processActivity(
 		// Process hexagons in batch
 		const hexagonStats = await processHexagons(hexagons, activity, user, routeType, session);
 
+		// Update user's lastHex (for map initialization)
+		if (hexagons.length > 0) {
+			const h3 = require('h3-js');
+			const firstHexParent = h3.cellToParent(hexagons[0], 6);
+			await user.updateOne({ lastHex: firstHexParent }, { session });
+			console.log(`📍 Updated user lastHex to: ${firstHexParent}`);
+		}
+
 		// Commit transaction
 		await session.commitTransaction();
 

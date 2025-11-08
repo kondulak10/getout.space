@@ -21,6 +21,7 @@ interface User {
   tokenIsExpired: boolean;
   createdAt: string;
   updatedAt: string;
+  lastHex?: string; // Resolution 6 parent hex from most recent activity
 }
 
 interface AuthContextType {

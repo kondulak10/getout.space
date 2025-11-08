@@ -7,7 +7,9 @@ import { useHexagonSelection } from "@/hooks/useHexagonSelection";
 import { useHexagons } from "@/hooks/useHexagons";
 import { useMapView } from "@/hooks/useMapView";
 import { useMapbox } from "@/hooks/useMapbox";
-import { useStravaAuth } from "@/hooks/useStravaAuth";
+import { useAuth } from "@/contexts/useAuth";
+import { useMemo } from "react";
+import * as h3 from "h3-js";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 /**
@@ -15,12 +17,32 @@ import "mapbox-gl/dist/mapbox-gl.css";
  * Shows the interactive map with hexagons
  */
 export function HomePage() {
+	const { user } = useAuth();
 	const { mapView, setMapView } = useMapView();
 	const { selectedHexagon, hexagonDetailLoading, handleHexagonClick, clearSelection } =
 		useHexagonSelection();
 
+	// Calculate map center from user's lastHex (if available)
+	const mapCenter = useMemo(() => {
+		console.log('👤 User lastHex:', user?.lastHex);
+		if (user?.lastHex) {
+			try {
+				const [lat, lng] = h3.cellToLatLng(user.lastHex);
+				const coords = [lng, lat] as [number, number];
+				console.log('📍 Map will center on:', coords, `(from hex ${user.lastHex})`);
+				return coords; // Mapbox uses [lng, lat]
+			} catch (error) {
+				console.warn('Failed to convert lastHex to coordinates:', error);
+			}
+		}
+		console.log('📍 No lastHex, will use default viewport (Ostrava)');
+		return undefined; // Fall back to default viewport (Ostrava)
+	}, [user?.lastHex]);
+
 	const { mapContainerRef, mapRef } = useMapbox({
 		viewport: "ostrava",
+		center: mapCenter, // Use user's lastHex location if available
+		zoom: mapCenter ? 13 : undefined, // Slightly closer zoom when centering on user's hex
 		// Uses dark-v11 with custom monochrome flat styling + 3D buildings
 	});
 
@@ -29,11 +51,6 @@ export function HomePage() {
 		mapRef,
 		mode: mapView,
 		onHexagonClick: handleHexagonClick,
-	});
-
-	// Setup Strava auth to refresh hexagons after registration activities are processed
-	useStravaAuth({
-		onActivitiesProcessed: refetchHexagons,
 	});
 
 	// Add profile images on hexagons

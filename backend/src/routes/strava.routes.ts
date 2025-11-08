@@ -6,6 +6,7 @@ import { processActivity, deleteActivityAndRestoreHexagons } from '../services/a
 import { StravaOAuthTokenResponse, StravaActivity, StravaAthleteStats } from '../types/strava.types';
 import { Activity } from '../models/Activity';
 import { processAndUploadProfileImage } from '../utils/imageProcessing';
+import { geocodeToHex } from '../utils/geocoding';
 
 const router = Router();
 
@@ -162,6 +163,20 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 
 		console.log('👤 User profile updated:', user.stravaProfile.firstname);
 
+		// For new users, try to geocode their city to set initial lastHex (best effort)
+		if (isNewUser && !user.lastHex) {
+			const initialHex = await geocodeToHex(
+				user.stravaProfile.city,
+				user.stravaProfile.state,
+				user.stravaProfile.country
+			);
+			if (initialHex) {
+				user.lastHex = initialHex;
+				await user.save();
+				console.log('✅ Set initial lastHex from location');
+			}
+		}
+
 		// Generate JWT token
 		const token = generateToken(user);
 
@@ -178,6 +193,7 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 				isAdmin: user.isAdmin,
 				profile: user.stravaProfile,
 				tokenExpiresAt: user.tokenExpiresAt,
+				lastHex: user.lastHex,
 			},
 		});
 	} catch (error: unknown) {
@@ -453,6 +469,7 @@ router.get('/api/auth/me', authenticateToken, async (req: AuthRequest, res: Resp
 				profile: user.stravaProfile,
 				tokenExpiresAt: user.tokenExpiresAt,
 				createdAt: user.createdAt,
+				lastHex: user.lastHex,
 			},
 		});
 	} catch (error: unknown) {
