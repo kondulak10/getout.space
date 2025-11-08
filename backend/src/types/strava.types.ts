@@ -1,7 +1,3 @@
-/**
- * Type definitions for Strava API responses
- */
-
 export interface StravaOAuthTokenResponse {
 	token_type: string;
 	expires_at: number;

@@ -1,8 +1,3 @@
-/**
- * Font Awesome library configuration
- * Import commonly used icons here to optimize bundle size
- */
-
 import { library } from '@fortawesome/fontawesome-svg-core';
 import {
 	faUser,
@@ -39,9 +34,7 @@ import {
 	faUser as faUserLight,
 } from '@fortawesome/pro-light-svg-icons';
 
-// Add icons to the library
 library.add(
-	// Solid icons
 	faUser,
 	faMap,
 	faHouse,
@@ -64,10 +57,8 @@ library.add(
 	faStar,
 	faLocationDot,
 	faSwords,
-	// Regular icons
 	faUserRegular,
 	faHeartRegular,
 	faStarRegular,
-	// Light icons
 	faUserLight,
 );

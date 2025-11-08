@@ -1,10 +1,5 @@
 import { IUser } from '../models/User';
 
-/**
- * Refresh a user's Strava access token using their refresh token
- * @param user - The user whose token should be refreshed
- * @returns The updated token data from Strava
- */
 export async function refreshStravaToken(user: IUser): Promise<{
   access_token: string;
   refresh_token: string;
@@ -34,11 +29,9 @@ export async function refreshStravaToken(user: IUser): Promise<{
       errorBody = await response.text();
       errorData = JSON.parse(errorBody);
     } catch (e) {
-      // If we can't parse JSON, use the raw text
       errorData = { raw: errorBody };
     }
 
-    // Log detailed error information
     console.error('❌ Token refresh failed:', {
       status: response.status,
       statusText: response.statusText,
@@ -52,7 +45,6 @@ export async function refreshStravaToken(user: IUser): Promise<{
       refreshTokenLength: user.refreshToken.length,
     });
 
-    // Special handling for 401 - likely means refresh token was already used or revoked
     if (response.status === 401) {
       throw new Error(`Token refresh failed with 401 - refresh token may have been already used or user revoked access (user: ${user.stravaProfile.firstname})`);
     }

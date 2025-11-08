@@ -13,12 +13,10 @@ export interface HexagonData {
 	image?: string;
 }
 
-// Generate random color from palette
 export const getRandomColor = (): string => {
 	return HEX_COLORS[Math.floor(Math.random() * HEX_COLORS.length)];
 };
 
-// Convert H3 cell to GeoJSON polygon
 export const h3ToGeoJSON = (h3Index: string) => {
 	const boundary = cellToBoundary(h3Index, true);
 	const closedBoundary = [...boundary, boundary[0]];
@@ -33,7 +31,6 @@ export const h3ToGeoJSON = (h3Index: string) => {
 	};
 };
 
-// Calculate hexagon center (memoizable)
 export const getHexagonCenter = (hex: string): [number, number] => {
 	const boundary = cellToBoundary(hex);
 	let sumLat = 0;
@@ -45,7 +42,6 @@ export const getHexagonCenter = (hex: string): [number, number] => {
 	return [sumLat / boundary.length, sumLng / boundary.length];
 };
 
-// Get hexagons for current viewport
 export const getViewportHexagons = (map: MapboxMap): string[] => {
 	const bounds = map.getBounds();
 	const center = map.getCenter();
@@ -69,7 +65,6 @@ export const getViewportHexagons = (map: MapboxMap): string[] => {
 	});
 };
 
-// Assign color/image data to hexagon if not already assigned
 export const getOrCreateHexagonData = (
 	hex: string,
 	dataMap: Map<string, HexagonData>
@@ -85,7 +80,6 @@ export const getOrCreateHexagonData = (
 	return dataMap.get(hex)!;
 };
 
-// Create GeoJSON features from hexagons
 export const createHexagonFeatures = (hexagons: string[], dataMap: Map<string, HexagonData>) => {
 	return hexagons.map((hex) => {
 		const feature = h3ToGeoJSON(hex);

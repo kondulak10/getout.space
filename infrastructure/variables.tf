@@ -58,3 +58,9 @@ variable "slack_webhook_url" {
   sensitive   = true
   default     = ""
 }
+
+variable "mapbox_token" {
+  description = "Mapbox access token for geocoding user locations"
+  type        = string
+  sensitive   = true
+}

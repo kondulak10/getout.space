@@ -9,24 +9,17 @@ interface UseStaticHexagonsOptions {
 	mockData: MockData;
 }
 
-/**
- * Hook to display static hexagon data on the map (for test/demo purposes)
- * Does not fetch from backend, uses provided mock data
- */
 export function useStaticHexagons({ mapRef, mockData }: UseStaticHexagonsOptions) {
 	const layersSetupRef = useRef(false);
 
-	// Setup hexagon layers
 	const setupHexagonLayer = useCallback(() => {
 		if (!mapRef.current) return;
 		const map = mapRef.current;
 
-		// Check if source already exists
 		if (map.getSource('hexagons')) {
 			return;
 		}
 
-		// Add hexagon source
 		map.addSource('hexagons', {
 			type: 'geojson',
 			data: {
@@ -35,7 +28,6 @@ export function useStaticHexagons({ mapRef, mockData }: UseStaticHexagonsOptions
 			},
 		});
 
-		// Add hexagon fill layer
 		map.addLayer({
 			id: 'hexagon-fills',
 			type: 'fill',
@@ -46,7 +38,6 @@ export function useStaticHexagons({ mapRef, mockData }: UseStaticHexagonsOptions
 			},
 		});
 
-		// Add hexagon outline layer
 		map.addLayer({
 			id: 'hexagon-outlines',
 			type: 'line',
@@ -59,7 +50,6 @@ export function useStaticHexagons({ mapRef, mockData }: UseStaticHexagonsOptions
 		});
 	}, [mapRef]);
 
-	// Setup parent hexagon visualization layer
 	const setupParentLayer = useCallback(() => {
 		if (!mapRef.current) return;
 		const map = mapRef.current;
@@ -88,21 +78,16 @@ export function useStaticHexagons({ mapRef, mockData }: UseStaticHexagonsOptions
 		});
 	}, [mapRef]);
 
-	// Update hexagons on map
 	const updateHexagons = useCallback(() => {
 		if (!mapRef.current) return;
 		const map = mapRef.current;
 
-		// Ensure layers exist
 		if (!map.getSource('hexagons')) {
 			setupHexagonLayer();
 			setTimeout(() => updateHexagons(), 100);
 			return;
 		}
 
-		console.time('⏱️ GeoJSON generation');
-
-		// Create GeoJSON features from mock hexagons
 		const features = mockData.hexagons.map((hex) => {
 			const feature = h3ToGeoJSON(hex.hexagonId);
 			const color = getUserColor(hex.currentOwnerId);
@@ -125,22 +110,14 @@ export function useStaticHexagons({ mapRef, mockData }: UseStaticHexagonsOptions
 			features,
 		};
 
-		console.timeEnd('⏱️ GeoJSON generation');
-		console.time('⏱️ Mapbox render');
-
-		// Update the map source
 		const source = map.getSource('hexagons') as import('mapbox-gl').GeoJSONSource;
 		if (source) {
 			source.setData(geojson);
-			// Wait for render to complete
 			map.once('idle', () => {
-				console.timeEnd('⏱️ Mapbox render');
-				console.log('✅ Map render complete');
 			});
 		}
 	}, [mapRef, mockData.hexagons, setupHexagonLayer]);
 
-	// Update parent hexagons
 	const updateParentHexagons = useCallback(() => {
 		if (!mapRef.current) return;
 		const map = mapRef.current;
@@ -152,7 +129,6 @@ export function useStaticHexagons({ mapRef, mockData }: UseStaticHexagonsOptions
 			return;
 		}
 
-		// Convert parent hexagon IDs to GeoJSON
 		const features = mockData.parentHexagons.map((parentId) => {
 			return h3ToGeoJSON(parentId);
 		});
@@ -165,7 +141,6 @@ export function useStaticHexagons({ mapRef, mockData }: UseStaticHexagonsOptions
 		source.setData(geojson);
 	}, [mapRef, mockData.parentHexagons, setupParentLayer]);
 
-	// Cleanup layers
 	const cleanupHexagonLayer = useCallback(() => {
 		if (!mapRef.current) return;
 		const map = mapRef.current;
@@ -192,24 +167,20 @@ export function useStaticHexagons({ mapRef, mockData }: UseStaticHexagonsOptions
 				map.removeSource('parent-hexagons');
 			}
 		} catch (error) {
-			console.error(error);
 		}
 
 		layersSetupRef.current = false;
 	}, [mapRef]);
 
-	// Setup layers and render hexagons
 	useEffect(() => {
 		if (!mapRef.current) return;
 		const map = mapRef.current;
 
 		const initializeHexagons = () => {
-			// Setup layers
 			setupHexagonLayer();
 			setupParentLayer();
 			layersSetupRef.current = true;
 
-			// Render data after a short delay to ensure layers are ready
 			setTimeout(() => {
 				updateHexagons();
 				updateParentHexagons();

@@ -150,6 +150,61 @@ query MyActivities($limit: Int, $offset: Int) {
     movingTime
     distance
     averageSpeed
+    lastHex
     createdAt
+  }
+}
+
+query GetAllHexagons($limit: Int, $offset: Int) {
+  hexagons(limit: $limit, offset: $offset) {
+    id
+    hexagonId
+    currentOwnerId
+    currentOwnerStravaId
+    currentOwnerIsPremium
+    currentOwnerImghex
+    currentActivityId
+    currentStravaActivityId
+    captureCount
+    firstCapturedAt
+    lastCapturedAt
+    activityType
+    routeType
+    createdAt
+    updatedAt
+  }
+}
+
+query GetAllActivities($limit: Int, $offset: Int) {
+  activities(limit: $limit, offset: $offset) {
+    id
+    stravaActivityId
+    userId
+    source
+    name
+    type
+    sportType
+    description
+    startDate
+    startDateLocal
+    timezone
+    movingTime
+    elapsedTime
+    distance
+    elevationGain
+    averageSpeed
+    startLocation {
+      lat
+      lng
+    }
+    endLocation {
+      lat
+      lng
+    }
+    summaryPolyline
+    isManual
+    isPrivate
+    createdAt
+    updatedAt
   }
 }

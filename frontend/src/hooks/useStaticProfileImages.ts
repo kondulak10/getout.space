@@ -4,11 +4,6 @@ import { cellToBoundary } from 'h3-js';
 import * as turf from '@turf/turf';
 import type { MockData } from '@/utils/mockHexData';
 
-/**
- * Hook to display profile images on hexagons for static test data
- * - Premium users: 1 image per 5 hexagons, max 30 images per user
- * - Regular users: No images (to keep it simple for testing)
- */
 export function useStaticProfileImages(
 	mapRef: React.RefObject<MapboxMap | null>,
 	mockData: MockData | null
@@ -22,21 +17,17 @@ export function useStaticProfileImages(
 		}
 
 		const onMapLoad = () => {
-			// Helper function to add profile image to a hexagon
 			const addProfileImage = (hexagonId: string, imageUrl: string, uniqueId: string) => {
 				const layerId = `profile-image-${uniqueId}`;
 				const sourceId = `profile-image-source-${uniqueId}`;
 
-				// Skip if already added
 				if (layersAddedRef.current.has(layerId)) {
 					return;
 				}
 
 				try {
-					// Get hexagon boundary (6 vertices)
-					const boundary = cellToBoundary(hexagonId, true); // GeoJSON format = [lng, lat]
+					const boundary = cellToBoundary(hexagonId, true);
 
-					// Calculate bounding box from the 6 vertices
 					let minLat = Infinity, maxLat = -Infinity;
 					let minLng = Infinity, maxLng = -Infinity;
 
@@ -47,31 +38,26 @@ export function useStaticProfileImages(
 						maxLng = Math.max(maxLng, lng);
 					});
 
-					// Create bounding box polygon
 					const bbox = turf.polygon([[
-						[minLng, maxLat], // top-left
-						[maxLng, maxLat], // top-right
-						[maxLng, minLat], // bottom-right
-						[minLng, minLat], // bottom-left
-						[minLng, maxLat], // close the polygon
+						[minLng, maxLat],
+						[maxLng, maxLat],
+						[maxLng, minLat],
+						[minLng, minLat],
+						[minLng, maxLat],
 					]]);
 
-					// Scale down by 10% (make it 90% of original size)
 					const scaledBbox = turf.transformScale(bbox, 0.9);
 
-					// Rotate the polygon by 20 degrees
 					const rotatedBbox = turf.transformRotate(scaledBbox, 20);
 
-					// Extract the rotated coordinates (first 4 points, excluding the closing point)
 					const rotatedCoords = rotatedBbox.geometry.coordinates[0];
 					const imageBounds: [[number, number], [number, number], [number, number], [number, number]] = [
-						[rotatedCoords[0][0], rotatedCoords[0][1]], // top-left
-						[rotatedCoords[1][0], rotatedCoords[1][1]], // top-right
-						[rotatedCoords[2][0], rotatedCoords[2][1]], // bottom-right
-						[rotatedCoords[3][0], rotatedCoords[3][1]], // bottom-left
+						[rotatedCoords[0][0], rotatedCoords[0][1]],
+						[rotatedCoords[1][0], rotatedCoords[1][1]],
+						[rotatedCoords[2][0], rotatedCoords[2][1]],
+						[rotatedCoords[3][0], rotatedCoords[3][1]],
 					];
 
-					// Add image source with error handling
 					if (!map.getSource(sourceId)) {
 						map.addSource(sourceId, {
 							type: 'image',
@@ -79,7 +65,6 @@ export function useStaticProfileImages(
 							coordinates: imageBounds,
 						});
 
-						// Listen for source errors and clean up failed loads
 						const errorHandler = (e: any) => {
 							if (e.sourceId === sourceId || e.source?.id === sourceId) {
 								try {
@@ -92,7 +77,6 @@ export function useStaticProfileImages(
 									layersAddedRef.current.delete(layerId);
 									map.off('error', errorHandler);
 								} catch (cleanupError) {
-									// Silently fail
 								}
 							}
 						};
@@ -100,7 +84,6 @@ export function useStaticProfileImages(
 						map.on('error', errorHandler);
 					}
 
-					// Add image layer (make sure it's on top)
 					if (!map.getLayer(layerId)) {
 						map.addLayer({
 							id: layerId,
@@ -113,20 +96,16 @@ export function useStaticProfileImages(
 
 						layersAddedRef.current.add(layerId);
 					} else {
-						// If layer exists, ensure it's on top by moving it
 						map.moveLayer(layerId);
 					}
 				} catch (error) {
-					// Silently fail
 				}
 			};
 
-			// Add images for premium users: 1 photo per 5 hexes, max 30 photos per user
 			const premiumHexagons = mockData.hexagons.filter(
 				hex => hex.currentOwnerIsPremium && hex.currentOwnerImghex
 			);
 
-			// Group by user
 			const hexagonsByUser = new Map<string, typeof premiumHexagons>();
 			premiumHexagons.forEach(hex => {
 				if (!hexagonsByUser.has(hex.currentOwnerId)) {
@@ -139,10 +118,8 @@ export function useStaticProfileImages(
 			const interval = 5;
 			let totalImages = 0;
 
-			console.log(`🖼️ Processing test page profile images for ${hexagonsByUser.size} premium users`);
 			const imageDetails: Array<{ userId: string; imageUrl: string; count: number; totalHexagons: number }> = [];
 
-			// For each premium user, select every 5th hexagon, max 30 images
 			hexagonsByUser.forEach((userHexes) => {
 				const selectedHexes = userHexes.filter((_, index) => index % interval === 0).slice(0, maxImagesPerUser);
 
@@ -150,7 +127,6 @@ export function useStaticProfileImages(
 				const firstHex = userHexes[0];
 				selectedHexes.forEach((hex) => {
 					const uniqueId = `${hex.currentOwnerId}-${hex.hexagonId}`;
-					// Add cache-busting timestamp to prevent stale images
 					const imageUrlWithCacheBust = `${hex.currentOwnerImghex}?t=${cacheBustTimestamp}`;
 					addProfileImage(hex.hexagonId, imageUrlWithCacheBust, uniqueId);
 					totalImages++;
@@ -162,26 +138,10 @@ export function useStaticProfileImages(
 					count: selectedHexes.length,
 					totalHexagons: userHexes.length,
 				});
-
-				console.log(`  👑 Premium user ${firstHex.currentOwnerId}:`);
-				console.log(`     - Total hexagons: ${userHexes.length}`);
-				console.log(`     - Images added: ${selectedHexes.length} (1 per ${interval} hexes, max ${maxImagesPerUser})`);
-				console.log(`     - Image URL: ${firstHex.currentOwnerImghex}?t=${cacheBustTimestamp}`);
-			});
-
-			console.log(`\n📊 SUMMARY - Test Page Profile Images:`);
-			console.log(`   Total images rendered: ${totalImages}`);
-			console.log(`   Total premium hexagons: ${premiumHexagons.length}`);
-			console.log(`   Premium users: ${hexagonsByUser.size}`);
-			console.log(`\n📸 Image URLs:`);
-			imageDetails.forEach(detail => {
-				console.log(`   👑 ${detail.userId}: ${detail.imageUrl} (${detail.count} images from ${detail.totalHexagons} hexagons)`);
 			});
 		};
 
-		// Map is ready if hexagons are loaded - just call onMapLoad
 		if (map.loaded()) {
-			// Wait a bit for hexagon layers to be added first
 			setTimeout(onMapLoad, 500);
 		} else {
 			map.once('load', () => {
@@ -190,7 +150,6 @@ export function useStaticProfileImages(
 		}
 
 		return () => {
-			// Cleanup layers when component unmounts
 			const currentMap = mapRef.current;
 			if (currentMap && currentMap.getStyle()) {
 				layersAddedRef.current.forEach((layerId) => {
@@ -203,7 +162,6 @@ export function useStaticProfileImages(
 							currentMap.removeSource(sourceId);
 						}
 					} catch (error) {
-						// Silently fail cleanup
 					}
 				});
 			}

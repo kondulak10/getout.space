@@ -10,9 +10,6 @@ import {
 	type ActivityDetails,
 } from '@/services/stravaApi.service';
 
-/**
- * Hook for managing Strava activities - fetching, processing, deleting
- */
 export function useStravaActivities() {
 	const [activities, setActivities] = useState<StravaActivity[]>([]);
 	const [selectedActivity, setSelectedActivity] = useState<ActivityDetails | null>(null);
@@ -24,9 +21,6 @@ export function useStravaActivities() {
 
 	const perPage = 30;
 
-	/**
-	 * Fetch athlete statistics
-	 */
 	const loadAthleteStats = async () => {
 		try {
 			const data = await fetchAthleteStats();
@@ -35,17 +29,12 @@ export function useStravaActivities() {
 				setTotalRunCount(data.runCount);
 			}
 		} catch (error) {
-			// Silently fail
 		}
 	};
 
-	/**
-	 * Fetch activities for a specific page
-	 */
 	const loadActivities = async (page: number = currentPage) => {
 		setLoading(true);
 		try {
-			// Fetch stats on first page load
 			if (page === 1 && totalRunCount === null) {
 				await loadAthleteStats();
 			}
@@ -59,15 +48,11 @@ export function useStravaActivities() {
 				setHasMoreActivities(data.hasMorePages ?? false);
 			}
 		} catch (error) {
-			// Silently fail
 		} finally {
 			setLoading(false);
 		}
 	};
 
-	/**
-	 * Load activity details and decode polyline
-	 */
 	const loadActivityDetails = async (activityId: number) => {
 		try {
 
@@ -75,7 +60,6 @@ export function useStravaActivities() {
 
 			if (data.success) {
 
-				// Decode polyline if available
 				if (data.activity.map?.polyline) {
 					const decoded = polyline.decode(data.activity.map.polyline);
 					setRouteCoordinates(decoded);
@@ -86,13 +70,9 @@ export function useStravaActivities() {
 				}
 			}
 		} catch (error) {
-			// Silently fail
 		}
 	};
 
-	/**
-	 * Process (save) an activity to the database
-	 */
 	const saveActivity = async (activityId: number): Promise<void> => {
 		try {
 
@@ -106,13 +86,9 @@ export function useStravaActivities() {
 				);
 			}
 		} catch (error) {
-			// Silently fail
 		}
 	};
 
-	/**
-	 * Delete an activity from the database
-	 */
 	const removeActivity = async (activityId: number): Promise<void> => {
 		try {
 
@@ -126,12 +102,10 @@ export function useStravaActivities() {
 				);
 			}
 		} catch (error) {
-			// Silently fail
 		}
 	};
 
 	return {
-		// State
 		activities,
 		selectedActivity,
 		routeCoordinates,
@@ -141,7 +115,6 @@ export function useStravaActivities() {
 		loading,
 		perPage,
 
-		// Actions
 		loadActivities,
 		loadActivityDetails,
 		saveActivity,

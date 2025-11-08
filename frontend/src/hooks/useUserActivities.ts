@@ -8,18 +8,13 @@ import {
 	type StravaActivity,
 } from '@/services/stravaApi.service';
 
-/**
- * Hook for managing user activities
- */
 export function useUserActivities() {
 	const [latestActivity, setLatestActivity] = useState<UserActivity | null>(null);
 	const [stravaActivities, setStravaActivities] = useState<StravaActivity[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [infoMessage, setInfoMessage] = useState<string | null>(null);
 
-	/**
-	 * Load latest activity from database
-	 */
 	const loadLatestActivity = async () => {
 		try {
 			const data = await fetchLatestActivity();
@@ -31,17 +26,15 @@ export function useUserActivities() {
 		}
 	};
 
-	/**
-	 * Load all activities from Strava (not database)
-	 */
 	const loadStravaActivities = async () => {
 		setLoading(true);
 		setError(null);
+		setInfoMessage(null);
 		try {
-			// Fetch first page of Strava activities (with isStored flags)
 			const data = await fetchActivities(1, 30);
 			if (data.success) {
 				setStravaActivities(data.activities);
+				setInfoMessage(data.infoMessage || null);
 			} else {
 				setError(data.error || 'Failed to fetch activities');
 			}
@@ -52,9 +45,6 @@ export function useUserActivities() {
 		}
 	};
 
-	/**
-	 * Process (save) an activity
-	 */
 	const saveActivity = async (activityId: number): Promise<void> => {
 		try {
 
@@ -75,9 +65,6 @@ export function useUserActivities() {
 		}
 	};
 
-	/**
-	 * Delete an activity
-	 */
 	const removeActivity = async (activityId: number): Promise<void> => {
 		try {
 
@@ -98,7 +85,6 @@ export function useUserActivities() {
 		}
 	};
 
-	// Load latest activity on mount
 	useEffect(() => {
 		loadLatestActivity();
 	}, []);
@@ -108,6 +94,7 @@ export function useUserActivities() {
 		stravaActivities,
 		loading,
 		error,
+		infoMessage,
 		loadLatestActivity,
 		loadStravaActivities,
 		saveActivity,

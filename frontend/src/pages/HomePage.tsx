@@ -8,65 +8,79 @@ import { useHexagons } from "@/hooks/useHexagons";
 import { useMapView } from "@/hooks/useMapView";
 import { useMapbox } from "@/hooks/useMapbox";
 import { useAuth } from "@/contexts/useAuth";
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import * as h3 from "h3-js";
 import "mapbox-gl/dist/mapbox-gl.css";
 
-/**
- * HomePage - Authenticated users only
- * Shows the interactive map with hexagons
- */
 export function HomePage() {
 	const { user } = useAuth();
+	const [searchParams, setSearchParams] = useSearchParams();
 	const { mapView, setMapView } = useMapView();
 	const { selectedHexagon, hexagonDetailLoading, handleHexagonClick, clearSelection } =
 		useHexagonSelection();
 
-	// Calculate map center from user's lastHex (if available)
+	const hexFromUrl = searchParams.get('hex');
+
 	const mapCenter = useMemo(() => {
-		console.log('👤 User lastHex:', user?.lastHex);
-		if (user?.lastHex) {
+		// Prioritize hex from URL parameter
+		const hexToUse = hexFromUrl || user?.lastHex;
+
+		if (hexToUse) {
 			try {
-				const [lat, lng] = h3.cellToLatLng(user.lastHex);
+				const [lat, lng] = h3.cellToLatLng(hexToUse);
 				const coords = [lng, lat] as [number, number];
-				console.log('📍 Map will center on:', coords, `(from hex ${user.lastHex})`);
-				return coords; // Mapbox uses [lng, lat]
+				return coords;
 			} catch (error) {
-				console.warn('Failed to convert lastHex to coordinates:', error);
+				console.error('Invalid hex ID:', hexToUse);
 			}
 		}
-		console.log('📍 No lastHex, will use default viewport (Ostrava)');
-		return undefined; // Fall back to default viewport (Ostrava)
-	}, [user?.lastHex]);
+		return undefined;
+	}, [hexFromUrl, user?.lastHex]);
 
 	const { mapContainerRef, mapRef } = useMapbox({
 		viewport: "ostrava",
-		center: mapCenter, // Use user's lastHex location if available
-		zoom: mapCenter ? 13 : undefined, // Slightly closer zoom when centering on user's hex
-		// Uses dark-v11 with custom monochrome flat styling + 3D buildings
+		center: mapCenter,
+		zoom: mapCenter ? 13 : undefined,
 	});
 
-	// Unified hexagon hook - mode changes based on view
 	const { loading, refetchHexagons, hexagonsData } = useHexagons({
 		mapRef,
 		mode: mapView,
 		onHexagonClick: handleHexagonClick,
 	});
 
-	// Add profile images on hexagons
 	useActivityProfileImages(mapRef, hexagonsData ?? null);
 
-	// Callback for when activities change
+	// Handle hex navigation from URL parameter
+	useEffect(() => {
+		if (hexFromUrl && mapRef.current) {
+			try {
+				const [lat, lng] = h3.cellToLatLng(hexFromUrl);
+				mapRef.current.flyTo({
+					center: [lng, lat],
+					zoom: 13,
+					duration: 1500,
+				});
+
+				// Clear the hex parameter from URL after navigating
+				setTimeout(() => {
+					setSearchParams({});
+				}, 1500);
+			} catch (error) {
+				console.error('Failed to navigate to hex:', error);
+			}
+		}
+	}, [hexFromUrl, mapRef, setSearchParams]);
+
 	const handleActivityChanged = () => {
 		refetchHexagons();
 	};
 
 	return (
 		<div className="relative w-full h-[100dvh] md:h-screen bg-black">
-			{/* Map container - adjusted for mobile bottom nav */}
 			<div ref={mapContainerRef} className="w-full h-[calc(100dvh-90px)] md:h-full" />
 
-			{/* UI Overlays */}
 			<VersionBadge />
 			<HexOverlay
 				view={mapView}
@@ -75,7 +89,6 @@ export function HomePage() {
 			/>
 			<HexagonLoadingIndicator isLoading={loading} />
 
-			{/* Hexagon Detail Modal */}
 			{(selectedHexagon || hexagonDetailLoading) && (
 				<HexagonDetailModal
 					activity={selectedHexagon?.activity}

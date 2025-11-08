@@ -6,7 +6,6 @@ import { GraphQLContext, requireAuth, requireAdmin } from './auth.helpers';
 
 export const hexagonResolvers = {
   Hexagon: {
-    // Field resolver: Populate current owner
     currentOwner: async (parent: IHexagon) => {
       try {
         const user = await User.findById(parent.currentOwnerId);
@@ -16,7 +15,6 @@ export const hexagonResolvers = {
         return null;
       }
     },
-    // Field resolver: Populate current activity
     currentActivity: async (parent: IHexagon) => {
       try {
         const activity = await Activity.findById(parent.currentActivityId);
@@ -26,7 +24,6 @@ export const hexagonResolvers = {
         return null;
       }
     },
-    // Field resolver: Populate first capturer
     firstCapturedBy: async (parent: IHexagon) => {
       try {
         const user = await User.findById(parent.firstCapturedBy);
@@ -39,7 +36,6 @@ export const hexagonResolvers = {
   },
 
   Query: {
-    // Get hexagons owned by current user
     myHexagons: async (
       _: any,
       { limit = 1000, offset = 0 }: { limit?: number; offset?: number },
@@ -59,7 +55,6 @@ export const hexagonResolvers = {
       }
     },
 
-    // Get hexagons owned by current user within a bounding box
     myHexagonsInBbox: async (
       _: any,
       { south, west, north, east }: { south: number; west: number; north: number; east: number },
@@ -68,17 +63,13 @@ export const hexagonResolvers = {
       const user = requireAuth(context);
 
       try {
-        // Import h3-js for filtering hexagons within bbox
         const h3 = require('h3-js');
 
-        // Get user's hexagons with a safety limit (prevent loading too many at once)
-        // TODO: Replace with geospatial indexing for better performance
         const MAX_HEXAGONS = 5000;
         const hexagons = await Hexagon.find({ currentOwnerId: user._id })
           .limit(MAX_HEXAGONS)
-          .sort({ lastCapturedAt: -1 }); // Get most recent first
+          .sort({ lastCapturedAt: -1 });
 
-        // Filter hexagons that are within the bounding box
         const hexagonsInBbox = hexagons.filter((hex) => {
           const center = h3.cellToLatLng(hex.hexagonId);
           const [lat, lng] = center;
@@ -86,7 +77,6 @@ export const hexagonResolvers = {
           return lat >= south && lat <= north && lng >= west && lng <= east;
         });
 
-        // Log warning if we hit the limit
         if (hexagons.length === MAX_HEXAGONS) {
           console.warn(`⚠️  User ${user._id} has more than ${MAX_HEXAGONS} hexagons. Consider implementing geospatial indexing.`);
         }
@@ -98,7 +88,6 @@ export const hexagonResolvers = {
       }
     },
 
-    // Get all hexagons from all users within a bounding box
     hexagonsInBbox: async (
       _: any,
       { south, west, north, east }: { south: number; west: number; north: number; east: number },
@@ -107,17 +96,13 @@ export const hexagonResolvers = {
       requireAuth(context);
 
       try {
-        // Import h3-js for filtering hexagons within bbox
         const h3 = require('h3-js');
 
-        // Get all hexagons with a safety limit (prevent loading too many at once)
-        // TODO: Replace with geospatial indexing for better performance
         const MAX_HEXAGONS = 10000;
         const hexagons = await Hexagon.find({})
           .limit(MAX_HEXAGONS)
-          .sort({ lastCapturedAt: -1 }); // Get most recent first
+          .sort({ lastCapturedAt: -1 });
 
-        // Filter hexagons that are within the bounding box
         const hexagonsInBbox = hexagons.filter((hex) => {
           const center = h3.cellToLatLng(hex.hexagonId);
           const [lat, lng] = center;
@@ -125,7 +110,6 @@ export const hexagonResolvers = {
           return lat >= south && lat <= north && lng >= west && lng <= east;
         });
 
-        // Log warning if we hit the limit
         if (hexagons.length === MAX_HEXAGONS) {
           console.warn(`⚠️  Database has more than ${MAX_HEXAGONS} hexagons in this area. Consider implementing geospatial indexing.`);
         }
@@ -137,7 +121,6 @@ export const hexagonResolvers = {
       }
     },
 
-    // Get hexagons owned by current user by parent H3 IDs (OPTIMIZED WITH PARENT HEXAGONS)
     myHexagonsByParents: async (
       _: any,
       { parentHexagonIds }: { parentHexagonIds: string[] },
@@ -148,7 +131,6 @@ export const hexagonResolvers = {
       try {
         console.log(`📡 Fetching user hexagons under ${parentHexagonIds.length} parent hexagons`);
 
-        // Query by parent hexagon IDs - much smaller payload than child IDs!
         const hexagons = await Hexagon.find({
           parentHexagonId: { $in: parentHexagonIds },
           currentOwnerId: user._id,
@@ -162,7 +144,6 @@ export const hexagonResolvers = {
       }
     },
 
-    // Get hexagons from all users by parent H3 IDs (OPTIMIZED WITH PARENT HEXAGONS)
     hexagonsByParents: async (
       _: any,
       { parentHexagonIds }: { parentHexagonIds: string[] },
@@ -173,7 +154,6 @@ export const hexagonResolvers = {
       try {
         console.log(`📡 Fetching all hexagons under ${parentHexagonIds.length} parent hexagons`);
 
-        // Query by parent hexagon IDs - much smaller payload than child IDs!
         const hexagons = await Hexagon.find({
           parentHexagonId: { $in: parentHexagonIds },
         });
@@ -186,7 +166,6 @@ export const hexagonResolvers = {
       }
     },
 
-    // Get total count of hexagons owned by current user
     myHexagonsCount: async (_: any, __: any, context: GraphQLContext) => {
       const user = requireAuth(context);
 
@@ -199,7 +178,6 @@ export const hexagonResolvers = {
       }
     },
 
-    // Get hexagons owned by a specific user
     userHexagons: async (
       _: any,
       { userId, limit = 1000, offset = 0 }: { userId: string; limit?: number; offset?: number },
@@ -219,7 +197,6 @@ export const hexagonResolvers = {
       }
     },
 
-    // Get single hexagon by H3 ID
     hexagon: async (_: any, { hexagonId }: { hexagonId: string }, context: GraphQLContext) => {
       requireAuth(context);
 
@@ -232,7 +209,6 @@ export const hexagonResolvers = {
       }
     },
 
-    // Get most contested hexagons
     contestedHexagons: async (
       _: any,
       { limit = 100 }: { limit?: number },
@@ -251,7 +227,6 @@ export const hexagonResolvers = {
       }
     },
 
-    // Get all hexagons (Admin only)
     hexagons: async (
       _: any,
       { limit = 1000, offset = 0 }: { limit?: number; offset?: number },
@@ -273,7 +248,6 @@ export const hexagonResolvers = {
   },
 
   Mutation: {
-    // Capture hexagons from an activity
     captureHexagons: async (
       _: any,
       { activityId, hexagonIds, routeType }: { activityId: string; hexagonIds: string[]; routeType?: string },
@@ -282,7 +256,6 @@ export const hexagonResolvers = {
       const currentUser = requireAuth(context);
 
       try {
-        // Verify activity exists and belongs to current user
         const activity = await Activity.findById(activityId);
 
         if (!activity) {
@@ -299,7 +272,6 @@ export const hexagonResolvers = {
 
         console.log(`🎯 Capturing ${hexagonIds.length} hexagons for activity ${activity.name}`);
 
-        // Import h3 for parent calculation
         const h3 = require('h3-js');
 
         const capturedHexagons: IHexagon[] = [];
@@ -307,15 +279,12 @@ export const hexagonResolvers = {
         let recaptures = 0;
         let ownHexagons = 0;
 
-        // Process each hexagon
         for (const hexagonId of hexagonIds) {
           const existingHex = await Hexagon.findOne({ hexagonId });
 
-          // Calculate parent hexagon (resolution 6 for good balance)
           const parentHexagonId = h3.cellToParent(hexagonId, 6);
 
           if (!existingHex) {
-            // First capture - create new hexagon
             const newHex = new Hexagon({
               hexagonId,
               parentHexagonId,
@@ -336,8 +305,6 @@ export const hexagonResolvers = {
             capturedHexagons.push(newHex);
             newCaptures++;
           } else if (String(existingHex.currentOwnerId) !== String(currentUser._id)) {
-            // Recapture - hex owned by someone else
-            // Add previous owner to history
             const historyEntry: ICaptureHistoryEntry = {
               userId: existingHex.currentOwnerId,
               stravaId: existingHex.currentOwnerStravaId,
@@ -348,7 +315,6 @@ export const hexagonResolvers = {
             };
             existingHex.captureHistory.push(historyEntry);
 
-            // Update to new owner
             existingHex.currentOwnerId = currentUser._id;
             existingHex.currentOwnerStravaId = currentUser.stravaId;
             existingHex.currentActivityId = activity._id;
@@ -362,7 +328,6 @@ export const hexagonResolvers = {
             capturedHexagons.push(existingHex);
             recaptures++;
           } else {
-            // Already owned by current user - no action needed
             capturedHexagons.push(existingHex);
             ownHexagons++;
           }
@@ -380,7 +345,6 @@ export const hexagonResolvers = {
       }
     },
 
-    // Delete hexagon by H3 ID (Admin only)
     deleteHexagon: async (_: any, { hexagonId }: { hexagonId: string }, context: GraphQLContext) => {
       requireAdmin(context);
 

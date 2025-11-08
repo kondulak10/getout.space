@@ -1,6 +1,5 @@
 import mongoose, { Document, Schema, Types } from 'mongoose';
 
-// TypeScript interface for capture history entry
 export interface ICaptureHistoryEntry {
   userId: Types.ObjectId;
   stravaId: number;
@@ -10,61 +9,52 @@ export interface ICaptureHistoryEntry {
   activityType: string;
 }
 
-// TypeScript interface for Hexagon
 export interface IHexagon extends Document {
   _id: Types.ObjectId;
 
-  // Unique hexagon identifier (H3 index)
-  hexagonId: string; // e.g., "8a2a1072b59ffff" (resolution 10)
-  parentHexagonId: string; // Parent at resolution 6 for efficient querying
+  hexagonId: string;
+  parentHexagonId: string;
 
-  // Current owner information
-  currentOwnerId: Types.ObjectId; // User who currently owns this hex
-  currentOwnerStravaId: number; // Strava ID of current owner
-  currentOwnerIsPremium: boolean; // Is current owner a premium user (denormalized for performance)
-  currentOwnerImghex?: string; // Current owner's profile image (denormalized for performance)
-  currentActivityId: Types.ObjectId; // Activity that captured this hex
-  currentStravaActivityId: number; // Strava activity ID
+  currentOwnerId: Types.ObjectId;
+  currentOwnerStravaId: number;
+  currentOwnerIsPremium: boolean;
+  currentOwnerImghex?: string;
+  currentActivityId: Types.ObjectId;
+  currentStravaActivityId: number;
 
-  // Capture statistics
-  captureCount: number; // How many times this hex has been captured (1 = first capture)
+  captureCount: number;
 
-  // Capture metadata
-  firstCapturedAt: Date; // When this hex was first captured by anyone
-  firstCapturedBy: Types.ObjectId; // Original capturer
-  lastCapturedAt: Date; // When this hex was most recently captured
+  firstCapturedAt: Date;
+  firstCapturedBy: Types.ObjectId;
+  lastCapturedAt: Date;
 
-  // Activity context for current capture
-  activityType: string; // "Run", "TrailRun", etc.
-  routeType?: 'line' | 'area'; // Was this from a loop or linear route
+  activityType: string;
+  routeType?: 'line' | 'area';
 
-  // Capture history (optional - for showing previous owners)
   captureHistory: ICaptureHistoryEntry[];
 
-  // Timestamps (auto-managed by Mongoose)
   createdAt: Date;
   updatedAt: Date;
 }
 
-// MongoDB schema
 const hexagonSchema = new Schema<IHexagon>(
   {
     hexagonId: {
       type: String,
       required: true,
-      unique: true, // Global uniqueness - only one owner per hex
+      unique: true,
       index: true,
     },
     parentHexagonId: {
       type: String,
-      required: false, // Optional for backward compatibility
-      index: true, // Index for fast parent-based queries
+      required: false,
+      index: true,
     },
     currentOwnerId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true, // For querying all hexes owned by a user
+      index: true,
     },
     currentOwnerStravaId: {
       type: Number,
@@ -125,21 +115,19 @@ const hexagonSchema = new Schema<IHexagon>(
           stravaActivityId: { type: Number, required: true },
           capturedAt: { type: Date, required: true },
           activityType: { type: String, required: true },
-          _id: false, // Don't create _id for subdocuments
+          _id: false,
         },
       ],
       default: [],
     },
   },
   {
-    timestamps: true, // Automatically adds createdAt and updatedAt
+    timestamps: true,
   }
 );
 
-// Compound indexes for efficient queries
-hexagonSchema.index({ currentOwnerId: 1, lastCapturedAt: -1 }); // User's hexes sorted by recent
-hexagonSchema.index({ captureCount: -1 }); // Most contested hexes
-hexagonSchema.index({ firstCapturedAt: 1 }); // Oldest hexes
+hexagonSchema.index({ currentOwnerId: 1, lastCapturedAt: -1 });
+hexagonSchema.index({ captureCount: -1 });
+hexagonSchema.index({ firstCapturedAt: 1 });
 
-// Create and export the model
 export const Hexagon = mongoose.model<IHexagon>('Hexagon', hexagonSchema);

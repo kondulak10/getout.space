@@ -29,7 +29,6 @@ export function HexagonDetailModal({
 	};
 
 	const formatSpeed = (metersPerSecond: number) => {
-		// Convert m/s to min/km
 		const minutesPerKm = 1000 / (metersPerSecond * 60);
 		const minutes = Math.floor(minutesPerKm);
 		const seconds = Math.round((minutesPerKm - minutes) * 60);
@@ -59,7 +58,6 @@ export function HexagonDetailModal({
 				className="bg-[rgba(10,10,10,0.95)] backdrop-blur-md border border-white/10 rounded-xl shadow-2xl max-w-md w-full"
 				onClick={(e) => e.stopPropagation()}
 			>
-				{/* Header */}
 				<div className="flex items-center justify-between p-4 border-b border-white/10">
 					<h2 className="text-lg font-semibold text-gray-100">Hexagon Details</h2>
 					<button
@@ -70,7 +68,6 @@ export function HexagonDetailModal({
 					</button>
 				</div>
 
-				{/* Content */}
 				<div className="p-4 space-y-4">
 					{loading ? (
 						<div className="flex items-center justify-center py-12">
@@ -78,13 +75,11 @@ export function HexagonDetailModal({
 						</div>
 					) : activity ? (
 						<>
-					{/* Activity Name */}
 					<div>
 						<div className="text-sm font-semibold text-gray-400 mb-1">Activity</div>
 						<div className="text-base font-medium text-gray-100">{activity.name}</div>
 					</div>
 
-					{/* Stats Grid */}
 					<div className="grid grid-cols-2 gap-4">
 						<div>
 							<div className="text-xs text-gray-500 mb-1">Distance</div>
@@ -110,7 +105,6 @@ export function HexagonDetailModal({
 						</div>
 					</div>
 
-					{/* Hexagon ID */}
 					<div>
 						<div className="text-xs text-gray-500 mb-1">Hexagon ID</div>
 						<div className="text-xs font-mono text-gray-300 bg-white/5 border border-white/10 p-2 rounded break-all">
@@ -118,7 +112,6 @@ export function HexagonDetailModal({
 						</div>
 					</div>
 
-					{/* View on Strava Link */}
 					<div className="pt-2">
 						<a
 							href={stravaUrl}

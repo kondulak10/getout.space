@@ -355,6 +355,7 @@ resource "aws_secretsmanager_secret_version" "backend_env" {
     JWT_SECRET                    = var.jwt_secret
     ENCRYPTION_KEY                = var.encryption_key
     SLACK_WEBHOOK_URL             = var.slack_webhook_url
+    MAPBOX_TOKEN                  = var.mapbox_token
     FRONTEND_URL                  = "https://${var.domain_name}"
     BACKEND_URL                   = "https://api.${var.domain_name}"
     AWS_REGION                    = var.aws_region
@@ -422,6 +423,10 @@ resource "aws_ecs_task_definition" "backend" {
         {
           name      = "SLACK_WEBHOOK_URL"
           valueFrom = "${aws_secretsmanager_secret.backend_env.arn}:SLACK_WEBHOOK_URL::"
+        },
+        {
+          name      = "MAPBOX_TOKEN"
+          valueFrom = "${aws_secretsmanager_secret.backend_env.arn}:MAPBOX_TOKEN::"
         },
         {
           name      = "FRONTEND_URL"

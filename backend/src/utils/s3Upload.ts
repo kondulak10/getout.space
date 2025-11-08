@@ -1,20 +1,12 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 
-// Initialize S3 client
 const s3Client = new S3Client({
 	region: process.env.AWS_REGION || 'eu-north-1',
 });
 
 const S3_BUCKET = 'getout-space-web';
-const CLOUDFRONT_DOMAIN = 'https://cdn.getout.space'; // CDN subdomain for static assets (no SPA routing)
+const CLOUDFRONT_DOMAIN = 'https://cdn.getout.space';
 
-/**
- * Upload image buffer to S3
- * @param buffer Image buffer
- * @param key S3 key (path) for the file
- * @param contentType MIME type of the file
- * @returns Public URL of the uploaded file
- */
 export async function uploadImageToS3(
 	buffer: Buffer,
 	key: string,
@@ -28,7 +20,7 @@ export async function uploadImageToS3(
 			Key: key,
 			Body: buffer,
 			ContentType: contentType,
-			CacheControl: 'public, max-age=31536000', // Cache for 1 year
+			CacheControl: 'public, max-age=31536000',
 		});
 
 		await s3Client.send(command);
@@ -43,12 +35,6 @@ export async function uploadImageToS3(
 	}
 }
 
-/**
- * Generate S3 key for profile images
- * @param userId User ID
- * @param type 'original' or 'hexagon'
- * @returns S3 key
- */
 export function getProfileImageKey(userId: string, type: 'original' | 'hexagon'): string {
 	return `profile-images/${userId}/${type}.png`;
 }

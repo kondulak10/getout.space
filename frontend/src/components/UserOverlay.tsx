@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/useAuth';
 import { useUserActivities } from '@/hooks/useUserActivities';
 import { useActivitiesManager } from '@/hooks/useActivitiesManager';
 import { ActivitiesManagerModal } from './ActivitiesManagerModal';
-import { User, RefreshCw } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 interface UserOverlayProps {
 	onActivityChanged?: () => void;
@@ -12,11 +12,15 @@ interface UserOverlayProps {
 export function UserOverlay({ onActivityChanged }: UserOverlayProps) {
 	const { user } = useAuth();
 	const { latestActivity } = useUserActivities();
-	const { showModal, activities, loading, openModal, closeModal, handleSaveActivity, handleRemoveActivity } =
+	const { showModal, activities, loading, infoMessage, openModal, closeModal, handleSaveActivity, handleRemoveActivity } =
 		useActivitiesManager(onActivityChanged);
 	const navigate = useNavigate();
 
-	// User data is loading from GraphQL - show skeleton
+	const handleShowOnMap = (hexId: string) => {
+		closeModal();
+		navigate(`/?hex=${hexId}`);
+	};
+
 	if (!user) {
 		return (
 			<div className="absolute top-4 right-4 z-10">
@@ -47,7 +51,6 @@ export function UserOverlay({ onActivityChanged }: UserOverlayProps) {
 	return (
 		<div className="absolute top-4 right-4 z-10">
 			<div className="bg-white rounded-lg shadow-lg p-4 min-w-[320px]">
-				{/* Profile Row */}
 				<div className="flex items-center gap-3">
 					<img
 						src={user.profile.imghex || user.profile.profile}
@@ -66,11 +69,10 @@ export function UserOverlay({ onActivityChanged }: UserOverlayProps) {
 						className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded transition-colors"
 						title="Profile"
 					>
-						<User className="w-4 h-4" />
+						<FontAwesomeIcon icon="user" className="w-4 h-4" />
 					</button>
 				</div>
 
-				{/* Latest Activity Row */}
 				{latestActivity && (
 					<div className="mt-3 pt-3 border-t border-gray-200">
 						<div className="text-xs text-gray-500 mb-1">
@@ -87,27 +89,27 @@ export function UserOverlay({ onActivityChanged }: UserOverlayProps) {
 					</div>
 				)}
 
-				{/* Manage Activities Button */}
 				<div className="mt-3 pt-3 border-t border-gray-200">
 					<button
 						onClick={openModal}
 						disabled={loading}
 						className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white px-3 py-2 rounded text-sm font-medium transition-colors"
 					>
-						<RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+						<FontAwesomeIcon icon={loading ? "spinner" : "sync-alt"} className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
 						{loading ? 'Loading...' : 'Manage Activities'}
 					</button>
 				</div>
 			</div>
 
-			{/* Activities Modal */}
 			<ActivitiesManagerModal
 				isOpen={showModal}
 				activities={activities}
 				loading={loading}
+				infoMessage={infoMessage}
 				onClose={closeModal}
 				onProcess={handleSaveActivity}
 				onDelete={handleRemoveActivity}
+				onShowOnMap={handleShowOnMap}
 			/>
 		</div>
 	);

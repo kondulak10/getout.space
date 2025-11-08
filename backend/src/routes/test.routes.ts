@@ -3,7 +3,6 @@ import * as version from '../version';
 
 const router = Router();
 
-// Health check
 router.get('/health', (req: Request, res: Response) => {
   res.json({
     status: 'ok',
@@ -12,7 +11,6 @@ router.get('/health', (req: Request, res: Response) => {
   });
 });
 
-// Version info
 router.get('/version', (req: Request, res: Response) => {
   res.json({
     version: version.APP_VERSION,
@@ -21,7 +19,6 @@ router.get('/version', (req: Request, res: Response) => {
   });
 });
 
-// Test route
 router.get('/api/test', (req: Request, res: Response) => {
   res.json({
     message: 'Hello from GetOut backend!',
@@ -29,7 +26,6 @@ router.get('/api/test', (req: Request, res: Response) => {
   });
 });
 
-// Echo route - test POST requests
 router.post('/api/echo', (req: Request, res: Response) => {
   res.json({
     message: 'Echo received',

@@ -5,22 +5,22 @@ interface ActivitiesManagerModalProps {
 	isOpen: boolean;
 	activities: StravaActivity[];
 	loading: boolean;
+	infoMessage?: string | null;
 	onClose: () => void;
 	onProcess: (activityId: number) => Promise<void>;
 	onDelete: (activityId: number) => Promise<void>;
+	onShowOnMap?: (hexId: string) => void;
 }
 
-/**
- * Reusable Activities Manager Modal
- * Can be used from HomePage or ProfilePage
- */
 export function ActivitiesManagerModal({
 	isOpen,
 	activities,
 	loading,
+	infoMessage,
 	onClose,
 	onProcess,
 	onDelete,
+	onShowOnMap,
 }: ActivitiesManagerModalProps) {
 	if (!isOpen) return null;
 
@@ -28,9 +28,11 @@ export function ActivitiesManagerModal({
 		<CompactActivitiesModal
 			activities={activities}
 			loading={loading}
+			infoMessage={infoMessage}
 			onClose={onClose}
 			onProcess={onProcess}
 			onDelete={onDelete}
+			onShowOnMap={onShowOnMap}
 		/>
 	);
 }

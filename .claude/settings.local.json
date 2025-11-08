@@ -15,7 +15,10 @@
       "Bash(aws cloudfront create-invalidation:*)",
       "Bash(npm audit:*)",
       "Bash(find:*)",
-      "Bash(node -e:*)"
+      "Bash(node -e:*)",
+      "Bash(npm run typecheck:*)",
+      "Bash(cat:*)",
+      "Bash(terraform apply:*)"
     ],
     "deny": [],
     "ask": []

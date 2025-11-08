@@ -10,10 +10,9 @@ import { geocodeToHex } from '../utils/geocoding';
 
 const router = Router();
 
-// Step 1: Redirect to Strava OAuth
 router.get('/api/strava/auth', (req: Request, res: Response) => {
 	const clientId = process.env.STRAVA_CLIENT_ID;
-	const redirectUri = process.env.FRONTEND_URL; // Redirect to home page where StravaSection handles callback
+	const redirectUri = process.env.FRONTEND_URL;
 	const scope = 'read,activity:read_all';
 
 	const authUrl = `https://www.strava.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&approval_prompt=auto&scope=${scope}`;
@@ -21,7 +20,6 @@ router.get('/api/strava/auth', (req: Request, res: Response) => {
 	res.json({ authUrl });
 });
 
-// Step 2: Exchange code for tokens and create/update user
 router.post('/api/strava/callback', async (req: Request, res: Response) => {
 	try {
 		const { code } = req.body;
@@ -49,7 +47,6 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 			const errorData = await response.json().catch(() => ({})) as Record<string, unknown>;
 			console.error('❌ Strava API error:', response.status, errorData);
 
-			// Common OAuth errors
 			const message = typeof errorData.message === 'string' ? errorData.message : '';
 			if (response.status === 400 && message.includes('expired')) {
 				throw new Error('Authorization code has expired. Please try logging in again.');
@@ -71,22 +68,16 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 		});
 		console.log('👤 Athlete data:', data.athlete);
 
-		// Check if this user should have admin privileges (specific Strava ID)
-		const isAdminStravaId = data.athlete.id === 27159758; // Jan's Strava ID
+		const isAdminStravaId = data.athlete.id === 27159758;
 
-		// Find or create user
 		let user = await User.findOne({ stravaId: data.athlete.id });
 
-		// Track if this is a new user
 		const isNewUser = !user;
 
-		// Create temporary user to get ID for S3 path (for new users)
-		// For existing users, we'll use their existing ID
 		let tempUserId: string;
 		if (user) {
 			tempUserId = user._id.toString();
 		} else {
-			// Need to create user first to get ID
 			console.log('👤 Creating new user:', data.athlete.firstname);
 			user = new User({
 				stravaId: data.athlete.id,
@@ -97,8 +88,8 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 				stravaProfile: {
 					firstname: data.athlete.firstname,
 					lastname: data.athlete.lastname,
-					profile: '', // Will update after S3 upload
-					imghex: '', // Will update after S3 upload
+					profile: '',
+					imghex: '',
 					city: data.athlete.city,
 					state: data.athlete.state,
 					country: data.athlete.country,
@@ -114,9 +105,8 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 			}
 		}
 
-		// Process profile image and upload to S3 (optional - only if user has a photo)
 		const stravaImageUrl = data.athlete.profile || data.athlete.profile_medium || '';
-		let s3ProfileUrl = user.stravaProfile.profile; // Keep existing if already set
+		let s3ProfileUrl = user.stravaProfile.profile;
 		let s3HexagonUrl = user.stravaProfile.imghex;
 
 		if (stravaImageUrl) {
@@ -133,9 +123,8 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 			} catch (error) {
 				console.error('⚠️ Failed to process profile image, using Strava URL as fallback');
 				console.error('Error:', error instanceof Error ? error.message : 'Unknown error');
-				// Fall back to Strava URL if S3 upload fails - don't break authentication!
 				s3ProfileUrl = stravaImageUrl;
-				s3HexagonUrl = undefined; // Clear hexagon URL if processing failed
+				s3HexagonUrl = undefined;
 			}
 		} else {
 			console.log('ℹ️ User has no profile photo from Strava - skipping image processing');
@@ -143,11 +132,10 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 			s3HexagonUrl = undefined;
 		}
 
-		// Update user with final profile URLs
 		user.accessToken = data.access_token;
 		user.refreshToken = data.refresh_token;
 		user.tokenExpiresAt = data.expires_at;
-		user.isAdmin = user.isAdmin || isAdminStravaId; // Ensure admin status for specific Strava ID
+		user.isAdmin = user.isAdmin || isAdminStravaId;
 		user.stravaProfile = {
 			firstname: data.athlete.firstname,
 			lastname: data.athlete.lastname,
@@ -163,7 +151,6 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 
 		console.log('👤 User profile updated:', user.stravaProfile.firstname);
 
-		// For new users, try to geocode their city to set initial lastHex (best effort)
 		if (isNewUser && !user.lastHex) {
 			const initialHex = await geocodeToHex(
 				user.stravaProfile.city,
@@ -177,7 +164,6 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 			}
 		}
 
-		// Generate JWT token
 		const token = generateToken(user);
 
 		console.log('✅ Authentication successful');
@@ -206,21 +192,17 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 	}
 });
 
-// Step 3: Get Strava activities - REQUIRES AUTH
 router.get('/api/strava/activities', authenticateToken, async (req: AuthRequest, res: Response) => {
 	try {
 		console.log('🏃 Fetching Strava activities for user:', req.user?.stravaProfile.firstname);
 
-		// Get paging parameters from query string
 		const page = parseInt(req.query.page as string) || 1;
-		const per_page = Math.min(parseInt(req.query.per_page as string) || 30, 200); // Max 200 per Strava API
+		const per_page = Math.min(parseInt(req.query.per_page as string) || 30, 200);
 
 		console.log(`📄 Fetching page ${page} with ${per_page} activities per page`);
 
-		// Use user's access token (frontend handles refresh)
 		const accessToken = req.user!.accessToken;
 
-		// Fetch activities from Strava with paging
 		const stravaUrl = new URL('https://www.strava.com/api/v3/athlete/activities');
 		stravaUrl.searchParams.set('page', page.toString());
 		stravaUrl.searchParams.set('per_page', per_page.toString());
@@ -239,50 +221,52 @@ router.get('/api/strava/activities', authenticateToken, async (req: AuthRequest,
 
 		console.log(`✅ Fetched ${activities.length} activities from Strava`);
 
-		// Check if Strava has more pages (if we got a full page, there might be more)
 		const hasMorePages = activities.length === per_page;
 
-		// Filter to only include running activities after Nov 1, 2025
-		const cutoffDate = new Date('2025-11-01T00:00:00Z');
+		const cutoffDate = new Date();
+		cutoffDate.setDate(cutoffDate.getDate() - 7);
+		cutoffDate.setHours(0, 0, 0, 0);
+
 		const runningActivities = activities.filter((activity: StravaActivity) => {
 			const type = activity.type;
 			const sportType = activity.sport_type;
 			const isRunning = type === 'Run' || sportType === 'TrailRun' || sportType === 'VirtualRun';
 
-			// Check if activity is after cutoff date
 			const activityDate = new Date(activity.start_date);
 			const isAfterCutoff = activityDate >= cutoffDate;
 
 			return isRunning && isAfterCutoff;
 		});
 
-		console.log(`🏃 Filtered to ${runningActivities.length} running activities after ${cutoffDate.toISOString()} (from ${activities.length} total)`);
+		console.log(`🏃 Filtered to ${runningActivities.length} running activities from last 7 days (after ${cutoffDate.toISOString()}) (from ${activities.length} total)`);
 
-		// Check which activities are already stored in our database
 		const stravaActivityIds = runningActivities.map((a: StravaActivity) => a.id);
 
 		const storedActivities = await Activity.find(
 			{ stravaActivityId: { $in: stravaActivityIds } },
-			{ stravaActivityId: 1 }
+			{ stravaActivityId: 1, lastHex: 1 }
 		);
 
-		const storedActivityIds = new Set(storedActivities.map((a) => a.stravaActivityId));
+		const storedActivityMap = new Map(
+			storedActivities.map((a) => [a.stravaActivityId, a.lastHex])
+		);
 
-		// Add isStored flag to each activity
 		const activitiesWithStoredFlag = runningActivities.map((activity: StravaActivity) => ({
 			...activity,
-			isStored: storedActivityIds.has(activity.id),
+			isStored: storedActivityMap.has(activity.id),
+			lastHex: storedActivityMap.get(activity.id) || undefined,
 		}));
 
-		console.log(`💾 ${storedActivityIds.size} of ${runningActivities.length} activities already stored in database`);
+		console.log(`💾 ${storedActivityMap.size} of ${runningActivities.length} activities already stored in database`);
 
 		res.json({
 			success: true,
 			count: runningActivities.length,
 			page,
 			per_page,
-			hasMorePages, // Based on Strava's response, not filtered results
+			hasMorePages,
 			activities: activitiesWithStoredFlag,
+			infoMessage: 'You cannot fetch activities older than 7 days.',
 		});
 	} catch (error: unknown) {
 		const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
@@ -294,16 +278,13 @@ router.get('/api/strava/activities', authenticateToken, async (req: AuthRequest,
 	}
 });
 
-// Step 4: Get single activity details - REQUIRES AUTH
 router.get('/api/strava/activities/:id', authenticateToken, async (req: AuthRequest, res: Response) => {
 	try {
 		const activityId = req.params.id;
 		console.log(`🏃 Fetching Strava activity ${activityId} for user:`, req.user?.stravaProfile.firstname);
 
-		// Use user's access token (frontend handles refresh)
 		const accessToken = req.user!.accessToken;
 
-		// Fetch single activity from Strava
 		const response = await fetch(`https://www.strava.com/api/v3/activities/${activityId}`, {
 			headers: {
 				Authorization: `Bearer ${accessToken}`,
@@ -335,15 +316,12 @@ router.get('/api/strava/activities/:id', authenticateToken, async (req: AuthRequ
 	}
 });
 
-// Get athlete stats - REQUIRES AUTH
 router.get('/api/strava/stats', authenticateToken, async (req: AuthRequest, res: Response) => {
 	try {
 		console.log('📊 Fetching Strava stats for user:', req.user?.stravaProfile.firstname);
 
-		// Use user's access token (frontend handles refresh)
 		const accessToken = req.user!.accessToken;
 
-		// Fetch stats from Strava
 		const response = await fetch(`https://www.strava.com/api/v3/athletes/${req.user?.stravaId}/stats`, {
 			headers: {
 				Authorization: `Bearer ${accessToken}`,
@@ -358,7 +336,6 @@ router.get('/api/strava/stats', authenticateToken, async (req: AuthRequest, res:
 
 		console.log('✅ Fetched athlete stats');
 
-		// Extract run counts from stats
 		const runCount = stats.all_run_totals?.count || 0;
 
 		res.json({
@@ -376,7 +353,6 @@ router.get('/api/strava/stats', authenticateToken, async (req: AuthRequest, res:
 	}
 });
 
-// Delete Strava activity - removes activity and restores/deletes hexagons
 router.delete('/api/strava/activities/:stravaActivityId', authenticateToken, async (req: AuthRequest, res: Response) => {
 	try {
 		const { stravaActivityId } = req.params;
@@ -411,7 +387,6 @@ router.delete('/api/strava/activities/:stravaActivityId', authenticateToken, asy
 	}
 });
 
-// Process Strava activity - fetch, decode polyline, create hexagons
 router.post('/api/strava/process-activity', authenticateToken, async (req: AuthRequest, res: Response) => {
 	try {
 		const { activityId } = req.body;
@@ -432,7 +407,6 @@ router.post('/api/strava/process-activity', authenticateToken, async (req: AuthR
 
 		const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
-		// Handle specific error types
 		if (errorMessage.includes('Only running activities')) {
 			return res.status(400).json({
 				error: 'Only running activities are allowed',
@@ -455,7 +429,6 @@ router.post('/api/strava/process-activity', authenticateToken, async (req: AuthR
 	}
 });
 
-// Get current authenticated user
 router.get('/api/auth/me', authenticateToken, async (req: AuthRequest, res: Response) => {
 	try {
 		const user = req.user!;
@@ -482,7 +455,6 @@ router.get('/api/auth/me', authenticateToken, async (req: AuthRequest, res: Resp
 	}
 });
 
-// Refresh user's Strava token
 router.post('/api/auth/refresh-token', authenticateToken, async (req: AuthRequest, res: Response) => {
 	try {
 		const user = await User.findById(req.userId);
@@ -497,7 +469,6 @@ router.post('/api/auth/refresh-token', authenticateToken, async (req: AuthReques
 		console.log(`🔄 Token refresh requested for user: ${user.stravaProfile.firstname}`);
 		console.log(`⏰ Token expires in ${timeUntilExpiry}s (${Math.floor(timeUntilExpiry / 60)} minutes)`);
 
-		// Refresh if token expires in less than 1 hour (3600 seconds)
 		if (timeUntilExpiry < 3600) {
 			console.log(`🔄 Refreshing token (expires in ${timeUntilExpiry}s)...`);
 
@@ -518,7 +489,6 @@ router.post('/api/auth/refresh-token', authenticateToken, async (req: AuthReques
 				const errorData = await response.json().catch(() => ({}));
 				console.error('❌ Token refresh failed:', response.status, errorData);
 
-				// If refresh fails, token may be revoked
 				if (response.status === 401) {
 					return res.status(401).json({
 						error: 'Token refresh failed - user may have revoked access',
@@ -536,7 +506,6 @@ router.post('/api/auth/refresh-token', authenticateToken, async (req: AuthReques
 				expires_in: number;
 			};
 
-			// Update user's tokens in database
 			user.accessToken = tokenData.access_token;
 			user.refreshToken = tokenData.refresh_token;
 			user.tokenExpiresAt = tokenData.expires_at;
@@ -547,7 +516,6 @@ router.post('/api/auth/refresh-token', authenticateToken, async (req: AuthReques
 			console.log(`✅ Token still valid (expires in ${timeUntilExpiry}s), no refresh needed`);
 		}
 
-		// Return updated user with token expiry
 		res.json({
 			success: true,
 			user: {
@@ -569,7 +537,6 @@ router.post('/api/auth/refresh-token', authenticateToken, async (req: AuthReques
 	}
 });
 
-// Get latest activity for the authenticated user
 router.get('/api/activities/latest', authenticateToken, async (req: AuthRequest, res: Response) => {
 	try {
 		console.log('📊 Fetching latest activity for user:', req.user?.stravaProfile.firstname);
@@ -594,6 +561,7 @@ router.get('/api/activities/latest', authenticateToken, async (req: AuthRequest,
 				name: latestActivity.name,
 				distance: latestActivity.distance,
 				startDate: latestActivity.startDate,
+				lastHex: latestActivity.lastHex,
 			},
 		});
 	} catch (error: unknown) {
@@ -606,14 +574,13 @@ router.get('/api/activities/latest', authenticateToken, async (req: AuthRequest,
 	}
 });
 
-// Get all activities for the authenticated user from database
 router.get('/api/activities/all', authenticateToken, async (req: AuthRequest, res: Response) => {
 	try {
 		console.log('📊 Fetching all activities for user:', req.user?.stravaProfile.firstname);
 
 		const activities = await Activity.find({ userId: req.userId })
 			.sort({ startDate: -1 })
-			.select('stravaActivityId name distance startDate')
+			.select('stravaActivityId name distance startDate lastHex')
 			.lean();
 
 		res.json({
@@ -625,6 +592,7 @@ router.get('/api/activities/all', authenticateToken, async (req: AuthRequest, re
 				name: activity.name,
 				distance: activity.distance,
 				startDate: activity.startDate,
+				lastHex: activity.lastHex,
 			})),
 		});
 	} catch (error: unknown) {

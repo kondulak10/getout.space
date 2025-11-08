@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Trash2, Loader2, Activity } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { toast } from 'sonner';
 import type { StravaActivity } from '@/services/stravaApi.service';
 import {
@@ -20,6 +20,7 @@ interface CompactActivitiesModalProps {
 	onClose: () => void;
 	onProcess: (activityId: number) => Promise<void>;
 	onDelete: (activityId: number) => Promise<void>;
+	onShowOnMap?: (hexId: string) => void;
 }
 
 export function CompactActivitiesModal({
@@ -28,6 +29,7 @@ export function CompactActivitiesModal({
 	onClose,
 	onProcess,
 	onDelete,
+	onShowOnMap,
 }: CompactActivitiesModalProps) {
 	const [processingIds, setProcessingIds] = useState<Set<number>>(new Set());
 	const [deletingIds, setDeletingIds] = useState<Set<number>>(new Set());
@@ -95,22 +97,20 @@ export function CompactActivitiesModal({
 				className="bg-[rgba(10,10,10,0.95)] border border-white/10 rounded-xl shadow-2xl max-w-3xl w-full max-h-[90dvh] flex flex-col"
 				onClick={(e) => e.stopPropagation()}
 			>
-				{/* Header */}
 				<div className="flex items-center justify-between p-4 border-b border-white/10">
 					<h2 className="text-lg font-semibold text-gray-100">Your Strava Activities</h2>
 					<button
 						onClick={onClose}
 						className="text-gray-400 hover:text-gray-200 transition-colors cursor-pointer"
 					>
-						<X className="w-5 h-5" />
+						<FontAwesomeIcon icon="times" className="w-5 h-5" />
 					</button>
 				</div>
 
-				{/* Content */}
 				<div className="flex-1 overflow-auto p-4">
 					{loading ? (
 						<div className="flex items-center justify-center py-12">
-							<Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+							<FontAwesomeIcon icon="spinner" className="w-8 h-8 animate-spin text-gray-400" />
 						</div>
 					) : activities.length === 0 ? (
 						<div className="text-center py-12 text-gray-400">
@@ -140,6 +140,18 @@ export function CompactActivitiesModal({
 												<span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/30">
 													✓ Processed
 												</span>
+												{activity.lastHex && onShowOnMap && (
+													<button
+														onClick={(e) => {
+															e.stopPropagation();
+															onShowOnMap(activity.lastHex!);
+														}}
+														className="p-2 text-blue-400 hover:bg-blue-500/10 rounded transition-colors cursor-pointer"
+														title="Show on map"
+													>
+														<FontAwesomeIcon icon="map-marker-alt" className="w-4 h-4" />
+													</button>
+												)}
 												<button
 													onClick={(e) => handleDelete(activity.id, e)}
 													disabled={deletingIds.has(activity.id)}
@@ -147,9 +159,9 @@ export function CompactActivitiesModal({
 													title="Delete activity"
 												>
 													{deletingIds.has(activity.id) ? (
-														<Loader2 className="w-4 h-4 animate-spin" />
+														<FontAwesomeIcon icon="spinner" className="w-4 h-4 animate-spin" />
 													) : (
-														<Trash2 className="w-4 h-4" />
+														<FontAwesomeIcon icon="trash-alt" className="w-4 h-4" />
 													)}
 												</button>
 											</>
@@ -162,12 +174,12 @@ export function CompactActivitiesModal({
 											>
 												{processingIds.has(activity.id) ? (
 													<>
-														<Loader2 className="w-3 h-3 inline animate-spin mr-1" />
+														<FontAwesomeIcon icon="spinner" className="w-3 h-3 inline animate-spin mr-1" />
 														Processing...
 													</>
 												) : (
 													<>
-														<Activity className="w-3 h-3 inline mr-1" />
+														<FontAwesomeIcon icon="running" className="w-3 h-3 inline mr-1" />
 														Process from Strava
 													</>
 												)}
@@ -180,12 +192,16 @@ export function CompactActivitiesModal({
 					)}
 				</div>
 
-				{/* Footer */}
 				{!loading && activities.length > 0 && (
-					<div className="p-4 border-t border-white/10 bg-white/5 text-center text-sm text-gray-400">
-						Total: {activities.length} {activities.length === 1 ? 'activity' : 'activities'}
-						{' • '}
-						{activities.filter((a) => a.isStored).length} processed
+					<div className="border-t border-white/10 bg-white/5">
+						<div className="p-4 text-center text-sm text-gray-400">
+							Total: {activities.length} {activities.length === 1 ? 'activity' : 'activities'}
+							{' • '}
+							{activities.filter((a) => a.isStored).length} processed
+						</div>
+						<div className="px-4 pb-4 text-center text-xs text-amber-400/90 border-t border-white/5 pt-3">
+							You cannot fetch activities older than 7 days.
+						</div>
 					</div>
 				)}
 			</div>

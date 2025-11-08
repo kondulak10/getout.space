@@ -15,11 +15,10 @@ export const connectDatabase = async (): Promise<void> => {
     console.log('✅ MongoDB connected successfully');
   } catch (error) {
     console.error('❌ MongoDB connection error:', error);
-    process.exit(1); // Exit if we can't connect to database
+    process.exit(1);
   }
 };
 
-// Handle connection events
 mongoose.connection.on('disconnected', () => {
   console.log('⚠️  MongoDB disconnected');
 });

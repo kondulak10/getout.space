@@ -29,6 +29,7 @@ export const activitySchema = gql`
     summaryPolyline: String
     isManual: Boolean!
     isPrivate: Boolean!
+    lastHex: String
     createdAt: Date!
     updatedAt: Date!
   }

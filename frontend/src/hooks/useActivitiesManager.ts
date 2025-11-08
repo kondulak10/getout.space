@@ -1,15 +1,12 @@
 import { useState } from 'react';
 import { useUserActivities } from './useUserActivities';
 
-/**
- * Hook for managing activities modal state
- * Reusable across different pages
- */
 export function useActivitiesManager(onActivityProcessed?: () => void) {
 	const [showModal, setShowModal] = useState(false);
 	const {
 		stravaActivities,
 		loading,
+		infoMessage,
 		loadStravaActivities,
 		saveActivity,
 		removeActivity,
@@ -33,7 +30,7 @@ export function useActivitiesManager(onActivityProcessed?: () => void) {
 			}
 		} catch (error) {
 			console.error('❌ Failed to save activity:', error);
-			throw error; // Re-throw so the UI can handle it
+			throw error;
 		}
 	};
 
@@ -48,6 +45,7 @@ export function useActivitiesManager(onActivityProcessed?: () => void) {
 		showModal,
 		activities: stravaActivities,
 		loading,
+		infoMessage,
 		openModal,
 		closeModal,
 		handleSaveActivity,

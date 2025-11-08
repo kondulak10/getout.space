@@ -1,35 +1,28 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-// TypeScript interface for Activity
 export interface IActivity extends Document {
   _id: mongoose.Types.ObjectId;
 
-  // Identifiers
   stravaActivityId: number;
   userId: mongoose.Types.ObjectId;
 
-  // Source tracking
   source: 'webhook' | 'api';
 
-  // Basic info
   name: string;
-  type: string; // "Run", "Ride", "Swim", etc.
-  sportType?: string; // "TrailRun", "MountainBikeRide", "VirtualRide", etc.
+  type: string;
+  sportType?: string;
   description?: string;
 
-  // Timing
-  startDate: Date; // UTC
-  startDateLocal: Date; // Local time
+  startDate: Date;
+  startDateLocal: Date;
   timezone?: string;
-  movingTime: number; // seconds (excludes stops)
-  elapsedTime: number; // seconds (includes stops)
+  movingTime: number;
+  elapsedTime: number;
 
-  // Metrics
-  distance: number; // meters
-  elevationGain: number; // meters
-  averageSpeed: number; // m/s (Strava native)
+  distance: number;
+  elevationGain: number;
+  averageSpeed: number;
 
-  // Location
   startLocation?: {
     lat: number;
     lng: number;
@@ -39,19 +32,17 @@ export interface IActivity extends Document {
     lng: number;
   };
 
-  // Route data
-  summaryPolyline?: string; // Encoded polyline
+  summaryPolyline?: string;
 
-  // Flags
   isManual: boolean;
   isPrivate: boolean;
 
-  // Timestamps (auto-managed by Mongoose)
+  lastHex?: string;
+
   createdAt: Date;
   updatedAt: Date;
 }
 
-// MongoDB schema
 const activitySchema = new Schema<IActivity>(
   {
     stravaActivityId: {
@@ -88,7 +79,7 @@ const activitySchema = new Schema<IActivity>(
     startDate: {
       type: Date,
       required: true,
-      index: true, // For sorting by date
+      index: true,
     },
     startDateLocal: {
       type: Date,
@@ -146,14 +137,16 @@ const activitySchema = new Schema<IActivity>(
       required: true,
       default: false,
     },
+    lastHex: {
+      type: String,
+      required: false,
+    },
   },
   {
-    timestamps: true, // Automatically adds createdAt and updatedAt
+    timestamps: true,
   }
 );
 
-// Compound index for efficient user activity queries
 activitySchema.index({ userId: 1, startDate: -1 });
 
-// Create and export the model
 export const Activity = mongoose.model<IActivity>('Activity', activitySchema);

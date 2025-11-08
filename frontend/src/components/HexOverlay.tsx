@@ -21,12 +21,18 @@ export function HexOverlay({ view, onViewChange, onActivityChanged }: HexOverlay
 		showModal,
 		activities,
 		loading,
+		infoMessage,
 		openModal,
 		closeModal,
 		handleSaveActivity,
 		handleRemoveActivity,
 	} = useActivitiesManager(onActivityChanged);
 	const navigate = useNavigate();
+
+	const handleShowOnMap = (hexId: string) => {
+		closeModal();
+		navigate(`/?hex=${hexId}`);
+	};
 
 	if (!user) {
 		return (
@@ -57,10 +63,8 @@ export function HexOverlay({ view, onViewChange, onActivityChanged }: HexOverlay
 
 	return (
 		<>
-			{/* Desktop Layout - Top Right */}
 			<div className="hidden md:block absolute top-4 right-4 z-10">
 				<div className="bg-[rgba(10,10,10,0.9)] backdrop-blur-md border border-white/10 rounded-xl p-3 min-w-72 shadow-2xl">
-					{/* User Profile Section */}
 					<div className="flex items-center gap-2 mb-3">
 						<img
 							src={user.profile.imghex || user.profile.profile}
@@ -82,7 +86,6 @@ export function HexOverlay({ view, onViewChange, onActivityChanged }: HexOverlay
 						</button>
 					</div>
 
-					{/* View Toggle Section */}
 					<div className="mb-3">
 						<div className="relative flex bg-white/5 border border-white/10 rounded-lg p-0.5 overflow-hidden">
 							<div
@@ -111,7 +114,6 @@ export function HexOverlay({ view, onViewChange, onActivityChanged }: HexOverlay
 						</div>
 					</div>
 
-					{/* Latest Activity Section */}
 					{latestActivity && (
 						<div className="pt-2 border-t border-white/10 mb-3">
 							<div className="text-[11px] text-gray-400 mb-1">
@@ -128,7 +130,6 @@ export function HexOverlay({ view, onViewChange, onActivityChanged }: HexOverlay
 						</div>
 					)}
 
-					{/* Fetch from Strava Link */}
 					<div>
 						<button
 							onClick={openModal}
@@ -148,16 +149,13 @@ export function HexOverlay({ view, onViewChange, onActivityChanged }: HexOverlay
 				</div>
 			</div>
 
-			{/* Mobile Layout - Bottom Navigation */}
 			<div className="md:hidden fixed bottom-0 left-0 right-0 z-10 safe-area-bottom">
-				{/* Expanded Content */}
 				<div
 					className={`bg-[rgba(10,10,10,0.95)] backdrop-blur-md border-t border-white/10 transition-all duration-300 ${
 						mobileExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0 overflow-hidden"
 					}`}
 				>
 					<div className="p-3 space-y-3">
-						{/* User Profile */}
 						<div className="flex items-center gap-2">
 							<img
 								src={user.profile.imghex || user.profile.profile}
@@ -178,7 +176,6 @@ export function HexOverlay({ view, onViewChange, onActivityChanged }: HexOverlay
 							</button>
 						</div>
 
-						{/* Latest Activity Details */}
 						{latestActivity && (
 							<div className="pt-2 border-t border-white/10">
 								<div className="text-[10px] text-gray-400 mb-1">
@@ -195,7 +192,6 @@ export function HexOverlay({ view, onViewChange, onActivityChanged }: HexOverlay
 							</div>
 						)}
 
-						{/* Fetch from Strava */}
 						<button
 							onClick={openModal}
 							disabled={loading}
@@ -206,11 +202,8 @@ export function HexOverlay({ view, onViewChange, onActivityChanged }: HexOverlay
 					</div>
 				</div>
 
-				{/* Bottom Bar - Always Visible */}
 				<div className="bg-[rgba(10,10,10,0.95)] backdrop-blur-md border-t border-white/10 p-2">
-					{/* First Row: Toggle and Menu Button */}
 					<div className="flex items-center justify-center gap-2">
-						{/* View Toggle - Horizontal Layout */}
 						<div className="flex-shrink-0 relative flex bg-white/5 border border-white/10 rounded-lg p-0.5 overflow-hidden" style={{ width: '180px', height: '44px' }}>
 							<div
 								className={`hex-switch-slider absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] rounded-md transition-all z-0 ${
@@ -237,7 +230,6 @@ export function HexOverlay({ view, onViewChange, onActivityChanged }: HexOverlay
 							</button>
 						</div>
 
-						{/* Toggle Expand/Collapse */}
 						<button
 							onClick={() => setMobileExpanded(!mobileExpanded)}
 							className="flex-shrink-0 bg-white/5 border border-white/10 text-gray-300 p-2.5 rounded-md cursor-pointer"
@@ -250,7 +242,6 @@ export function HexOverlay({ view, onViewChange, onActivityChanged }: HexOverlay
 						</button>
 					</div>
 
-					{/* Second Row: Synced Date */}
 					{latestActivity && (
 						<div className="mt-2 text-center">
 							<div className="text-xs text-gray-400">
@@ -261,14 +252,15 @@ export function HexOverlay({ view, onViewChange, onActivityChanged }: HexOverlay
 				</div>
 			</div>
 
-			{/* Activities Modal */}
 			<ActivitiesManagerModal
 				isOpen={showModal}
 				activities={activities}
 				loading={loading}
+				infoMessage={infoMessage}
 				onClose={closeModal}
 				onProcess={handleSaveActivity}
 				onDelete={handleRemoveActivity}
+				onShowOnMap={handleShowOnMap}
 			/>
 		</>
 	);

@@ -8,15 +8,11 @@ export interface RouteHexagonResult {
 	type: RouteType;
 }
 
-/**
- * Calculate distance between two coordinates in meters using Haversine formula
- */
 const calculateDistance = (coord1: [number, number], coord2: [number, number]): number => {
 	const [lat1, lng1] = coord1;
 	const [lat2, lng2] = coord2;
 
-	// Convert to radians
-	const R = 6371e3; // Earth radius in meters
+	const R = 6371e3;
 	const φ1 = (lat1 * Math.PI) / 180;
 	const φ2 = (lat2 * Math.PI) / 180;
 	const Δφ = ((lat2 - lat1) * Math.PI) / 180;
@@ -26,15 +22,9 @@ const calculateDistance = (coord1: [number, number], coord2: [number, number]): 
 		Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
 	const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-	return R * c; // Distance in meters
+	return R * c;
 };
 
-/**
- * Convert route coordinates to H3 hexagons - line version with gap filling
- * @param coordinates Array of [lat, lng] pairs
- * @param fillGaps Whether to interpolate hexagons between GPS points (default: true)
- * @returns Array of unique H3 hexagon indexes
- */
 export const routeToHexagonsLine = (
 	coordinates: [number, number][],
 	fillGaps: boolean = true
@@ -42,7 +32,6 @@ export const routeToHexagonsLine = (
 	const hexSet = new Set<string>();
 
 	if (!fillGaps) {
-		// Simple mode: just convert each point to hexagon
 		coordinates.forEach(([lat, lng]) => {
 			const hex = latLngToCell(lat, lng, H3_RESOLUTION);
 			hexSet.add(hex);
@@ -50,27 +39,20 @@ export const routeToHexagonsLine = (
 		return Array.from(hexSet);
 	}
 
-	// Gap-filling mode: interpolate between consecutive points
 	for (let i = 0; i < coordinates.length; i++) {
 		const [lat, lng] = coordinates[i];
 		const currentHex = latLngToCell(lat, lng, H3_RESOLUTION);
 		hexSet.add(currentHex);
 
-		// If there's a next point, fill gaps between current and next
 		if (i < coordinates.length - 1) {
 			const [nextLat, nextLng] = coordinates[i + 1];
 			const nextHex = latLngToCell(nextLat, nextLng, H3_RESOLUTION);
 
-			// Only interpolate if hexagons are different
 			if (currentHex !== nextHex) {
 				try {
-					// Get all hexagons between current and next point
-					// Note: gridPathCells might not exist in all h3-js versions
-					// If it fails, we'll just skip interpolation for this segment
 					const pathHexes = gridPathCells(currentHex, nextHex);
 					pathHexes.forEach(hex => hexSet.add(hex));
 				} catch (error) {
-					// gridPathCells not available or failed, just add both endpoints
 					hexSet.add(nextHex);
 				}
 			}
@@ -80,31 +62,17 @@ export const routeToHexagonsLine = (
 	return Array.from(hexSet);
 };
 
-/**
- * Convert route coordinates to H3 hexagons - area version (fills interior)
- * @param coordinates Array of [lat, lng] pairs forming a closed polygon
- * @returns Array of unique H3 hexagon indexes
- */
 export const routeToHexagonsArea = (coordinates: [number, number][]): string[] => {
-	// Convert coordinates to H3 polygon format: [[lng, lat], ...]
 	const h3Polygon = coordinates.map(([lat, lng]) => [lng, lat]);
 
 	try {
-		// Use H3's polygonToCells to fill the polygon with hexagons
 		const hexagons = polygonToCells([h3Polygon], H3_RESOLUTION, true);
 		return hexagons;
 	} catch (error) {
-		// Fallback to line mode
 		return routeToHexagonsLine(coordinates);
 	}
 };
 
-/**
- * Determine route type and convert to hexagons accordingly
- * @param coordinates Array of [lat, lng] pairs
- * @param closeThreshold Distance in meters to consider route closed (default: 350m)
- * @returns RouteHexagonResult with hexagons and type
- */
 export const analyzeRouteAndConvertToHexagons = (
 	coordinates: [number, number][],
 	closeThreshold: number = 350
@@ -119,19 +87,15 @@ export const analyzeRouteAndConvertToHexagons = (
 	const firstPoint = coordinates[0];
 	const lastPoint = coordinates[coordinates.length - 1];
 
-	// Calculate distance between first and last point
 	const distance = calculateDistance(firstPoint, lastPoint);
 
 
 	if (distance <= closeThreshold) {
 
-		// Get area hexagons (filled polygon)
 		const areaHexagons = routeToHexagonsArea(coordinates);
 
-		// Also get line hexagons (perimeter path)
 		const lineHexagons = routeToHexagonsLine(coordinates, true);
 
-		// Combine both sets to ensure no hexagons are omitted
 		const combinedHexSet = new Set([...areaHexagons, ...lineHexagons]);
 		const hexagons = Array.from(combinedHexSet);
 
@@ -141,7 +105,7 @@ export const analyzeRouteAndConvertToHexagons = (
 			type: 'area',
 		};
 	} else {
-		const hexagons = routeToHexagonsLine(coordinates, true); // true = fill gaps
+		const hexagons = routeToHexagonsLine(coordinates, true);
 		return {
 			hexagons,
 			type: 'line',
@@ -149,31 +113,22 @@ export const analyzeRouteAndConvertToHexagons = (
 	}
 };
 
-/**
- * Sample route coordinates to reduce density (performance optimization)
- * @param coordinates Array of [lat, lng] pairs
- * @param sampleRate Take every Nth point (default: 5)
- * @returns Sampled coordinates
- */
 export const sampleRouteCoordinates = (
 	coordinates: [number, number][],
 	sampleRate: number = 5
 ): [number, number][] => {
 	if (coordinates.length <= sampleRate * 2) {
-		return coordinates; // Return all if route is short
+		return coordinates;
 	}
 
 	const sampled: [number, number][] = [];
 
-	// Always include first point
 	sampled.push(coordinates[0]);
 
-	// Sample every Nth point
 	for (let i = sampleRate; i < coordinates.length; i += sampleRate) {
 		sampled.push(coordinates[i]);
 	}
 
-	// Always include last point
 	if (coordinates[coordinates.length - 1] !== sampled[sampled.length - 1]) {
 		sampled.push(coordinates[coordinates.length - 1]);
 	}

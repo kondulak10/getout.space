@@ -1,12 +1,7 @@
 import * as h3 from 'h3-js';
 
-/**
- * Geocode a location (city, state, country) to H3 hex at resolution 6
- * Returns undefined if geocoding fails (network error, no results, etc.)
- */
 export async function geocodeToHex(city?: string, state?: string, country?: string): Promise<string | undefined> {
 	try {
-		// Build location string
 		const locationParts = [city, state, country].filter(Boolean);
 		if (locationParts.length === 0) {
 			console.log('ℹ️ No location data provided for geocoding');
@@ -16,7 +11,6 @@ export async function geocodeToHex(city?: string, state?: string, country?: stri
 		const location = locationParts.join(', ');
 		console.log(`📍 Attempting to geocode: ${location}`);
 
-		// Use Mapbox Geocoding API (free tier: 100,000 requests/month)
 		const mapboxToken = process.env.MAPBOX_TOKEN;
 		if (!mapboxToken) {
 			console.log('ℹ️ MAPBOX_TOKEN not configured - skipping geocoding');
@@ -34,7 +28,7 @@ export async function geocodeToHex(city?: string, state?: string, country?: stri
 
 		const data = await response.json() as {
 			features?: Array<{
-				center?: [number, number]; // [longitude, latitude]
+				center?: [number, number];
 				place_name?: string;
 			}>;
 		};
@@ -52,7 +46,6 @@ export async function geocodeToHex(city?: string, state?: string, country?: stri
 
 		console.log(`✅ Geocoded "${location}" to: ${lat}, ${lng}`);
 
-		// Convert to H3 hex at resolution 6
 		const hex = h3.latLngToCell(lat, lng, 6);
 		console.log(`✅ Converted to hex (res 6): ${hex}`);
 

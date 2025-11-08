@@ -6,14 +6,12 @@ export function LandingOverlay() {
 	return (
 		<div className="absolute inset-0 z-20 flex items-center justify-center p-4">
 			<div className="max-w-6xl w-full space-y-12 text-center">
-				{/* Invite-only / Testing Mode Banner */}
 				<div className="px-4 py-2 bg-amber-500/90 backdrop-blur-sm rounded-lg shadow-lg border border-amber-400 inline-block mx-auto">
 					<p className="text-sm font-medium text-black">
 						🔒 Invite-Only • Currently in Testing Mode
 					</p>
 				</div>
 
-				{/* Hero Section */}
 				<div className="space-y-6">
 					<h1
 						className="text-7xl md:text-9xl font-black text-white tracking-tight uppercase flex items-center justify-center gap-2"
@@ -32,7 +30,6 @@ export function LandingOverlay() {
 					</p>
 				</div>
 
-				{/* CTA Button */}
 				<div className="space-y-4">
 					<img
 						src="/btn_strava_connect_with_orange.svg"

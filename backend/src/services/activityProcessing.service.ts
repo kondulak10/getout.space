@@ -6,9 +6,6 @@ import { IUser } from '../models/User';
 import { analyzeRouteAndConvertToHexagons } from '../utils/routeToHexagons';
 import { fetchStravaActivity, getValidAccessToken, isRunningActivity, StravaActivityData } from './strava.service';
 
-/**
- * Result of processing an activity
- */
 export interface ProcessActivityResult {
 	activity: {
 		id: mongoose.Types.ObjectId;
@@ -31,9 +28,6 @@ export interface ProcessActivityResult {
 	};
 }
 
-/**
- * Result of deleting an activity
- */
 export interface DeleteActivityResult {
 	message: string;
 	hexagons: {
@@ -42,15 +36,6 @@ export interface DeleteActivityResult {
 	};
 }
 
-/**
- * Process a Strava activity: fetch from API, decode polyline, create/update hexagons
- *
- * @param stravaActivityId - Strava activity ID
- * @param user - Current user
- * @param userId - User's MongoDB ID
- * @returns Processing result with activity and hexagon statistics
- * @throws Error if processing fails
- */
 export async function processActivity(
 	stravaActivityId: number,
 	user: IUser,
@@ -62,13 +47,10 @@ export async function processActivity(
 	try {
 		console.log(`🎯 Processing Strava activity ${stravaActivityId} for user: ${user.stravaProfile.firstname}`);
 
-		// Get valid access token (refreshes if needed - used for webhook flow)
 		const accessToken = await getValidAccessToken(userId);
 
-		// Fetch activity details from Strava
 		const stravaActivity = await fetchStravaActivity(stravaActivityId, accessToken);
 
-		// Validate activity type - only allow running activities
 		if (!isRunningActivity(stravaActivity)) {
 			const activityType = stravaActivity.type;
 			const sportType = stravaActivity.sport_type;
@@ -77,28 +59,23 @@ export async function processActivity(
 			);
 		}
 
-		// Validate activity has polyline
 		if (!stravaActivity.map?.summary_polyline) {
 			throw new Error('Activity has no GPS data (summary_polyline missing)');
 		}
 
 		console.log(`📍 Activity: ${stravaActivity.name} - ${stravaActivity.type}`);
 
-		// Decode polyline to coordinates
 		const coordinates = polyline.decode(stravaActivity.map.summary_polyline) as [number, number][];
 		console.log(`📍 Decoded ${coordinates.length} GPS points`);
 
-		// Convert coordinates to hexagons
 		const { hexagons, type: routeType } = analyzeRouteAndConvertToHexagons(coordinates);
 		console.log(`🔷 Generated ${hexagons.length} hexagons (type: ${routeType})`);
 
-		// Save/Update Activity
 		let activity = await Activity.findOne({ stravaActivityId }).session(session);
 		let wasActivityCreated = false;
 
 		if (activity) {
 			console.log(`📝 Updating existing activity ${activity._id}`);
-			// Update all fields
 			activity.userId = user._id;
 			activity.source = 'api';
 			activity.name = stravaActivity.name;
@@ -169,18 +146,20 @@ export async function processActivity(
 
 		console.log(`✅ Activity saved: ${activity._id}`);
 
-		// Process hexagons in batch
 		const hexagonStats = await processHexagons(hexagons, activity, user, routeType, session);
 
-		// Update user's lastHex (for map initialization)
 		if (hexagons.length > 0) {
 			const h3 = require('h3-js');
 			const firstHexParent = h3.cellToParent(hexagons[0], 6);
+
+			// Update both user and activity with lastHex
 			await user.updateOne({ lastHex: firstHexParent }, { session });
-			console.log(`📍 Updated user lastHex to: ${firstHexParent}`);
+			activity.lastHex = firstHexParent;
+			await activity.save({ session });
+
+			console.log(`📍 Updated user and activity lastHex to: ${firstHexParent}`);
 		}
 
-		// Commit transaction
 		await session.commitTransaction();
 
 		console.log(`✅ Transaction committed`);
@@ -216,9 +195,6 @@ export async function processActivity(
 	}
 }
 
-/**
- * Hexagon creation document type
- */
 interface HexagonCreateDoc {
 	hexagonId: string;
 	parentHexagonId: string;
@@ -237,9 +213,6 @@ interface HexagonCreateDoc {
 	captureHistory: never[];
 }
 
-/**
- * Process hexagons for an activity
- */
 async function processHexagons(
 	hexagons: string[],
 	activity: IActivity,
@@ -247,21 +220,17 @@ async function processHexagons(
 	routeType: 'line' | 'area',
 	session: mongoose.ClientSession
 ) {
-	// Import h3 for parent calculation
 	const h3 = require('h3-js');
 
-	// Step 1: Fetch all existing hexagons in one query
 	const existingHexagons = await Hexagon.find({
 		hexagonId: { $in: hexagons },
 	}).session(session);
 
-	// Create a map for quick lookup
 	const existingHexMap = new Map<string, IHexagon>();
 	existingHexagons.forEach((hex) => {
 		existingHexMap.set(hex.hexagonId, hex);
 	});
 
-	// Step 2: Separate into creates, updates, and skips
 	const hexagonsToCreate: HexagonCreateDoc[] = [];
 	const bulkUpdateOps: mongoose.AnyBulkWriteOperation<IHexagon>[] = [];
 	const createdIds: string[] = [];
@@ -274,8 +243,6 @@ async function processHexagons(
 		const existingHex = existingHexMap.get(hexagonId);
 
 		if (!existingHex) {
-			// New hexagon - prepare for batch insert
-			// Calculate parent hexagon (resolution 6 for good balance)
 			const parentHexagonId = h3.cellToParent(hexagonId, 6);
 
 			hexagonsToCreate.push({
@@ -297,11 +264,9 @@ async function processHexagons(
 			});
 			createdIds.push(hexagonId);
 		} else {
-			// Existing hexagon - check if we can update it
 			const hexDate = existingHex.lastCapturedAt.getTime();
 
 			if (activityDate > hexDate) {
-				// Activity is newer - prepare update operation
 				const ownershipChanged = String(existingHex.currentOwnerId) !== String(user._id);
 
 				const updateDoc: mongoose.UpdateQuery<IHexagon> = {
@@ -318,9 +283,7 @@ async function processHexagons(
 					},
 				};
 
-				// Check if ownership changed
 				if (ownershipChanged) {
-					// Add previous owner to capture history
 					updateDoc.$push = {
 						captureHistory: {
 							userId: existingHex.currentOwnerId,
@@ -342,13 +305,11 @@ async function processHexagons(
 				});
 				updatedIds.push(hexagonId);
 			} else {
-				// Activity is older - skip
 				skippedIds.push(hexagonId);
 			}
 		}
 	}
 
-	// Step 3: Execute batch operations
 	let created = 0;
 	let updated = 0;
 
@@ -374,14 +335,6 @@ async function processHexagons(
 	};
 }
 
-/**
- * Delete an activity and restore hexagon ownership
- *
- * @param stravaActivityId - Strava activity ID
- * @param user - Current user
- * @returns Deletion result with hexagon statistics
- * @throws Error if deletion fails
- */
 export async function deleteActivityAndRestoreHexagons(
 	stravaActivityId: number,
 	user: IUser
@@ -392,7 +345,6 @@ export async function deleteActivityAndRestoreHexagons(
 	try {
 		console.log(`🗑️ Deleting activity ${stravaActivityId} for user: ${user.stravaProfile.firstname}`);
 
-		// Find activity by Strava activity ID
 		const activity = await Activity.findOne({
 			stravaActivityId: parseInt(String(stravaActivityId)),
 		}).session(session);
@@ -401,19 +353,16 @@ export async function deleteActivityAndRestoreHexagons(
 			throw new Error('Activity not found in database');
 		}
 
-		// Check ownership
 		if (String(activity.userId) !== String(user._id) && !user.isAdmin) {
 			throw new Error('You can only delete your own activities');
 		}
 
-		// Find all hexagons captured by this activity
 		const hexagons = await Hexagon.find({
 			currentActivityId: activity._id,
 		}).session(session);
 
 		console.log(`📦 Found ${hexagons.length} hexagons to process`);
 
-		// Process each hexagon
 		const hexagonsToDelete: string[] = [];
 		const bulkUpdateOps: mongoose.AnyBulkWriteOperation<IHexagon>[] = [];
 		let restored = 0;
@@ -421,7 +370,6 @@ export async function deleteActivityAndRestoreHexagons(
 
 		for (const hexagon of hexagons) {
 			if (hexagon.captureHistory && hexagon.captureHistory.length > 0) {
-				// Restore previous owner from capture history
 				const previousCapture = hexagon.captureHistory[hexagon.captureHistory.length - 1];
 
 				bulkUpdateOps.push({
@@ -436,20 +384,18 @@ export async function deleteActivityAndRestoreHexagons(
 								lastCapturedAt: previousCapture.capturedAt,
 								activityType: previousCapture.activityType,
 							},
-							$pop: { captureHistory: 1 }, // Remove last entry from history
-							$inc: { captureCount: -1 }, // Decrement capture count
+							$pop: { captureHistory: 1 },
+							$inc: { captureCount: -1 },
 						},
 					},
 				});
 				restored++;
 			} else {
-				// No capture history - delete the hexagon entirely
 				hexagonsToDelete.push(hexagon.hexagonId);
 				deleted++;
 			}
 		}
 
-		// Execute bulk operations
 		if (bulkUpdateOps.length > 0) {
 			await Hexagon.bulkWrite(bulkUpdateOps, { session });
 			console.log(`✅ Restored ${restored} hexagons to previous owners`);
@@ -462,11 +408,9 @@ export async function deleteActivityAndRestoreHexagons(
 			console.log(`✅ Deleted ${deleted} hexagons with no capture history`);
 		}
 
-		// Delete the activity
 		await Activity.findByIdAndDelete(activity._id).session(session);
 		console.log(`✅ Activity deleted successfully`);
 
-		// Commit transaction
 		await session.commitTransaction();
 
 		return {

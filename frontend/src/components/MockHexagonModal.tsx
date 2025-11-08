@@ -14,7 +14,6 @@ export function MockHexagonModal({
 	user,
 	onClose,
 }: MockHexagonModalProps) {
-	// Handle ESC key to close modal
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
 			if (e.key === 'Escape') {
@@ -35,7 +34,6 @@ export function MockHexagonModal({
 				className="bg-[rgba(10,10,10,0.95)] border border-white/10 rounded-xl shadow-2xl max-w-lg w-full"
 				onClick={(e) => e.stopPropagation()}
 			>
-				{/* Header */}
 				<div className="flex items-center justify-between p-4 border-b border-white/10">
 					<h2 className="text-lg font-semibold text-gray-100">Hexagon Details</h2>
 					<button
@@ -46,9 +44,7 @@ export function MockHexagonModal({
 					</button>
 				</div>
 
-				{/* Content */}
 				<div className="p-6 space-y-6">
-					{/* Hexagon ID */}
 					<div className="bg-white/5 rounded-lg p-4">
 						<div className="flex items-center gap-2 text-gray-400 text-sm mb-2">
 							<MapPin className="w-4 h-4" />
@@ -59,7 +55,6 @@ export function MockHexagonModal({
 						</div>
 					</div>
 
-					{/* Owner Info */}
 					<div className="bg-white/5 rounded-lg p-4">
 						<div className="flex items-center gap-2 text-gray-400 text-sm mb-2">
 							<User className="w-4 h-4" />
@@ -86,7 +81,6 @@ export function MockHexagonModal({
 						</div>
 					</div>
 
-					{/* Activity Info */}
 					<div className="bg-white/5 rounded-lg p-4">
 						<div className="flex items-center gap-2 text-gray-400 text-sm mb-3">
 							<Activity className="w-4 h-4" />
@@ -113,7 +107,6 @@ export function MockHexagonModal({
 					</div>
 				</div>
 
-				{/* Footer */}
 				<div className="p-4 border-t border-white/10 bg-white/5 text-center text-sm text-gray-400">
 					Click outside or press ESC to close
 				</div>

@@ -7,15 +7,11 @@ export function LandingPage() {
 
 	return (
 		<div className="relative w-full h-screen bg-black overflow-hidden">
-			{/* Animated Background */}
 			<div className="absolute inset-0">
-				{/* Noise texture */}
 				<div className="absolute inset-0 opacity-10 bg-noise"></div>
 
-				{/* Animated gradient */}
 				<div className="absolute inset-0 bg-gradient-radial from-orange-900/20 via-black to-black"></div>
 
-				{/* Hexagonal grid animation */}
 				<div className="hex-pattern"></div>
 			</div>
 

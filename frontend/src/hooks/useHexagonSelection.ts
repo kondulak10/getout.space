@@ -15,9 +15,6 @@ export interface SelectedHexagonData {
 	};
 }
 
-/**
- * Hook for managing hexagon selection and fetching hexagon details
- */
 export function useHexagonSelection() {
 	const [selectedHexagon, setSelectedHexagon] = useState<SelectedHexagonData | null>(null);
 	const [fetchHexagonDetail, { loading: hexagonDetailLoading }] = useLazyQuery(HexagonDetailDocument);

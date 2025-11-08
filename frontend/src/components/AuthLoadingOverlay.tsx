@@ -3,12 +3,9 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 export function AuthLoadingOverlay() {
 	return (
 		<div className="absolute inset-0 z-30 bg-black flex items-center justify-center">
-			{/* Same animated background as landing page */}
 			<div className="absolute inset-0">
-				{/* Noise texture */}
 				<div className="absolute inset-0 opacity-10 bg-noise"></div>
 
-				{/* Animated gradient */}
 				<div
 					className="absolute inset-0"
 					style={{
@@ -17,15 +14,12 @@ export function AuthLoadingOverlay() {
 					}}
 				></div>
 
-				{/* Hexagonal grid animation */}
 				<div className="hex-pattern-auth"></div>
 			</div>
 
-			{/* Content */}
 			<div className="text-center relative z-10">
 				<div className="mb-8">
 					<div className="relative inline-block">
-						{/* Hexagon spinner */}
 						<FontAwesomeIcon
 							icon="hexagon"
 							className="text-orange-500 animate-spin w-20 h-20"

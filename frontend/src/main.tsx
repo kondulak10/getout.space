@@ -8,9 +8,8 @@ import App from '@/App.tsx'
 import { logVersion } from '@/version'
 import { apolloClient } from '@/lib/apollo-client'
 import { AuthProvider } from '@/contexts/AuthProvider'
-import '@/lib/fontawesome' // Initialize Font Awesome library
+import '@/lib/fontawesome'
 
-// Log version on mount
 logVersion();
 
 createRoot(document.getElementById('root')!).render(

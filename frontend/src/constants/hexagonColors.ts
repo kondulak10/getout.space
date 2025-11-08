@@ -1,31 +1,23 @@
-/**
- * Hexagon color palette for user-owned hexagons
- * Used to assign consistent colors per user across the map
- * Brighter, more vibrant colors for better visibility
- */
 export const HEXAGON_COLORS = [
-	"#5D3FFF",  // Brighter blue
-	"#4DFFFF",  // Bright cyan
-	"#B3FF66",  // Bright lime green
-	"#FFEB3B",  // Bright yellow
-	"#FF4444",  // Bright red
-	"#FF6B35",  // Bright orange
-	"#A0FF44",  // Bright green
-	"#FF4FA7",  // Bright pink
-	"#E366FF",  // Bright purple
-	"#9C5FFF",  // Bright violet
-	"#66FFE0",  // Bright teal
-	"#FFB84D",  // Bright amber
-	"#FF66B8",  // Bright magenta
-	"#5FE8FF",  // Bright sky blue
-	"#CCFF33",  // Bright yellow-green
+	"#5D3FFF",
+	"#4DFFFF",
+	"#B3FF66",
+	"#FFEB3B",
+	"#FF4444",
+	"#FF6B35",
+	"#A0FF44",
+	"#FF4FA7",
+	"#E366FF",
+	"#9C5FFF",
+	"#66FFE0",
+	"#FFB84D",
+	"#FF66B8",
+	"#5FE8FF",
+	"#CCFF33",
 ] as const;
 
 export type HexagonColor = typeof HEXAGON_COLORS[number];
 
-/**
- * Generate a consistent color for a user ID using the hexagon color palette
- */
 export function getUserColor(userId: string): HexagonColor {
 	let hash = 0;
 	for (let i = 0; i < userId.length; i++) {

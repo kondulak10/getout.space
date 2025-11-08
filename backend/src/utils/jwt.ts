@@ -2,9 +2,8 @@ import jwt from 'jsonwebtoken';
 import { IUser } from '../models/User';
 
 const JWT_SECRET_RAW = process.env.JWT_SECRET;
-const JWT_EXPIRES_IN = '7d'; // Token expires in 7 days
+const JWT_EXPIRES_IN = '7d';
 
-// CRITICAL: Fail fast if JWT_SECRET is not set
 if (!JWT_SECRET_RAW) {
   console.error('❌ CRITICAL: JWT_SECRET environment variable is not set!');
   console.error('❌ Application cannot start without a secure JWT secret.');
@@ -12,7 +11,6 @@ if (!JWT_SECRET_RAW) {
   process.exit(1);
 }
 
-// After validation, we know it's a valid string
 const JWT_SECRET: string = JWT_SECRET_RAW;
 
 export interface JWTPayload {
@@ -21,9 +19,6 @@ export interface JWTPayload {
   isAdmin: boolean;
 }
 
-/**
- * Generate a JWT token for a user
- */
 export const generateToken = (user: IUser): string => {
   const payload: JWTPayload = {
     userId: String(user._id),
@@ -36,9 +31,6 @@ export const generateToken = (user: IUser): string => {
   });
 };
 
-/**
- * Verify and decode a JWT token
- */
 export const verifyToken = (token: string): JWTPayload => {
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
@@ -48,15 +40,11 @@ export const verifyToken = (token: string): JWTPayload => {
   }
 };
 
-/**
- * Extract token from Authorization header
- */
 export const extractTokenFromHeader = (authHeader?: string): string | null => {
   if (!authHeader) {
     return null;
   }
 
-  // Format: "Bearer TOKEN"
   const parts = authHeader.split(' ');
   if (parts.length === 2 && parts[0] === 'Bearer') {
     return parts[1];

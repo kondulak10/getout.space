@@ -7,8 +7,8 @@ interface UseMapboxOptions {
 	viewport?: ViewportKey;
 	style?: string;
 	enableCustomStyling?: boolean;
-	center?: [number, number]; // Override center [lng, lat]
-	zoom?: number; // Override zoom
+	center?: [number, number];
+	zoom?: number;
 }
 
 export const useMapbox = (options: UseMapboxOptions = {}) => {
@@ -18,7 +18,6 @@ export const useMapbox = (options: UseMapboxOptions = {}) => {
 	const mapRef = useRef<mapboxgl.Map | null>(null);
 	const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
-	// Initialize map ONCE - user is already loaded before this component mounts
 	useEffect(() => {
 		if (!mapContainerRef.current || mapRef.current) return;
 
@@ -28,22 +27,19 @@ export const useMapbox = (options: UseMapboxOptions = {}) => {
 		const initialCenter = center || viewportConfig.center;
 		const initialZoom = zoom || viewportConfig.zoom;
 
-		console.log('🗺️ Initializing map at:', initialCenter, 'zoom:', initialZoom);
-
 		const map = new mapboxgl.Map({
 			container: mapContainerRef.current,
 			style,
 			center: initialCenter,
 			zoom: initialZoom,
-			pitch: 0, // Force flat map
+			pitch: 0,
 			bearing: 0,
-			dragRotate: false, // Disable rotation
-			pitchWithRotate: false, // Disable pitch
-			touchPitch: false, // Disable touch pitch
-			projection: 'equalEarth', // Equal-area projection for uniform hexagons
+			dragRotate: false,
+			pitchWithRotate: false,
+			touchPitch: false,
+			projection: 'equalEarth',
 		});
 
-		// Apply custom dark monochrome flat styling
 		if (enableCustomStyling) {
 			configureMapStyle(map);
 		}
@@ -54,7 +50,7 @@ export const useMapbox = (options: UseMapboxOptions = {}) => {
 			map.remove();
 			mapRef.current = null;
 		};
-	}, [mapboxToken, viewport, style, enableCustomStyling]); // NOTE: center/zoom NOT in deps - map creates once!
+	}, [mapboxToken, viewport, style, enableCustomStyling]);
 
 	return {
 		mapContainerRef,

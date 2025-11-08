@@ -1,9 +1,3 @@
-/**
- * Safely format a date string to a localized date
- * @param dateString - ISO 8601 date string or similar
- * @param options - Intl.DateTimeFormat options
- * @returns Formatted date string or 'N/A' if invalid
- */
 export function formatDate(
 	dateString: string | null | undefined,
 	options: Intl.DateTimeFormatOptions = {
@@ -24,9 +18,6 @@ export function formatDate(
 	return date.toLocaleDateString('en-US', options);
 }
 
-/**
- * Format date with time
- */
 export function formatDateTime(dateString: string | null | undefined): string {
 	return formatDate(dateString, {
 		year: 'numeric',
@@ -37,9 +28,6 @@ export function formatDateTime(dateString: string | null | undefined): string {
 	});
 }
 
-/**
- * Format distance in meters to kilometers
- */
 export function formatDistance(meters: number): string {
 	return (meters / 1000).toFixed(2) + ' km';
 }

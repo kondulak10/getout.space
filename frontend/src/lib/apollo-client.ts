@@ -10,12 +10,10 @@ const httpLink = new HttpLink({
   uri: `${backendUrl}/graphql`,
 });
 
-// Logging link for GraphQL requests
 const loggingLink = new ApolloLink((operation, forward) => {
   const startTime = Date.now();
   const timestamp = new Date().toLocaleTimeString();
 
-  // Log outgoing request
   const firstDefinition = operation.query.definitions[0] as OperationDefinitionNode;
   const operationType = firstDefinition?.operation || 'unknown';
 
@@ -41,7 +39,6 @@ const loggingLink = new ApolloLink((operation, forward) => {
         const duration = endTime - startTime;
         const endTimestamp = new Date().toLocaleTimeString();
 
-        // Log successful response
         console.log(
           `%c✅ GraphQL Response [${endTimestamp}] (${duration}ms)`,
           'background: #10B981; color: white; padding: 4px 8px; border-radius: 3px; font-weight: bold',
@@ -63,7 +60,6 @@ const loggingLink = new ApolloLink((operation, forward) => {
   });
 });
 
-// Error link for GraphQL errors
 const errorLink = onError((errorContext: any) => {
   const timestamp = new Date().toLocaleTimeString();
 
@@ -96,9 +92,7 @@ const errorLink = onError((errorContext: any) => {
   }
 });
 
-// Auth link to add JWT token to headers
 const authLink = setContext((_, { headers }) => {
-  // Get token from localStorage
   const token = localStorage.getItem('getout_auth_token');
 
   return {
@@ -111,17 +105,14 @@ const authLink = setContext((_, { headers }) => {
 
 export const apolloClient = new ApolloClient({
   link: from([
-    errorLink,    // Error logging (first to catch all errors)
-    loggingLink,  // Request/response logging
-    authLink,     // Add JWT token
-    httpLink      // Send to backend
+    errorLink,
+    loggingLink,
+    authLink,
+    httpLink
   ]),
   cache: new InMemoryCache({
     typePolicies: {
       User: {
-        // Apollo automatically uses 'id' field for cache normalization
-        // This ensures mutations that return User objects automatically
-        // update all queries containing that user - no refetching needed!
         keyFields: ['id'],
       },
     },

@@ -31,7 +31,6 @@ export function ActivityFeed({ onActivityClick }: ActivityFeedProps) {
 
 	useEffect(() => {
 
-		// Create EventSource for SSE
 		const eventSource = new EventSource(`${backendUrl}/api/strava/events`);
 
 		eventSource.onopen = () => {
@@ -42,15 +41,12 @@ export function ActivityFeed({ onActivityClick }: ActivityFeedProps) {
 			try {
 				const data: EventData = JSON.parse(event.data);
 
-				// Check if it's a connection message
 				if ("type" in data && data.type === "connected") {
 					return;
 				}
 
-				// It's a webhook event
 				const webhookEvent = data as WebhookEvent;
 
-				// Add event to the list (newest first)
 				setEvents((prev) => [webhookEvent, ...prev]);
 			} catch (error) {
 			}
@@ -60,7 +56,6 @@ export function ActivityFeed({ onActivityClick }: ActivityFeedProps) {
 			setIsConnected(false);
 		};
 
-		// Cleanup on unmount
 		return () => {
 			eventSource.close();
 		};
@@ -104,7 +99,6 @@ export function ActivityFeed({ onActivityClick }: ActivityFeedProps) {
 	};
 
 	const isEventClickable = (event: WebhookEvent) => {
-		// Only "create" activity events are clickable
 		return event.object_type === "activity" && event.aspect_type === "create" && onActivityClick;
 	};
 

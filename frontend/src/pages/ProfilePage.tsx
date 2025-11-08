@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/useAuth';
 import { useActivitiesManager } from '@/hooks/useActivitiesManager';
 import { useStoredActivities } from '@/hooks/useStoredActivities';
 import { ActivitiesManagerModal } from '@/components/ActivitiesManagerModal';
-import { AlertTriangle, Activity, LogOut, Trash2, Loader2, ChevronLeft } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { formatDate, formatDistance } from '@/utils/dateFormatter';
 import {
 	AlertDialog,
@@ -24,8 +24,13 @@ export function ProfilePage() {
 	const navigate = useNavigate();
 	const [deleteMyAccount, { loading: deletingAccount }] = useMutation(DeleteMyAccountDocument);
 
-	const { showModal, activities, loading, openModal, closeModal, handleSaveActivity, handleRemoveActivity } =
+	const { showModal, activities, loading, infoMessage, openModal, closeModal, handleSaveActivity, handleRemoveActivity } =
 		useActivitiesManager();
+
+	const handleShowOnMap = (hexId: string) => {
+		closeModal();
+		navigate(`/?hex=${hexId}`);
+	};
 
 	const {
 		activities: storedActivities,
@@ -77,16 +82,14 @@ export function ProfilePage() {
 	return (
 		<div className="min-h-screen bg-[#0a0a0a] p-4 md:p-8">
 			<div className="max-w-3xl mx-auto space-y-4">
-				{/* Back Button */}
 				<button
 					onClick={() => navigate('/')}
 					className="flex items-center gap-2 text-gray-400 hover:text-gray-200 transition-colors cursor-pointer"
 				>
-					<ChevronLeft className="w-4 h-4" />
+					<FontAwesomeIcon icon="chevron-left" className="w-4 h-4" />
 					Back to Map
 				</button>
 
-				{/* Header with Profile and Logout */}
 				<div className="bg-[rgba(10,10,10,0.9)] backdrop-blur-md border border-white/10 rounded-xl p-4 md:p-6">
 					<div className="flex items-center justify-between gap-4">
 						<div className="flex items-center gap-4">
@@ -110,29 +113,27 @@ export function ProfilePage() {
 							}}
 							className="flex items-center gap-2 bg-white/5 border border-white/10 text-gray-300 px-3 py-2 rounded-lg hover:bg-white/10 hover:text-white transition-all cursor-pointer"
 						>
-							<LogOut className="w-4 h-4" />
+							<FontAwesomeIcon icon="sign-out-alt" className="w-4 h-4" />
 							<span className="hidden md:inline">Logout</span>
 						</button>
 					</div>
 				</div>
 
-				{/* Manage Activities Button */}
 				<button
 					onClick={openModal}
 					disabled={loading}
 					className="inline-flex items-center gap-2 bg-[#FC5200] hover:bg-[#E34402] disabled:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
 				>
-					<Activity className="w-4 h-4" />
+					<FontAwesomeIcon icon="running" className="w-4 h-4" />
 					{loading ? 'Loading...' : 'Manage Activities'}
 				</button>
 
-				{/* Stored Activities */}
 				<div className="bg-[rgba(10,10,10,0.9)] backdrop-blur-md border border-white/10 rounded-xl p-4 md:p-6">
 					<h2 className="text-lg font-semibold text-gray-100 mb-4">Stored Activities</h2>
 
 					{loadingStored ? (
 						<div className="flex items-center justify-center py-8">
-							<Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+							<FontAwesomeIcon icon="spinner" className="w-6 h-6 animate-spin text-gray-400" />
 						</div>
 					) : storedActivities.length === 0 ? (
 						<div className="text-center py-8 text-gray-400 text-sm">
@@ -157,18 +158,29 @@ export function ProfilePage() {
 											</div>
 										</div>
 
-										<button
-											onClick={() => handleDeleteActivity(activity.id, activity.stravaActivityId)}
-											disabled={deletingActivityId === activity.id}
-											className="p-2 text-red-400 hover:bg-red-500/10 rounded transition-colors disabled:opacity-50 flex-shrink-0 cursor-pointer"
-											title="Delete activity"
-										>
-											{deletingActivityId === activity.id ? (
-												<Loader2 className="w-4 h-4 animate-spin" />
-											) : (
-												<Trash2 className="w-4 h-4" />
+										<div className="flex items-center gap-2 flex-shrink-0">
+											{activity.lastHex && (
+												<button
+													onClick={() => navigate(`/?hex=${activity.lastHex}`)}
+													className="p-2 text-blue-400 hover:bg-blue-500/10 rounded transition-colors cursor-pointer"
+													title="Show on map"
+												>
+													<FontAwesomeIcon icon="map-marker-alt" className="w-4 h-4" />
+												</button>
 											)}
-										</button>
+											<button
+												onClick={() => handleDeleteActivity(activity.id, activity.stravaActivityId)}
+												disabled={deletingActivityId === activity.id}
+												className="p-2 text-red-400 hover:bg-red-500/10 rounded transition-colors disabled:opacity-50 cursor-pointer"
+												title="Delete activity"
+											>
+												{deletingActivityId === activity.id ? (
+													<FontAwesomeIcon icon="spinner" className="w-4 h-4 animate-spin" />
+												) : (
+													<FontAwesomeIcon icon="trash-alt" className="w-4 h-4" />
+												)}
+											</button>
+										</div>
 									</div>
 								))}
 							</div>
@@ -179,7 +191,6 @@ export function ProfilePage() {
 					)}
 				</div>
 
-				{/* About */}
 				<div className="bg-[rgba(10,10,10,0.9)] backdrop-blur-md border border-white/10 rounded-xl p-4 md:p-6">
 					<h2 className="text-lg font-semibold text-gray-100 mb-3">How It Works</h2>
 					<div className="text-sm text-gray-400 space-y-2">
@@ -196,10 +207,9 @@ export function ProfilePage() {
 					</div>
 				</div>
 
-				{/* Delete Account */}
 				<div className="bg-[rgba(10,10,10,0.9)] backdrop-blur-md border border-red-500/20 rounded-xl p-4 md:p-6">
 					<div className="flex items-start gap-3 mb-4">
-						<AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+						<FontAwesomeIcon icon="exclamation-triangle" className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
 						<div className="text-sm text-red-400">
 							<p className="font-semibold mb-1">Danger Zone</p>
 							<p className="text-xs">Deleting your account permanently removes all activities and hexagons. This cannot be undone.</p>
@@ -215,7 +225,7 @@ export function ProfilePage() {
 								: 'bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30'
 						}`}
 					>
-						<Trash2 className="w-4 h-4" />
+						<FontAwesomeIcon icon="trash-alt" className="w-4 h-4" />
 						{deletingAccount
 							? 'Deleting...'
 							: showDeleteConfirm
@@ -234,17 +244,17 @@ export function ProfilePage() {
 				</div>
 			</div>
 
-			{/* Activities Modal */}
 			<ActivitiesManagerModal
 				isOpen={showModal}
 				activities={activities}
 				loading={loading}
+				infoMessage={infoMessage}
 				onClose={closeModal}
 				onProcess={handleSaveActivity}
 				onDelete={handleRemoveActivity}
+				onShowOnMap={handleShowOnMap}
 			/>
 
-			{/* Activity Delete Confirmation Dialog */}
 			<AlertDialog open={showActivityDeleteDialog} onOpenChange={setShowActivityDeleteDialog}>
 				<AlertDialogContent className="bg-[rgba(10,10,10,0.95)] border border-white/10 text-gray-100">
 					<AlertDialogHeader>

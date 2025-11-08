@@ -16,10 +16,8 @@ const PORT = process.env.PORT || 4000;
 
 const app = express();
 
-// Connect to MongoDB
 connectDatabase();
 
-// Middleware
 app.use(cors({
   origin: [
     'http://localhost:5173',
@@ -31,38 +29,30 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Root HTML page
 app.get('/', (req, res) => {
 	res.sendFile(path.join(__dirname, 'templates', 'landing.html'));
 });
 
-// Routes
 app.use(testRoutes);
 app.use(stravaRoutes);
 app.use(webhookRoutes);
 
-// Initialize Apollo Server
 const startApolloServer = async () => {
   const server = new ApolloServer({
     typeDefs,
     resolvers,
-    introspection: true, // Enable introspection for documentation
-    // In production, you might want to disable the landing page for security
-    // plugins: [ApolloServerPluginLandingPageDisabled()],
+    introspection: true,
   });
 
   await server.start();
 
-  // Mount Apollo GraphQL endpoint with authentication context
   app.use(
     '/graphql',
     expressMiddleware(server, {
       context: async ({ req }) => {
-        // Import here to avoid circular dependencies
         const { verifyToken, extractTokenFromHeader } = await import('./utils/jwt');
         const { User } = await import('./models/User');
 
-        // Extract token from Authorization header
         const token = extractTokenFromHeader(req.headers.authorization);
 
         if (token) {
@@ -78,12 +68,10 @@ const startApolloServer = async () => {
               };
             }
           } catch (error) {
-            // Invalid token - continue without authentication
             console.log('Invalid token in GraphQL request');
           }
         }
 
-        // No authentication
         return {
           user: undefined,
           userId: undefined,
@@ -93,7 +81,6 @@ const startApolloServer = async () => {
     })
   );
 
-  // GraphQL Playground - Interactive documentation UI
   app.get(
     '/playground',
     expressPlayground({
@@ -104,7 +91,6 @@ const startApolloServer = async () => {
     })
   );
 
-  // Start server
   app.listen(PORT, () => {
     console.log(`
 ╔═══════════════════════════════════════════╗

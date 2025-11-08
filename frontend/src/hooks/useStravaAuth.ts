@@ -8,29 +8,20 @@ interface UseStravaAuthOptions {
 	onActivitiesProcessed?: () => void;
 }
 
-// GLOBAL flag to prevent multiple hook instances from exchanging the same code
-// This is necessary because the hook is used in multiple components
 let globalCodeExchangeInProgress = false;
 let globalCodeExchanged = '';
 
-/**
- * Hook for managing Strava OAuth authentication flow
- */
 export function useStravaAuth(options?: UseStravaAuthOptions) {
 	const { isAuthenticated, login, user } = useAuth();
 	const [isAuthenticating, setIsAuthenticating] = useState(false);
 	const onActivitiesProcessedRef = useRef(options?.onActivitiesProcessed);
 
-	// Handle OAuth callback on component mount
 	useEffect(() => {
 		const urlParams = new URLSearchParams(window.location.search);
 		const code = urlParams.get('code');
 		const scope = urlParams.get('scope');
 
-		// OAuth codes can only be used once!
-		// Use GLOBAL flag to prevent multiple hook instances from exchanging the same code
 		if (code && scope && !isAuthenticated) {
-			// Check if this exact code has already been exchanged or is in progress
 			if (globalCodeExchanged === code || globalCodeExchangeInProgress) {
 				console.log('⏭️ OAuth code already exchanged or in progress, skipping...');
 				return;
@@ -41,11 +32,8 @@ export function useStravaAuth(options?: UseStravaAuthOptions) {
 			setIsAuthenticating(true);
 			handleOAuthCallback(code);
 		}
-	}, []); // Empty deps - only run once on mount
+	}, []);
 
-	/**
-	 * Initiate Strava login flow
-	 */
 	const loginWithStrava = async () => {
 		try {
 			const authUrl = await getStravaAuthUrl();
@@ -55,9 +43,6 @@ export function useStravaAuth(options?: UseStravaAuthOptions) {
 		}
 	};
 
-	/**
-	 * Auto-process 3 latest runs for new users
-	 */
 	const autoProcessLatestRuns = async () => {
 		try {
 			console.log('🎉 New user detected! Auto-processing 3 latest runs...');
@@ -65,7 +50,6 @@ export function useStravaAuth(options?: UseStravaAuthOptions) {
 				description: 'This may take a moment.',
 			});
 
-			// Fetch activities from Strava (backend already filters to runs)
 			const activitiesData = await fetchActivities(1, 30);
 
 			if (!activitiesData.success || !activitiesData.activities.length) {
@@ -76,9 +60,8 @@ export function useStravaAuth(options?: UseStravaAuthOptions) {
 				return;
 			}
 
-			// Get the 3 most recent activities (already filtered to runs on backend)
 			const latestRuns = activitiesData.activities
-				.filter(activity => !activity.isStored) // Only process activities not already stored
+				.filter(activity => !activity.isStored)
 				.slice(0, 3);
 
 			console.log(`📊 Found ${latestRuns.length} runs to process`);
@@ -93,7 +76,6 @@ export function useStravaAuth(options?: UseStravaAuthOptions) {
 			let processedCount = 0;
 			let failedCount = 0;
 
-			// Process each run sequentially
 			for (const run of latestRuns) {
 				try {
 					console.log(`🏃 Processing run: ${run.name}`);
@@ -103,19 +85,16 @@ export function useStravaAuth(options?: UseStravaAuthOptions) {
 				} catch (error) {
 					console.error(`❌ Failed to process run: ${run.name}`, error);
 					failedCount++;
-					// Continue with next activity even if one fails
 				}
 			}
 
 			console.log('🎊 Finished auto-processing runs!');
 
-			// Show success toast
 			if (processedCount > 0) {
 				toast.success(`${processedCount} ${processedCount === 1 ? 'activity' : 'activities'} processed!`, {
 					description: 'Your hexagons are now visible on the map.',
 				});
 
-				// Trigger callback to refresh map
 				if (onActivitiesProcessedRef.current) {
 					onActivitiesProcessedRef.current();
 				}
@@ -134,20 +113,20 @@ export function useStravaAuth(options?: UseStravaAuthOptions) {
 		}
 	};
 
-	/**
-	 * Handle OAuth callback - exchange code for tokens
-	 */
 	const handleOAuthCallback = async (code: string) => {
 		try {
 			const data = await exchangeCodeForToken(code);
 
 			if (data.success && data.token && data.user) {
-				login(data.token, data.user);
+				const user = {
+					...data.user,
+					tokenIsExpired: data.user.tokenIsExpired ?? false,
+					updatedAt: data.user.updatedAt ?? data.user.createdAt,
+				};
+				login(data.token, user);
 
-				// If this is a new user, show welcome celebration
 				if (data.isNewUser) {
-					// Trigger fullscreen confetti celebration
-					const duration = 3000; // 3 seconds
+					const duration = 3000;
 					const animationEnd = Date.now() + duration;
 
 					const interval = setInterval(() => {
@@ -160,7 +139,6 @@ export function useStravaAuth(options?: UseStravaAuthOptions) {
 
 						const particleCount = 50 * (timeLeft / duration);
 
-						// Launch confetti from both sides
 						confetti({
 							particleCount,
 							angle: 60,
@@ -177,13 +155,11 @@ export function useStravaAuth(options?: UseStravaAuthOptions) {
 						});
 					}, 250);
 
-					// Show welcome toast
 					toast.success('🎉 Welcome to GetOut!', {
 						description: 'Start running to conquer the territory',
 						duration: 5000,
 					});
 
-					// Run in background, don't block the login flow
 					autoProcessLatestRuns().catch(err => {
 						console.error('Failed to auto-process activities:', err);
 					});
@@ -197,7 +173,7 @@ export function useStravaAuth(options?: UseStravaAuthOptions) {
 			console.error('OAuth callback error:', error);
 		} finally {
 			setIsAuthenticating(false);
-			globalCodeExchangeInProgress = false; // Reset flag when done
+			globalCodeExchangeInProgress = false;
 		}
 	};
 

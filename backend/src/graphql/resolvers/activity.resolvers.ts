@@ -7,7 +7,6 @@ import mongoose from 'mongoose';
 
 export const activityResolvers = {
   Activity: {
-    // Field resolver: Populate user data
     user: async (parent: IActivity) => {
       try {
         const user = await User.findById(parent.userId);
@@ -20,7 +19,6 @@ export const activityResolvers = {
   },
 
   Query: {
-    // Get activities for current user
     myActivities: async (
       _: any,
       { limit = 50, offset = 0 }: { limit?: number; offset?: number },
@@ -40,7 +38,6 @@ export const activityResolvers = {
       }
     },
 
-    // Get activities for a specific user
     userActivities: async (
       _: any,
       { userId, limit = 50, offset = 0 }: { userId: string; limit?: number; offset?: number },
@@ -48,7 +45,6 @@ export const activityResolvers = {
     ) => {
       const currentUser = requireAuth(context);
 
-      // Allow if admin or requesting own activities
       if (!currentUser.isAdmin && String(currentUser._id) !== userId) {
         throw new GraphQLError('You can only view your own activities', {
           extensions: { code: 'FORBIDDEN' },
@@ -67,7 +63,6 @@ export const activityResolvers = {
       }
     },
 
-    // Get single activity by ID
     activity: async (_: any, { id }: { id: string }, context: GraphQLContext) => {
       const currentUser = requireAuth(context);
 
@@ -79,7 +74,6 @@ export const activityResolvers = {
           });
         }
 
-        // Allow if admin or activity owner
         if (!currentUser.isAdmin && String(activity.userId) !== String(currentUser._id)) {
           throw new GraphQLError('You can only view your own activities', {
             extensions: { code: 'FORBIDDEN' },
@@ -96,7 +90,6 @@ export const activityResolvers = {
       }
     },
 
-    // Get all activities (Admin only)
     activities: async (
       _: any,
       { limit = 50, offset = 0 }: { limit?: number; offset?: number },
@@ -118,7 +111,6 @@ export const activityResolvers = {
   },
 
   Mutation: {
-    // Delete activity by ID
     deleteActivity: async (_: any, { id }: { id: string }, context: GraphQLContext) => {
       const currentUser = requireAuth(context);
       const session = await mongoose.startSession();
@@ -134,7 +126,6 @@ export const activityResolvers = {
           });
         }
 
-        // Allow if admin or activity owner
         if (!currentUser.isAdmin && String(activity.userId) !== String(currentUser._id)) {
           await session.abortTransaction();
           throw new GraphQLError('You can only delete your own activities', {
@@ -144,14 +135,12 @@ export const activityResolvers = {
 
         console.log(`🗑️ Deleting activity ${id} (Strava ID: ${activity.stravaActivityId})`);
 
-        // Find all hexagons captured by this activity
         const hexagons = await Hexagon.find({
           currentActivityId: activity._id
         }).session(session);
 
         console.log(`📦 Found ${hexagons.length} hexagons to process`);
 
-        // Process each hexagon
         const hexagonsToDelete: string[] = [];
         const bulkUpdateOps: any[] = [];
         let restored = 0;
@@ -159,7 +148,6 @@ export const activityResolvers = {
 
         for (const hexagon of hexagons) {
           if (hexagon.captureHistory && hexagon.captureHistory.length > 0) {
-            // Restore previous owner from capture history
             const previousCapture = hexagon.captureHistory[hexagon.captureHistory.length - 1];
 
             bulkUpdateOps.push({
@@ -174,20 +162,18 @@ export const activityResolvers = {
                     lastCapturedAt: previousCapture.capturedAt,
                     activityType: previousCapture.activityType,
                   },
-                  $pop: { captureHistory: 1 }, // Remove last entry from history
-                  $inc: { captureCount: -1 }, // Decrement capture count
+                  $pop: { captureHistory: 1 },
+                  $inc: { captureCount: -1 },
                 },
               },
             });
             restored++;
           } else {
-            // No capture history - delete the hexagon entirely
             hexagonsToDelete.push(hexagon.hexagonId);
             deleted++;
           }
         }
 
-        // Execute bulk operations
         if (bulkUpdateOps.length > 0) {
           await Hexagon.bulkWrite(bulkUpdateOps, { session });
           console.log(`✅ Restored ${restored} hexagons to previous owners`);
@@ -200,11 +186,9 @@ export const activityResolvers = {
           console.log(`✅ Deleted ${deleted} hexagons with no capture history`);
         }
 
-        // Delete the activity
         await Activity.findByIdAndDelete(id).session(session);
         console.log(`✅ Activity deleted successfully`);
 
-        // Commit transaction
         await session.commitTransaction();
         return true;
       } catch (error) {
