@@ -25,7 +25,13 @@
       "WebSearch",
       "WebFetch(domain:getout.space)",
       "WebFetch(domain:api.getout.space)",
-      "Bash(aws logs tail:*)"
+      "Bash(aws logs tail:*)",
+      "Bash(terraform output:*)",
+      "Bash(terraform state show:*)",
+      "Bash(terraform show:*)",
+      "Bash(aws secretsmanager get-secret-value:*)",
+      "Bash(aws secretsmanager list-secrets:*)",
+      "Bash(aws ecs describe-services:*)"
     ],
     "deny": [],
     "ask": []
