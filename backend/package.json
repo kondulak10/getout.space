@@ -16,7 +16,7 @@
     "docker:run": "docker run -p 4000:4000 --env-file .env getout-backend"
   },
   "_moduleAliases": {
-    "@": "dist"
+    "@/": "dist/"
   },
   "keywords": [
     "strava",
