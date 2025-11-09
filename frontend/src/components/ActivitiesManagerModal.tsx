@@ -16,7 +16,6 @@ export function ActivitiesManagerModal({
 	isOpen,
 	activities,
 	loading,
-	infoMessage,
 	onClose,
 	onProcess,
 	onDelete,
@@ -28,7 +27,6 @@ export function ActivitiesManagerModal({
 		<CompactActivitiesModal
 			activities={activities}
 			loading={loading}
-			infoMessage={infoMessage}
 			onClose={onClose}
 			onProcess={onProcess}
 			onDelete={onDelete}

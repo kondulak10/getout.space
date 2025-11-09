@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { MapProvider } from '@/contexts/MapProvider';
+import { useMap } from '@/contexts/useMap';
 import { useMapbox } from '@/hooks/useMapbox';
 import { useStaticHexagons } from '@/hooks/useStaticHexagons';
 import { useStaticProfileImages } from '@/hooks/useStaticProfileImages';
@@ -9,15 +11,31 @@ import { MockHexagonModal } from '@/components/MockHexagonModal';
 import { Loader2 } from 'lucide-react';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-export function HexTestPage() {
+function HexTestPageContent() {
 	const [mockData, setMockData] = useState<MockData | null>(null);
 	const [loadingStage, setLoadingStage] = useState<'generating' | 'hexagons' | 'images' | 'complete'>('generating');
 	const [selectedHexagon, setSelectedHexagon] = useState<MockHexagon | null>(null);
 
-	const { mapContainerRef, mapRef } = useMapbox({
-		viewport: 'oslo',
+	const { mapRef, flyToLocation } = useMap();
+	const { mapContainerRef } = useMapbox({
 		enableCustomStyling: true,
 	});
+
+	// Navigate to Oslo on mount
+	useEffect(() => {
+		if (!mapRef.current) return;
+		const map = mapRef.current;
+
+		const navigateToOslo = () => {
+			flyToLocation(10.7522, 59.9139, 12, 0);
+		};
+
+		if (map.loaded()) {
+			navigateToOslo();
+		} else {
+			map.once('load', navigateToOslo);
+		}
+	}, [mapRef, flyToLocation]);
 
 	useEffect(() => {
 		const toastId = toast.loading('Loading test data...', {
@@ -138,5 +156,13 @@ export function HexTestPage() {
 				/>
 			)}
 		</div>
+	);
+}
+
+export function HexTestPage() {
+	return (
+		<MapProvider>
+			<HexTestPageContent />
+		</MapProvider>
 	);
 }

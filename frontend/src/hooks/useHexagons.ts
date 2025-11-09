@@ -51,8 +51,9 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 		if (!mapRef.current) return;
 		const map = mapRef.current;
 
-		// Wait for style to load before adding sources/layers
+		// Style should already be loaded by now (MapView waits for isLoaded)
 		if (!map.isStyleLoaded()) {
+			console.warn("⚠️ setupHexagonLayer called but style not loaded");
 			return;
 		}
 
@@ -119,8 +120,9 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 		if (!mapRef.current) return;
 		const map = mapRef.current;
 
-		// Wait for style to load before adding sources/layers
+		// Style should already be loaded by now (MapView waits for isLoaded)
 		if (!map.isStyleLoaded()) {
+			console.warn("⚠️ setupParentLayer called but style not loaded");
 			return;
 		}
 
@@ -317,6 +319,7 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 
 	useEffect(() => {
 		if (!mapRef.current) return;
+
 		const map = mapRef.current;
 
 		isMountedRef.current = true;
@@ -325,6 +328,8 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 			if (!isMountedRef.current) {
 				return;
 			}
+
+			console.log("🎯 Initializing hexagons (map loaded)");
 
 			setupHexagonLayer();
 			setupParentLayer();
@@ -346,6 +351,7 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 			map.on("zoomend", updateHexagons);
 		};
 
+		// Map is guaranteed to be loaded when this component mounts
 		if (map.loaded()) {
 			initializeHexagons();
 		} else {
@@ -371,14 +377,10 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 
 			cleanupHexagonLayer();
 		};
-	}, [
-		mapRef,
-		setupHexagonLayer,
-		setupParentLayer,
-		updateHexagons,
-		cleanupHexagonLayer,
-		clearCenterCache,
-	]);
+		// Only re-run if mapRef changes
+		// Callbacks are stable due to useCallback and refs
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [mapRef]);
 
 	useEffect(() => {
 		if (!mapRef.current) return;
