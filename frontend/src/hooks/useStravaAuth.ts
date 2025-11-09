@@ -163,10 +163,21 @@ export function useStravaAuth(options?: UseStravaAuthOptions) {
 
 				window.history.replaceState({}, document.title, '/');
 			} else {
-				console.error('Authentication failed:', data.error || data.details || 'Unknown error');
+				const errorMessage = data.error || data.details || 'Unknown error';
+				const statusCode = data.statusCode ? ` (${data.statusCode})` : '';
+				console.error('Authentication failed:', errorMessage, statusCode);
+				toast.error(`Authentication failed${statusCode}`, {
+					description: errorMessage,
+					duration: 6000,
+				});
 			}
 		} catch (error) {
 			console.error('OAuth callback error:', error);
+			const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred during authentication';
+			toast.error('Authentication failed', {
+				description: errorMessage,
+				duration: 6000,
+			});
 		} finally {
 			setIsAuthenticating(false);
 			globalCodeExchangeInProgress = false;

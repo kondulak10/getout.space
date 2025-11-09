@@ -67,6 +67,7 @@ export interface AuthResponse {
 	error?: string;
 	details?: string;
 	needsReauth?: boolean;
+	statusCode?: number;
 }
 
 export async function getStravaAuthUrl(): Promise<string> {
@@ -84,7 +85,13 @@ export async function exchangeCodeForToken(code: string): Promise<AuthResponse> 
 		body: JSON.stringify({ code }),
 	});
 
-	return await response.json();
+	const data = await response.json();
+
+	// Include the HTTP status code in the response
+	return {
+		...data,
+		statusCode: response.status,
+	};
 }
 
 export async function refreshToken(): Promise<AuthResponse> {
