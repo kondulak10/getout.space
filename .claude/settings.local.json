@@ -41,7 +41,10 @@
       "Bash(aws ecr describe-images:*)",
       "Bash(aws ecs list-task-definitions:*)",
       "Bash(aws ecs list-tasks:*)",
-      "Bash(aws ecs describe-tasks:*)"
+      "Bash(aws ecs describe-tasks:*)",
+      "Bash(export MSYS_NO_PATHCONV=1)",
+      "Bash(aws logs describe-log-streams:*)",
+      "Bash(aws logs get-log-events:*)"
     ],
     "deny": [],
     "ask": []
