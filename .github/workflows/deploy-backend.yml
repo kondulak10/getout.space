@@ -9,6 +9,10 @@ on:
       - '.github/workflows/deploy-backend.yml'
   workflow_dispatch:
 
+concurrency:
+  group: deploy-backend-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   AWS_REGION: eu-north-1
   ECR_REPOSITORY: getout-backend
