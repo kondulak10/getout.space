@@ -492,6 +492,16 @@ resource "aws_ecs_service" "backend" {
     container_port   = 4000
   }
 
+  health_check_grace_period_seconds = 120
+
+  deployment_maximum_percent         = 200
+  deployment_minimum_healthy_percent = 100
+
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
+
   depends_on = [
     aws_lb_listener.backend_http,
     aws_iam_role_policy_attachment.ecs_task_execution
