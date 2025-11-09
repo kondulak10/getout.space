@@ -5,7 +5,7 @@ import {
 	MyHexagonsCountDocument,
 } from "@/gql/graphql";
 import { h3ToGeoJSON } from "@/utils/hexagonUtils";
-import { useLazyQuery, useQuery } from "@apollo/client/react";
+import { useApolloClient, useLazyQuery, useQuery } from "@apollo/client/react";
 import { gridDisk, latLngToCell } from "h3-js";
 import type { Map as MapboxMap } from "mapbox-gl";
 import React, { useCallback, useEffect, useState } from "react";
@@ -19,6 +19,7 @@ interface UseHexagonsOptions {
 export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions) => {
 	const [visibleHexCount, setVisibleHexCount] = useState(0);
 	const [userCount, setUserCount] = useState(0);
+	const apolloClient = useApolloClient();
 	const debounceTimeoutRef = React.useRef<number | null>(null);
 	const onHexagonClickRef = React.useRef(onHexagonClick);
 	const lastCenterHexRef = React.useRef<string | null>(null);
@@ -30,6 +31,12 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 	const updateHexagonsRef = React.useRef<(() => void) | null>(null);
 
 	useEffect(() => {
+		apolloClient.cache.evict({ fieldName: "hexagonsByParents" });
+		apolloClient.cache.evict({ fieldName: "myHexagonsByParents" });
+		apolloClient.cache.gc();
+	}, [apolloClient]);
+
+	useEffect(() => {
 		onHexagonClickRef.current = onHexagonClick;
 		modeRef.current = mode;
 	}, [onHexagonClick, mode]);
@@ -39,88 +46,14 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 	});
 
 	const [fetchMyHexagons, { data: myHexagonsData, loading: myLoading }] = useLazyQuery(
-		MyHexagonsByParentsDocument,
-		{
-			fetchPolicy: "network-only",
-		}
+		MyHexagonsByParentsDocument
 	);
-	const [fetchAllHexagons, { data: allHexagonsData, loading: allLoading }] = useLazyQuery(
-		HexagonsByParentsDocument,
-		{
-			fetchPolicy: "network-only",
-		}
-	);
+	const [fetchAllHexagons, { data: allHexagonsData, loading: allLoading }] =
+		useLazyQuery(HexagonsByParentsDocument);
 
 	const hexagonsData =
 		mode === "only-you" ? myHexagonsData?.myHexagonsByParents : allHexagonsData?.hexagonsByParents;
 	const loading = mode === "only-you" ? myLoading : allLoading;
-
-	const setupHexagonLayer = useCallback(() => {
-		if (!mapRef.current) return;
-		const map = mapRef.current;
-
-		if (!map.isStyleLoaded()) {
-			return;
-		}
-
-		if (map.getSource("hexagons")) {
-			return;
-		}
-
-		map.addSource("hexagons", {
-			type: "geojson",
-			data: {
-				type: "FeatureCollection",
-				features: [],
-			},
-		});
-
-		map.addLayer({
-			id: "hexagon-fills",
-			type: "fill",
-			source: "hexagons",
-			paint: {
-				"fill-color": ["get", "color"],
-				"fill-opacity": 0.35,
-			},
-		});
-
-		map.addLayer({
-			id: "hexagon-outlines",
-			type: "line",
-			source: "hexagons",
-			paint: {
-				"line-color": "#000000",
-				"line-width": 1.5,
-				"line-opacity": 0.7,
-			},
-		});
-
-		const handleHexagonClick = (e: mapboxgl.MapMouseEvent) => {
-			if (!e.features || e.features.length === 0) return;
-			const feature = e.features[0];
-			const hexagonId = feature.properties?.hexagonId;
-			if (hexagonId && onHexagonClickRef.current) {
-				onHexagonClickRef.current(hexagonId);
-			}
-		};
-
-		const handleMouseEnter = () => {
-			map.getCanvas().style.cursor = "pointer";
-		};
-
-		const handleMouseLeave = () => {
-			map.getCanvas().style.cursor = "";
-		};
-
-		clickHandlerRef.current = handleHexagonClick;
-		mouseEnterHandlerRef.current = handleMouseEnter;
-		mouseLeaveHandlerRef.current = handleMouseLeave;
-
-		map.on("click", "hexagon-fills", handleHexagonClick);
-		map.on("mouseenter", "hexagon-fills", handleMouseEnter);
-		map.on("mouseleave", "hexagon-fills", handleMouseLeave);
-	}, [mapRef]);
 
 	const setupParentLayer = useCallback(() => {
 		if (!mapRef.current) return;
@@ -179,51 +112,6 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 		},
 		[mapRef, setupParentLayer]
 	);
-
-	const cleanupHexagonLayer = useCallback(() => {
-		if (!mapRef.current) return;
-		const map = mapRef.current;
-
-		if (!map.getStyle()) {
-			return;
-		}
-
-		try {
-			if (clickHandlerRef.current) {
-				map.off("click", "hexagon-fills", clickHandlerRef.current);
-				clickHandlerRef.current = null;
-			}
-			if (mouseEnterHandlerRef.current) {
-				map.off("mouseenter", "hexagon-fills", mouseEnterHandlerRef.current);
-				mouseEnterHandlerRef.current = null;
-			}
-			if (mouseLeaveHandlerRef.current) {
-				map.off("mouseleave", "hexagon-fills", mouseLeaveHandlerRef.current);
-				mouseLeaveHandlerRef.current = null;
-			}
-
-			if (map.getLayer("hexagon-fills")) {
-				map.removeLayer("hexagon-fills");
-			}
-			if (map.getLayer("hexagon-outlines")) {
-				map.removeLayer("hexagon-outlines");
-			}
-			if (map.getSource("hexagons")) {
-				map.removeSource("hexagons");
-			}
-
-			if (map.getLayer("parent-hexagon-borders")) {
-				map.removeLayer("parent-hexagon-borders");
-			}
-			if (map.getSource("parent-hexagons")) {
-				map.removeSource("parent-hexagons");
-			}
-		} catch (error) {
-			console.error(error);
-		}
-
-		lastCenterHexRef.current = null;
-	}, [mapRef]);
 
 	const clearCenterCache = useCallback(() => {
 		lastCenterHexRef.current = null;
@@ -291,86 +179,78 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 	}, [clearCenterCache, updateHexagonsImpl]);
 
 	useEffect(() => {
+		console.log(
+			"📊 useHexagons: Data effect triggered - hexagonsData:",
+			!!hexagonsData,
+			"count:",
+			hexagonsData?.length
+		);
+
 		if (!mapRef.current || !hexagonsData) return;
 
 		const map = mapRef.current;
-		let retryCount = 0;
-		const maxRetries = 5;
+		const source = map.getSource("hexagons") as import("mapbox-gl").GeoJSONSource;
 
-		const ensureLayerAndRender = () => {
-			if (!map.isStyleLoaded()) {
-				if (retryCount < maxRetries) {
-					retryCount++;
-					map.once("styledata", ensureLayerAndRender);
-				}
-				return;
-			}
+		if (!source) {
+			console.error(
+				"❌ useHexagons: Hexagons source not found - sources should be ready before MapContent renders"
+			);
+			return;
+		}
 
-			if (!map.getSource("hexagons")) {
-				setupHexagonLayer();
+		console.log(
+			"🎨 useHexagons: Starting to render",
+			hexagonsData.length,
+			"hexagons at",
+			new Date().toISOString()
+		);
 
-				if (!map.getSource("hexagons")) {
-					if (retryCount < maxRetries) {
-						retryCount++;
-						setTimeout(ensureLayerAndRender, 100);
-					}
-					return;
-				}
-			}
+		if (mode === "battle") {
+			const uniqueUsers = new Set(hexagonsData.map((hex) => hex.currentOwnerId));
+			setUserCount(uniqueUsers.size);
+		}
 
-			if (mode === "battle") {
-				const uniqueUsers = new Set(hexagonsData.map((hex) => hex.currentOwnerId));
-				setUserCount(uniqueUsers.size);
-			}
+		const features = hexagonsData.map((hex) => {
+			const feature = h3ToGeoJSON(hex.hexagonId);
+			const color = getUserColor(hex.currentOwnerId);
 
-			const features = hexagonsData.map((hex) => {
-				const feature = h3ToGeoJSON(hex.hexagonId);
-
-				const color = getUserColor(hex.currentOwnerId);
-
-				return {
-					...feature,
-					properties: {
-						...feature.properties,
-						hexagonId: hex.hexagonId,
-						userId: hex.currentOwnerId,
-						color: color,
-						hasImage: false,
-						captureCount: hex.captureCount,
-						activityType: hex.activityType,
-					},
-				};
-			});
-
-			const geojson: GeoJSON.FeatureCollection = {
-				type: "FeatureCollection",
-				features,
+			return {
+				...feature,
+				properties: {
+					...feature.properties,
+					hexagonId: hex.hexagonId,
+					userId: hex.currentOwnerId,
+					color: color,
+					hasImage: false,
+					captureCount: hex.captureCount,
+					activityType: hex.activityType,
+				},
 			};
+		});
 
-			const source = map.getSource("hexagons") as import("mapbox-gl").GeoJSONSource;
-			if (source) {
-				source.setData(geojson);
-				setVisibleHexCount(hexagonsData.length);
-
-				try {
-					const bounds = map.getBounds();
-					if (bounds) {
-						const centerLat = (bounds.getNorth() + bounds.getSouth()) / 2;
-						const centerLng = (bounds.getEast() + bounds.getWest()) / 2;
-						const centerParentHex = latLngToCell(centerLat, centerLng, 6);
-						lastCenterHexRef.current = centerParentHex;
-					}
-				} catch (error) {
-					console.error("Error calculating parent hex for cache:", error);
-				}
-			} else if (retryCount < maxRetries) {
-				retryCount++;
-				setTimeout(ensureLayerAndRender, 100);
-			}
+		const geojson: GeoJSON.FeatureCollection = {
+			type: "FeatureCollection",
+			features,
 		};
 
-		ensureLayerAndRender();
-	}, [hexagonsData, mapRef, mode, setupHexagonLayer]);
+		console.log("🖼️ useHexagons: Setting data on source with", features.length, "features");
+		source.setData(geojson);
+		setVisibleHexCount(hexagonsData.length);
+		console.log("✅ useHexagons: Data rendered successfully at", new Date().toISOString());
+
+		try {
+			const bounds = map.getBounds();
+			if (bounds) {
+				const centerLat = (bounds.getNorth() + bounds.getSouth()) / 2;
+				const centerLng = (bounds.getEast() + bounds.getWest()) / 2;
+				const centerParentHex = latLngToCell(centerLat, centerLng, 6);
+				lastCenterHexRef.current = centerParentHex;
+				console.log("💾 useHexagons: Cache updated to parent hex:", centerParentHex);
+			}
+		} catch (error) {
+			console.error("Error calculating parent hex for cache:", error);
+		}
+	}, [hexagonsData, mapRef, mode]);
 
 	// Separate effect to attach/detach map event listeners with stable references
 	useEffect(() => {
@@ -394,7 +274,6 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 		};
 	}, [mapRef]);
 
-	// Separate effect for initialization
 	useEffect(() => {
 		const map = mapRef.current;
 
@@ -402,66 +281,37 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 
 		isMountedRef.current = true;
 
-		const initializeHexagons = () => {
-			if (!isMountedRef.current) {
-				return;
+		const handleHexagonClick = (e: mapboxgl.MapMouseEvent) => {
+			if (!e.features || e.features.length === 0) return;
+			const feature = e.features[0];
+			const hexagonId = feature.properties?.hexagonId;
+			if (hexagonId && onHexagonClickRef.current) {
+				onHexagonClickRef.current(hexagonId);
 			}
-
-			let setupRetries = 0;
-			const maxSetupRetries = 10;
-
-			const setupLayersWhenReady = () => {
-				if (!map.isStyleLoaded()) {
-					if (setupRetries < maxSetupRetries) {
-						setupRetries++;
-						map.once("styledata", setupLayersWhenReady);
-					}
-					return;
-				}
-
-				setupHexagonLayer();
-				setupParentLayer();
-
-				const verifyLayersAndFetch = () => {
-					if (!isMountedRef.current) return;
-
-					const hexSource = map.getSource("hexagons");
-					const parentSource = map.getSource("parent-hexagons");
-
-					if (!hexSource || !parentSource) {
-						if (setupRetries < maxSetupRetries) {
-							setupRetries++;
-							if (map.isStyleLoaded()) {
-								if (!hexSource) setupHexagonLayer();
-								if (!parentSource) setupParentLayer();
-								setTimeout(verifyLayersAndFetch, 100);
-							} else {
-								map.once("styledata", setupLayersWhenReady);
-							}
-						}
-						return;
-					}
-
-					clearCenterCache();
-					updateHexagonsImpl();
-				};
-
-				if (map.loaded() && !map.isMoving()) {
-					setTimeout(verifyLayersAndFetch, 100);
-				} else {
-					map.once("idle", verifyLayersAndFetch);
-				}
-			};
-
-			setupLayersWhenReady();
 		};
 
-		// Map is guaranteed to be loaded when this component mounts
-		if (map.loaded()) {
-			initializeHexagons();
-		} else {
-			map.once("load", initializeHexagons);
-		}
+		const handleMouseEnter = () => {
+			map.getCanvas().style.cursor = "pointer";
+		};
+
+		const handleMouseLeave = () => {
+			map.getCanvas().style.cursor = "";
+		};
+
+		clickHandlerRef.current = handleHexagonClick;
+		mouseEnterHandlerRef.current = handleMouseEnter;
+		mouseLeaveHandlerRef.current = handleMouseLeave;
+
+		map.on("click", "hexagon-fills", handleHexagonClick);
+		map.on("mouseenter", "hexagon-fills", handleMouseEnter);
+		map.on("mouseleave", "hexagon-fills", handleMouseLeave);
+
+		console.log(
+			"🚀 useHexagons: Initialization - setting up and triggering initial fetch at",
+			new Date().toISOString()
+		);
+		clearCenterCache();
+		updateHexagonsImpl();
 
 		return () => {
 			isMountedRef.current = false;
@@ -473,10 +323,22 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 
 			lastCenterHexRef.current = null;
 
-			cleanupHexagonLayer();
+			if (map.getStyle()) {
+				if (clickHandlerRef.current) {
+					map.off("click", "hexagon-fills", clickHandlerRef.current);
+					clickHandlerRef.current = null;
+				}
+				if (mouseEnterHandlerRef.current) {
+					map.off("mouseenter", "hexagon-fills", mouseEnterHandlerRef.current);
+					mouseEnterHandlerRef.current = null;
+				}
+				if (mouseLeaveHandlerRef.current) {
+					map.off("mouseleave", "hexagon-fills", mouseLeaveHandlerRef.current);
+					mouseLeaveHandlerRef.current = null;
+				}
+			}
 		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [mapRef, clearCenterCache, updateHexagonsImpl]);
 
 	useEffect(() => {
 		if (!mapRef.current) return;
