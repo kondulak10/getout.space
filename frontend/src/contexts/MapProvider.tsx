@@ -8,7 +8,6 @@ export function MapProvider({ children }: { children: ReactNode }) {
 
   const flyToHex = useCallback((hexId: string, zoom: number = 13) => {
     if (!mapRef.current) {
-      console.warn('🗺️ Map not ready for navigation');
       return;
     }
 
@@ -19,9 +18,8 @@ export function MapProvider({ children }: { children: ReactNode }) {
         zoom,
         duration: 1500,
       });
-      console.log('✈️ Flying to hex:', hexId, { lat, lng, zoom });
     } catch (error) {
-      console.error('❌ Invalid hex ID:', hexId, error);
+      console.error('Invalid hex ID:', hexId, error);
     }
   }, []);
 
@@ -32,7 +30,6 @@ export function MapProvider({ children }: { children: ReactNode }) {
     duration: number = 1500
   ) => {
     if (!mapRef.current) {
-      console.warn('🗺️ Map not ready for navigation');
       return;
     }
 
@@ -41,7 +38,6 @@ export function MapProvider({ children }: { children: ReactNode }) {
       zoom,
       duration,
     });
-    console.log('✈️ Flying to location:', { lng, lat, zoom });
   }, []);
 
   const value: MapContextType = {

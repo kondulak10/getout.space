@@ -1,14 +1,15 @@
 import { HexOverlay } from "@/components/HexOverlay";
 import { HexagonDetailModal } from "@/components/HexagonDetailModal";
 import { HexagonLoadingIndicator } from "@/components/HexagonLoadingIndicator";
+import { useMap } from "@/contexts/useMap";
 import { useActivityProfileImages } from "@/hooks/useActivityProfileImages";
 import { useHexagonSelection } from "@/hooks/useHexagonSelection";
 import { useHexagons } from "@/hooks/useHexagons";
 import { useMapView } from "@/hooks/useMapView";
-import { useMap } from "@/contexts/useMap";
 
 export function MapContent() {
 	const { mapRef } = useMap();
+
 	const { mapView, setMapView } = useMapView();
 	const { selectedHexagon, hexagonDetailLoading, handleHexagonClick, clearSelection } =
 		useHexagonSelection();

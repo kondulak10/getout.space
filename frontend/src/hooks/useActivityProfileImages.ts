@@ -39,6 +39,29 @@ export function useActivityProfileImages(
 			return;
 		}
 
+		// Clean up all existing profile image layers before adding new ones
+		const cleanupExistingLayers = () => {
+			if (map && map.getStyle()) {
+				layersAddedRef.current.forEach((layerId) => {
+					try {
+						if (map.getLayer(layerId)) {
+							map.removeLayer(layerId);
+						}
+						const sourceId = layerId.replace("profile-image-", "profile-image-source-");
+						if (map.getSource(sourceId)) {
+							map.removeSource(sourceId);
+						}
+					// eslint-disable-next-line @typescript-eslint/no-unused-vars
+					} catch (_error) {
+						// Ignore error
+					}
+				});
+			}
+			layersAddedRef.current.clear();
+		};
+
+		cleanupExistingLayers();
+
 		const onMapLoad = () => {
 			// Helper function to add profile image to a hexagon
 			const addProfileImage = (hexagonId: string, imageUrl: string, uniqueId: string) => {

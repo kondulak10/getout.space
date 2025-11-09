@@ -1,7 +1,7 @@
+import { useMap } from "@/contexts/useMap";
+import { configureMapStyle } from "@/utils/mapStyleConfig";
 import mapboxgl from "mapbox-gl";
 import { useEffect, useRef, useState } from "react";
-import { configureMapStyle } from "@/utils/mapStyleConfig";
-import { useMap } from "@/contexts/useMap";
 
 interface UseMapboxOptions {
 	style?: string;
@@ -16,10 +16,10 @@ const DEFAULT_ZOOM = 8;
 
 export const useMapbox = (options: UseMapboxOptions = {}) => {
 	const {
-		style = 'mapbox://styles/mapbox/dark-v11',
+		style = "mapbox://styles/mapbox/dark-v11",
 		enableCustomStyling = true,
 		initialCenter = DEFAULT_CENTER,
-		initialZoom = DEFAULT_ZOOM
+		initialZoom = DEFAULT_ZOOM,
 	} = options;
 
 	const { mapRef } = useMap();
@@ -32,8 +32,6 @@ export const useMapbox = (options: UseMapboxOptions = {}) => {
 
 		mapboxgl.accessToken = mapboxToken;
 
-		console.log("🚀 Creating Mapbox map at:", initialCenter, "zoom:", initialZoom);
-
 		const map = new mapboxgl.Map({
 			container: mapContainerRef.current,
 			style,
@@ -44,7 +42,7 @@ export const useMapbox = (options: UseMapboxOptions = {}) => {
 			dragRotate: false,
 			pitchWithRotate: false,
 			touchPitch: false,
-			projection: 'equalEarth',
+			projection: "equalEarth",
 		});
 
 		if (enableCustomStyling) {
@@ -52,8 +50,7 @@ export const useMapbox = (options: UseMapboxOptions = {}) => {
 		}
 
 		// Wait for map to fully load
-		map.on('load', () => {
-			console.log("✅ Map fully loaded and ready");
+		map.on("load", () => {
 			setIsLoaded(true);
 		});
 

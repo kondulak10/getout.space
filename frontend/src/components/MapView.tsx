@@ -1,9 +1,9 @@
+import { MapContent } from "@/components/MapContent";
+import type { User } from "@/contexts/auth.types";
+import { useMapbox } from "@/hooks/useMapbox";
+import * as h3 from "h3-js";
 import { useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import * as h3 from "h3-js";
-import { MapContent } from "@/components/MapContent";
-import { useMapbox } from "@/hooks/useMapbox";
-import type { User } from "@/contexts/auth.types";
 
 interface MapViewProps {
 	user: User;
@@ -17,17 +17,9 @@ export function MapView({ user }: MapViewProps) {
 		const hexFromUrl = searchParams.get("hex");
 		const hexToUse = hexFromUrl || user.lastHex;
 
-		console.log("🗺️ Calculating initial map position:", {
-			hexFromUrl,
-			userLastHex: user.lastHex,
-			hexToUse,
-			userName: user.profile.firstname,
-		});
-
 		if (hexToUse) {
 			try {
 				const [lat, lng] = h3.cellToLatLng(hexToUse);
-				console.log("✅ Initializing map at hex:", hexToUse, { lat, lng });
 				return {
 					initialCenter: [lng, lat] as [number, number],
 					initialZoom: 13,
@@ -37,11 +29,11 @@ export function MapView({ user }: MapViewProps) {
 			}
 		}
 
-		console.log("📍 No hex found, using default center (Prague)");
 		return {
 			initialCenter: undefined, // Will use default Prague
 			initialZoom: undefined,
 		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []); // Empty deps - only calculate ONCE on mount
 
 	// Create the map at the initial position and wait for it to load

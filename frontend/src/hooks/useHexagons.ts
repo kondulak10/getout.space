@@ -27,6 +27,7 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 	const clickHandlerRef = React.useRef<((e: mapboxgl.MapMouseEvent) => void) | null>(null);
 	const mouseEnterHandlerRef = React.useRef<(() => void) | null>(null);
 	const mouseLeaveHandlerRef = React.useRef<(() => void) | null>(null);
+	const updateHexagonsRef = React.useRef<(() => void) | null>(null);
 
 	useEffect(() => {
 		onHexagonClickRef.current = onHexagonClick;
@@ -51,9 +52,7 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 		if (!mapRef.current) return;
 		const map = mapRef.current;
 
-		// Style should already be loaded by now (MapView waits for isLoaded)
 		if (!map.isStyleLoaded()) {
-			console.warn("⚠️ setupHexagonLayer called but style not loaded");
 			return;
 		}
 
@@ -120,9 +119,7 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 		if (!mapRef.current) return;
 		const map = mapRef.current;
 
-		// Style should already be loaded by now (MapView waits for isLoaded)
 		if (!map.isStyleLoaded()) {
-			console.warn("⚠️ setupParentLayer called but style not loaded");
 			return;
 		}
 
@@ -225,19 +222,20 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 		lastCenterHexRef.current = null;
 	}, []);
 
-	const updateHexagons = useCallback(() => {
+	const updateHexagonsImpl = useCallback(() => {
 		if (!mapRef.current) return;
 
 		const map = mapRef.current;
-		const bounds = map.getBounds();
-
-		if (!bounds) return;
 
 		if (debounceTimeoutRef.current) {
 			clearTimeout(debounceTimeoutRef.current);
 		}
 
 		debounceTimeoutRef.current = setTimeout(() => {
+			const bounds = map.getBounds();
+
+			if (!bounds) return;
+
 			const currentMode = modeRef.current;
 
 			try {
@@ -246,6 +244,7 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 
 				const centerParentHex = latLngToCell(centerLat, centerLng, 6);
 
+				// Skip if same parent hex (unless cache was cleared)
 				if (lastCenterHexRef.current === centerParentHex) {
 					return;
 				}
@@ -262,15 +261,30 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 					fetchAllHexagons({ variables: { parentHexagonIds } });
 				}
 			} catch (error) {
-				console.error("❌ Error in updateHexagons:", error);
+				console.error("Error in updateHexagons:", error);
 			}
 		}, 300);
 	}, [mapRef, fetchMyHexagons, fetchAllHexagons, updateParentVisualization]);
 
+	// Initialize ref immediately - before any effects run
+	updateHexagonsRef.current = updateHexagonsImpl;
+
+	// Keep the ref up to date
+	useEffect(() => {
+		updateHexagonsRef.current = updateHexagonsImpl;
+	}, [updateHexagonsImpl]);
+
+	// Stable wrapper that always calls the latest version
+	const updateHexagons = useCallback(() => {
+		updateHexagonsRef.current?.();
+	}, []);
+
 	const refetchHexagons = useCallback(() => {
+		// Clear cache and force update on next moveend
 		clearCenterCache();
-		updateHexagons();
-	}, [updateHexagons, clearCenterCache]);
+		// Trigger update immediately
+		updateHexagonsImpl();
+	}, [clearCenterCache, updateHexagonsImpl]);
 
 	useEffect(() => {
 		if (!mapRef.current || !hexagonsData) return;
@@ -317,10 +331,33 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 		}
 	}, [hexagonsData, mapRef, mode, setupHexagonLayer]);
 
+	// Separate effect to attach/detach map event listeners with stable references
 	useEffect(() => {
-		if (!mapRef.current) return;
-
 		const map = mapRef.current;
+
+		if (!map) return;
+
+		// Use the stable wrapper function - this reference NEVER changes
+		const stableUpdateHandler = () => {
+			updateHexagonsRef.current?.();
+		};
+
+		map.on("moveend", stableUpdateHandler);
+		map.on("zoomend", stableUpdateHandler);
+
+		return () => {
+			if (map.getStyle()) {
+				map.off("moveend", stableUpdateHandler);
+				map.off("zoomend", stableUpdateHandler);
+			}
+		};
+	}, []); // Empty deps - only run once on mount/unmount
+
+	// Separate effect for initialization
+	useEffect(() => {
+		const map = mapRef.current;
+
+		if (!map) return;
 
 		isMountedRef.current = true;
 
@@ -329,26 +366,32 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 				return;
 			}
 
-			console.log("🎯 Initializing hexagons (map loaded)");
+			// Ensure style is loaded before setting up layers
+			const setupLayersWhenReady = () => {
+				if (!map.isStyleLoaded()) {
+					map.once("styledata", setupLayersWhenReady);
+					return;
+				}
 
-			setupHexagonLayer();
-			setupParentLayer();
+				setupHexagonLayer();
+				setupParentLayer();
 
-			const doInitialFetch = () => {
-				if (!isMountedRef.current) return;
+				const doInitialFetch = () => {
+					if (!isMountedRef.current) return;
 
-				clearCenterCache();
-				updateHexagons();
+					clearCenterCache();
+					// Call directly instead of through ref to ensure it runs
+					updateHexagonsImpl();
+				};
+
+				if (map.loaded() && !map.isMoving()) {
+					setTimeout(doInitialFetch, 100);
+				} else {
+					map.once("idle", doInitialFetch);
+				}
 			};
 
-			if (map.loaded() && !map.isMoving()) {
-				setTimeout(doInitialFetch, 100);
-			} else {
-				map.once("idle", doInitialFetch);
-			}
-
-			map.on("moveend", updateHexagons);
-			map.on("zoomend", updateHexagons);
+			setupLayersWhenReady();
 		};
 
 		// Map is guaranteed to be loaded when this component mounts
@@ -366,21 +409,10 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 				debounceTimeoutRef.current = null;
 			}
 
-			if (map && map.getStyle()) {
-				try {
-					map.off("moveend", updateHexagons);
-					map.off("zoomend", updateHexagons);
-				} catch (error) {
-					console.error(error);
-				}
-			}
-
 			cleanupHexagonLayer();
 		};
-		// Only re-run if mapRef changes
-		// Callbacks are stable due to useCallback and refs
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [mapRef]);
+	}, []);
 
 	useEffect(() => {
 		if (!mapRef.current) return;
