@@ -1,8 +1,9 @@
 import { MapContent } from "@/components/MapContent";
 import type { User } from "@/contexts/auth.types";
+import { useMap } from "@/contexts/useMap";
 import { useMapbox } from "@/hooks/useMapbox";
 import * as h3 from "h3-js";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 
 interface MapViewProps {
@@ -11,6 +12,8 @@ interface MapViewProps {
 
 export function MapView({ user }: MapViewProps) {
 	const [searchParams, setSearchParams] = useSearchParams();
+	const { flyToHex } = useMap();
+	const initialHexFromUrl = useRef(searchParams.get("hex"));
 
 	// Calculate initial map position ONCE (from URL hex or user's lastHex)
 	const { initialCenter, initialZoom } = useMemo(() => {
@@ -42,15 +45,19 @@ export function MapView({ user }: MapViewProps) {
 		initialZoom,
 	});
 
-	// Clear URL hex parameter after map loads
 	useEffect(() => {
 		const hexFromUrl = searchParams.get("hex");
-		if (hexFromUrl && isLoaded) {
-			setTimeout(() => {
-				setSearchParams({});
-			}, 100);
+
+		if (!hexFromUrl || !isLoaded) return;
+
+		if (hexFromUrl !== initialHexFromUrl.current) {
+			flyToHex(hexFromUrl, 13);
 		}
-	}, [isLoaded, searchParams, setSearchParams]);
+
+		setTimeout(() => {
+			setSearchParams({});
+		}, 100);
+	}, [isLoaded, searchParams, setSearchParams, flyToHex]);
 
 	return (
 		<>

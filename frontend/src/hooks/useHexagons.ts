@@ -339,6 +339,7 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 
 		// Use the stable wrapper function - this reference NEVER changes
 		const stableUpdateHandler = () => {
+			console.log("updateHexagons move");
 			updateHexagonsRef.current?.();
 		};
 
@@ -351,7 +352,7 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 				map.off("zoomend", stableUpdateHandler);
 			}
 		};
-	}, []); // Empty deps - only run once on mount/unmount
+	}, [mapRef]);
 
 	// Separate effect for initialization
 	useEffect(() => {
