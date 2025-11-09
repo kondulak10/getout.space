@@ -24,7 +24,8 @@
       "Bash(npm run lint:*)",
       "WebSearch",
       "WebFetch(domain:getout.space)",
-      "WebFetch(domain:api.getout.space)"
+      "WebFetch(domain:api.getout.space)",
+      "Bash(aws logs tail:*)"
     ],
     "deny": [],
     "ask": []

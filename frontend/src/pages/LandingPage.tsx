@@ -5,7 +5,7 @@ import { useAppLoadingState } from "@/hooks/useAppLoadingState";
 export function LandingPage() {
 	const { showLoading } = useAppLoadingState();
 	console.log(
-		"🏠 LandingPage: Rendering at",
+		"🏠 LandingPage: Rendering ",
 		new Date().toISOString(),
 		"- showLoading:",
 		showLoading
