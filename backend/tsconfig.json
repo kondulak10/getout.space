@@ -12,9 +12,9 @@
     "resolveJsonModule": true,
     "moduleResolution": "node",
     "types": ["node"],
-    "baseUrl": "./dist",
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["src/*"]
     },
     "composite": true
   },

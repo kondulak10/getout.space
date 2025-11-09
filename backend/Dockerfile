@@ -61,9 +61,9 @@ RUN npm ci --only=production
 # Remove build dependencies to reduce image size
 RUN apk del build-base cairo-dev pango-dev jpeg-dev giflib-dev pixman-dev python3
 
-# Copy built files from builder
+# Copy built files from builder and package.json for module-alias
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/tsconfig.json ./tsconfig.json
+COPY package.json ./package.json
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \
