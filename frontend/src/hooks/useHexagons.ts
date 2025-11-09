@@ -39,10 +39,17 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 	});
 
 	const [fetchMyHexagons, { data: myHexagonsData, loading: myLoading }] = useLazyQuery(
-		MyHexagonsByParentsDocument
+		MyHexagonsByParentsDocument,
+		{
+			fetchPolicy: "network-only",
+		}
 	);
-	const [fetchAllHexagons, { data: allHexagonsData, loading: allLoading }] =
-		useLazyQuery(HexagonsByParentsDocument);
+	const [fetchAllHexagons, { data: allHexagonsData, loading: allLoading }] = useLazyQuery(
+		HexagonsByParentsDocument,
+		{
+			fetchPolicy: "network-only",
+		}
+	);
 
 	const hexagonsData =
 		mode === "only-you" ? myHexagonsData?.myHexagonsByParents : allHexagonsData?.hexagonsByParents;
@@ -244,12 +251,9 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 
 				const centerParentHex = latLngToCell(centerLat, centerLng, 6);
 
-				// Skip if same parent hex (unless cache was cleared)
 				if (lastCenterHexRef.current === centerParentHex) {
 					return;
 				}
-
-				lastCenterHexRef.current = centerParentHex;
 
 				const parentHexagonIds = gridDisk(centerParentHex, 1);
 
@@ -290,45 +294,82 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 		if (!mapRef.current || !hexagonsData) return;
 
 		const map = mapRef.current;
+		let retryCount = 0;
+		const maxRetries = 5;
 
-		if (!map.getSource("hexagons")) {
-			setupHexagonLayer();
-		}
+		const ensureLayerAndRender = () => {
+			if (!map.isStyleLoaded()) {
+				if (retryCount < maxRetries) {
+					retryCount++;
+					map.once("styledata", ensureLayerAndRender);
+				}
+				return;
+			}
 
-		if (mode === "battle") {
-			const uniqueUsers = new Set(hexagonsData.map((hex) => hex.currentOwnerId));
-			setUserCount(uniqueUsers.size);
-		}
+			if (!map.getSource("hexagons")) {
+				setupHexagonLayer();
 
-		const features = hexagonsData.map((hex) => {
-			const feature = h3ToGeoJSON(hex.hexagonId);
+				if (!map.getSource("hexagons")) {
+					if (retryCount < maxRetries) {
+						retryCount++;
+						setTimeout(ensureLayerAndRender, 100);
+					}
+					return;
+				}
+			}
 
-			const color = getUserColor(hex.currentOwnerId);
+			if (mode === "battle") {
+				const uniqueUsers = new Set(hexagonsData.map((hex) => hex.currentOwnerId));
+				setUserCount(uniqueUsers.size);
+			}
 
-			return {
-				...feature,
-				properties: {
-					...feature.properties,
-					hexagonId: hex.hexagonId,
-					userId: hex.currentOwnerId,
-					color: color,
-					hasImage: false,
-					captureCount: hex.captureCount,
-					activityType: hex.activityType,
-				},
+			const features = hexagonsData.map((hex) => {
+				const feature = h3ToGeoJSON(hex.hexagonId);
+
+				const color = getUserColor(hex.currentOwnerId);
+
+				return {
+					...feature,
+					properties: {
+						...feature.properties,
+						hexagonId: hex.hexagonId,
+						userId: hex.currentOwnerId,
+						color: color,
+						hasImage: false,
+						captureCount: hex.captureCount,
+						activityType: hex.activityType,
+					},
+				};
+			});
+
+			const geojson: GeoJSON.FeatureCollection = {
+				type: "FeatureCollection",
+				features,
 			};
-		});
 
-		const geojson: GeoJSON.FeatureCollection = {
-			type: "FeatureCollection",
-			features,
+			const source = map.getSource("hexagons") as import("mapbox-gl").GeoJSONSource;
+			if (source) {
+				source.setData(geojson);
+				setVisibleHexCount(hexagonsData.length);
+
+				try {
+					const bounds = map.getBounds();
+					if (bounds) {
+						const centerLat = (bounds.getNorth() + bounds.getSouth()) / 2;
+						const centerLng = (bounds.getEast() + bounds.getWest()) / 2;
+						const centerParentHex = latLngToCell(centerLat, centerLng, 6);
+						lastCenterHexRef.current = centerParentHex;
+					}
+				} catch (error) {
+					console.error("Error calculating parent hex for cache:", error);
+				}
+			} else if (retryCount < maxRetries) {
+				retryCount++;
+				setTimeout(ensureLayerAndRender, 100);
+			}
 		};
 
-		const source = map.getSource("hexagons") as import("mapbox-gl").GeoJSONSource;
-		if (source) {
-			source.setData(geojson);
-			setVisibleHexCount(hexagonsData.length);
-		}
+		ensureLayerAndRender();
 	}, [hexagonsData, mapRef, mode, setupHexagonLayer]);
 
 	// Separate effect to attach/detach map event listeners with stable references
@@ -339,7 +380,6 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 
 		// Use the stable wrapper function - this reference NEVER changes
 		const stableUpdateHandler = () => {
-			console.log("updateHexagons move");
 			updateHexagonsRef.current?.();
 		};
 
@@ -367,28 +407,49 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 				return;
 			}
 
-			// Ensure style is loaded before setting up layers
+			let setupRetries = 0;
+			const maxSetupRetries = 10;
+
 			const setupLayersWhenReady = () => {
 				if (!map.isStyleLoaded()) {
-					map.once("styledata", setupLayersWhenReady);
+					if (setupRetries < maxSetupRetries) {
+						setupRetries++;
+						map.once("styledata", setupLayersWhenReady);
+					}
 					return;
 				}
 
 				setupHexagonLayer();
 				setupParentLayer();
 
-				const doInitialFetch = () => {
+				const verifyLayersAndFetch = () => {
 					if (!isMountedRef.current) return;
 
+					const hexSource = map.getSource("hexagons");
+					const parentSource = map.getSource("parent-hexagons");
+
+					if (!hexSource || !parentSource) {
+						if (setupRetries < maxSetupRetries) {
+							setupRetries++;
+							if (map.isStyleLoaded()) {
+								if (!hexSource) setupHexagonLayer();
+								if (!parentSource) setupParentLayer();
+								setTimeout(verifyLayersAndFetch, 100);
+							} else {
+								map.once("styledata", setupLayersWhenReady);
+							}
+						}
+						return;
+					}
+
 					clearCenterCache();
-					// Call directly instead of through ref to ensure it runs
 					updateHexagonsImpl();
 				};
 
 				if (map.loaded() && !map.isMoving()) {
-					setTimeout(doInitialFetch, 100);
+					setTimeout(verifyLayersAndFetch, 100);
 				} else {
-					map.once("idle", doInitialFetch);
+					map.once("idle", verifyLayersAndFetch);
 				}
 			};
 
@@ -409,6 +470,8 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 				clearTimeout(debounceTimeoutRef.current);
 				debounceTimeoutRef.current = null;
 			}
+
+			lastCenterHexRef.current = null;
 
 			cleanupHexagonLayer();
 		};

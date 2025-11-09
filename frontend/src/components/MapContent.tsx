@@ -6,9 +6,10 @@ import { useActivityProfileImages } from "@/hooks/useActivityProfileImages";
 import { useHexagonSelection } from "@/hooks/useHexagonSelection";
 import { useHexagons } from "@/hooks/useHexagons";
 import { useMapView } from "@/hooks/useMapView";
+import { useEffect } from "react";
 
 export function MapContent() {
-	const { mapRef } = useMap();
+	const { mapRef, refetchHexagonsRef } = useMap();
 
 	const { mapView, setMapView } = useMapView();
 	const { selectedHexagon, hexagonDetailLoading, handleHexagonClick, clearSelection } =
@@ -19,6 +20,14 @@ export function MapContent() {
 		mode: mapView,
 		onHexagonClick: handleHexagonClick,
 	});
+
+	useEffect(() => {
+		refetchHexagonsRef.current = refetchHexagons;
+
+		return () => {
+			refetchHexagonsRef.current = undefined;
+		};
+	}, [refetchHexagons, refetchHexagonsRef]);
 
 	useActivityProfileImages(mapRef, hexagonsData ?? null);
 

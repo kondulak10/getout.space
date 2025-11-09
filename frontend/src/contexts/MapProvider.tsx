@@ -5,6 +5,7 @@ import { MapContext, MapContextType } from "./map.types";
 
 export function MapProvider({ children }: { children: ReactNode }) {
 	const mapRef = useRef<MapboxMap | null>(null);
+	const refetchHexagonsRef = useRef<(() => void) | undefined>(undefined);
 
 	const flyToHex = useCallback((hexId: string, zoom: number = 13) => {
 		if (!mapRef.current) {
@@ -38,10 +39,16 @@ export function MapProvider({ children }: { children: ReactNode }) {
 		[]
 	);
 
+	const refetchHexagons = useCallback(() => {
+		refetchHexagonsRef.current?.();
+	}, []);
+
 	const value: MapContextType = {
 		mapRef,
 		flyToHex,
 		flyToLocation,
+		refetchHexagons,
+		refetchHexagonsRef,
 	};
 
 	return <MapContext.Provider value={value}>{children}</MapContext.Provider>;

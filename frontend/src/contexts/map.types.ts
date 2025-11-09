@@ -5,6 +5,8 @@ export interface MapContextType {
 	mapRef: React.RefObject<MapboxMap | null>;
 	flyToHex: (hexId: string, zoom?: number) => void;
 	flyToLocation: (lng: number, lat: number, zoom?: number, duration?: number) => void;
+	refetchHexagons: () => void;
+	refetchHexagonsRef: React.MutableRefObject<(() => void) | undefined>;
 }
 
 export const MapContext = createContext<MapContextType | undefined>(undefined);

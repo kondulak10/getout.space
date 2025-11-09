@@ -120,7 +120,7 @@ export function HexOverlay({ view, onViewChange, onActivityChanged }: HexOverlay
 								Latest: {formatDate(latestActivity.startDate)}
 							</div>
 							<div className="flex items-center justify-between gap-2">
-								<div className="text-sm font-medium text-gray-200 truncate flex-1">
+								<div className="text-sm font-medium text-gray-200 truncate flex-1 max-w-[180px]">
 									{latestActivity.name}
 								</div>
 								<div className="text-xs text-gray-300 whitespace-nowrap">
@@ -182,7 +182,7 @@ export function HexOverlay({ view, onViewChange, onActivityChanged }: HexOverlay
 									Latest: {formatDate(latestActivity.startDate)}
 								</div>
 								<div className="flex items-center justify-between gap-2">
-									<div className="text-xs font-medium text-gray-200 truncate flex-1">
+									<div className="text-xs font-medium text-gray-200 truncate flex-1 max-w-[150px]">
 										{latestActivity.name}
 									</div>
 									<div className="text-xs text-gray-300">
