@@ -1,9 +1,15 @@
-import { useAppLoadingState } from '@/hooks/useAppLoadingState';
-import { LandingOverlay } from '@/components/LandingOverlay';
-import { AuthLoadingOverlay } from '@/components/AuthLoadingOverlay';
+import { AuthLoadingOverlay } from "@/components/AuthLoadingOverlay";
+import { LandingOverlay } from "@/components/LandingOverlay";
+import { useAppLoadingState } from "@/hooks/useAppLoadingState";
 
 export function LandingPage() {
 	const { showLoading } = useAppLoadingState();
+	console.log(
+		"🏠 LandingPage: Rendering at",
+		new Date().toISOString(),
+		"- showLoading:",
+		showLoading
+	);
 
 	return (
 		<div className="relative w-full h-screen bg-black overflow-hidden">
