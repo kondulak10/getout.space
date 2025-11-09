@@ -95,7 +95,10 @@ async function handleNewActivity(stravaOwnerId: number, stravaActivityId: number
 		const message = [
 			`🎉 *New Activity Processed!*`,
 			`👤 User: ${user.stravaProfile.firstname} ${user.stravaProfile.lastname}`,
+			`🆔 User ID: ${user._id}`,
+			`🔗 Strava Profile: <https://www.strava.com/athletes/${user.stravaId}|${user.stravaId}>`,
 			`🏃 Activity: ${result.activity.name}`,
+			`🔗 Strava Activity: <https://www.strava.com/activities/${stravaActivityId}|${stravaActivityId}>`,
 			`📏 Distance: ${(result.activity.distance / 1000).toFixed(2)} km`,
 			`🔷 Hexagons: ${result.hexagons.created} created, ${result.hexagons.updated} updated`,
 		].join('\n');
@@ -106,7 +109,7 @@ async function handleNewActivity(stravaOwnerId: number, stravaActivityId: number
 	} catch (error) {
 		console.error(`❌ Failed to process activity ${stravaActivityId}:`, error);
 		await sendSlackNotification(
-			`❌ *Failed to process activity ${stravaActivityId}*\nError: ${error instanceof Error ? error.message : 'Unknown error'}`
+			`❌ *Failed to process activity*\n🔗 Strava Activity: <https://www.strava.com/activities/${stravaActivityId}|${stravaActivityId}>\n🔗 Strava Athlete: <https://www.strava.com/athletes/${stravaOwnerId}|${stravaOwnerId}>\nError: ${error instanceof Error ? error.message : 'Unknown error'}`
 		);
 	}
 }

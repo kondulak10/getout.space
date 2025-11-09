@@ -356,6 +356,7 @@ resource "aws_secretsmanager_secret_version" "backend_env" {
     ENCRYPTION_KEY                = var.encryption_key
     SLACK_WEBHOOK_URL             = var.slack_webhook_url
     MAPBOX_TOKEN                  = var.mapbox_token
+    ADMIN_STRAVA_ID               = var.admin_strava_id
     FRONTEND_URL                  = "https://${var.domain_name}"
     BACKEND_URL                   = "https://api.${var.domain_name}"
     AWS_REGION                    = var.aws_region
@@ -427,6 +428,10 @@ resource "aws_ecs_task_definition" "backend" {
         {
           name      = "MAPBOX_TOKEN"
           valueFrom = "${aws_secretsmanager_secret.backend_env.arn}:MAPBOX_TOKEN::"
+        },
+        {
+          name      = "ADMIN_STRAVA_ID"
+          valueFrom = "${aws_secretsmanager_secret.backend_env.arn}:ADMIN_STRAVA_ID::"
         },
         {
           name      = "FRONTEND_URL"

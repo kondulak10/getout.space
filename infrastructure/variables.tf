@@ -64,3 +64,9 @@ variable "mapbox_token" {
   type        = string
   sensitive   = true
 }
+
+variable "admin_strava_id" {
+  description = "Strava ID of the admin user"
+  type        = string
+  sensitive   = true
+}

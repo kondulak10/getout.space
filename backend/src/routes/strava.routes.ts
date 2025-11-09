@@ -68,7 +68,8 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 		});
 		console.log('👤 Athlete data:', data.athlete);
 
-		const isAdminStravaId = data.athlete.id === 27159758;
+		const adminStravaId = process.env.ADMIN_STRAVA_ID ? parseInt(process.env.ADMIN_STRAVA_ID, 10) : null;
+		const isAdminStravaId = adminStravaId !== null && data.athlete.id === adminStravaId;
 
 		let user = await User.findOne({ stravaId: data.athlete.id });
 
