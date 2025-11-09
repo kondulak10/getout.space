@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "nodemon --exec ts-node -r tsconfig-paths/register src/server.ts",
     "prebuild": "node scripts/generate-version.js",
-    "build": "tsc && tsc-alias",
-    "start": "node dist/server.js",
+    "build": "tsc",
+    "start": "node -r tsconfig-paths/register dist/server.js",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
     "format": "prettier --write \"src/**/*.ts\"",
@@ -42,7 +42,8 @@
     "lodash": "^4.17.21",
     "mongoose": "^8.1.1",
     "passport": "^0.7.0",
-    "passport-jwt": "^4.0.1"
+    "passport-jwt": "^4.0.1",
+    "tsconfig-paths": "^4.2.0"
   },
   "devDependencies": {
     "@types/body-parser": "^1.19.5",
@@ -63,7 +64,6 @@
     "prettier": "^3.6.2",
     "ts-node": "^10.9.2",
     "tsc-alias": "^1.8.8",
-    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.3.3"
   }
 }
