@@ -35,12 +35,8 @@ export function useStravaAuth(options?: UseStravaAuthOptions) {
 	}, []);
 
 	const loginWithStrava = async () => {
-		try {
-			const authUrl = await getStravaAuthUrl();
-			window.location.href = authUrl;
-		} catch (error) {
-			throw error;
-		}
+		const authUrl = await getStravaAuthUrl();
+		window.location.href = authUrl;
 	};
 
 	const autoProcessLatestRuns = async () => {

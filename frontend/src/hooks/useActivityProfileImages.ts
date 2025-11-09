@@ -119,8 +119,9 @@ export function useActivityProfileImages(
 									}
 									layersAddedRef.current.delete(layerId);
 									map.off("error", errorHandler);
-								} catch (cleanupError) {
-									// Silently fail
+								// eslint-disable-next-line @typescript-eslint/no-unused-vars
+								} catch (_cleanupError) {
+									// Ignore error
 								}
 							}
 						};
@@ -144,8 +145,9 @@ export function useActivityProfileImages(
 						// If layer exists, ensure it's on top by moving it
 						map.moveLayer(layerId);
 					}
-				} catch (error) {
-					// Silently fail
+				// eslint-disable-next-line @typescript-eslint/no-unused-vars
+				} catch (_error) {
+					// Ignore error
 				}
 			};
 
@@ -268,8 +270,9 @@ export function useActivityProfileImages(
 						if (currentMap.getSource(sourceId)) {
 							currentMap.removeSource(sourceId);
 						}
-					} catch (error) {
-						// Silently fail cleanup
+					// eslint-disable-next-line @typescript-eslint/no-unused-vars
+					} catch (_error) {
+						// Ignore error
 					}
 				});
 			}

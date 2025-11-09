@@ -18,7 +18,10 @@
       "Bash(node -e:*)",
       "Bash(npm run typecheck:*)",
       "Bash(cat:*)",
-      "Bash(terraform apply:*)"
+      "Bash(terraform apply:*)",
+      "Bash(npm run lint)",
+      "Bash(npm run lint:fix:*)",
+      "Bash(npm run lint:*)"
     ],
     "deny": [],
     "ask": []

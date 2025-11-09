@@ -1,7 +1,7 @@
 import { Request, Response, Router } from 'express';
-import { User } from '../models/User';
-import { processActivity } from '../services/activityProcessing.service';
-import { sendSlackNotification } from '../services/slack.service';
+import { User } from '@/models/User';
+import { processActivity } from '@/services/activityProcessing.service';
+import { sendSlackNotification } from '@/services/slack.service';
 
 const router = Router();
 
@@ -55,7 +55,9 @@ router.get('/api/strava/events', (req: Request, res: Response) => {
 
 	sseClients.push(res);
 
-	res.write(`data: ${JSON.stringify({ type: 'connected', message: 'Connected to activity feed' })}\n\n`);
+	res.write(
+		`data: ${JSON.stringify({ type: 'connected', message: 'Connected to activity feed' })}\n\n`
+	);
 
 	req.on('close', () => {
 		console.log('🔌 SSE client disconnected');

@@ -1,210 +1,185 @@
 query Me {
-  me {
-    id
-    stravaId
-    isAdmin
-    isPremium
-    stravaProfile {
-      firstname
-      lastname
-      profile
-      imghex
-      city
-      state
-      country
-      sex
-      username
-    }
-    tokenExpiresAt
-    tokenIsExpired
-    createdAt
-    updatedAt
-  }
+	me {
+		id
+		stravaId
+		isAdmin
+		isPremium
+		stravaProfile {
+			firstname
+			lastname
+			profile
+			imghex
+			city
+			state
+			country
+			sex
+			username
+		}
+		tokenExpiresAt
+		tokenIsExpired
+		lastHex
+		createdAt
+		updatedAt
+	}
 }
 
 query GetUsers {
-  users {
-    id
-    stravaId
-    isAdmin
-    stravaProfile {
-      firstname
-      lastname
-      profile
-      imghex
-      city
-      state
-      country
-      sex
-      username
-    }
-    tokenExpiresAt
-    tokenIsExpired
-    createdAt
-    updatedAt
-  }
+	users {
+		id
+		stravaId
+		isAdmin
+		stravaProfile {
+			firstname
+			lastname
+			profile
+			imghex
+			city
+			state
+			country
+			sex
+			username
+		}
+		tokenExpiresAt
+		tokenIsExpired
+		lastHex
+		createdAt
+		updatedAt
+	}
 }
 
 mutation DeleteUser($id: ID!) {
-  deleteUser(id: $id)
+	deleteUser(id: $id)
 }
 
 mutation RefreshUserToken($id: ID!) {
-  refreshUserToken(id: $id) {
-    id
-    tokenExpiresAt
-    tokenIsExpired
-  }
-}
-
-mutation DeleteActivity($id: ID!) {
-  deleteActivity(id: $id)
-}
-
-query MyHexagonsInBbox($south: Float!, $west: Float!, $north: Float!, $east: Float!) {
-  myHexagonsInBbox(south: $south, west: $west, north: $north, east: $east) {
-    hexagonId
-    currentOwnerId
-    currentOwnerStravaId
-    currentStravaActivityId
-    activityType
-    captureCount
-    lastCapturedAt
-  }
-}
-
-query HexagonsInBbox($south: Float!, $west: Float!, $north: Float!, $east: Float!) {
-  hexagonsInBbox(south: $south, west: $west, north: $north, east: $east) {
-    hexagonId
-    currentOwnerId
-    currentOwnerStravaId
-    currentStravaActivityId
-    activityType
-    captureCount
-    lastCapturedAt
-  }
+	refreshUserToken(id: $id) {
+		id
+		tokenExpiresAt
+		tokenIsExpired
+	}
 }
 
 query MyHexagonsByParents($parentHexagonIds: [String!]!) {
-  myHexagonsByParents(parentHexagonIds: $parentHexagonIds) {
-    hexagonId
-    currentOwnerId
-    currentOwnerStravaId
-    currentOwnerIsPremium
-    currentOwnerImghex
-    currentStravaActivityId
-    activityType
-    captureCount
-    lastCapturedAt
-  }
+	myHexagonsByParents(parentHexagonIds: $parentHexagonIds) {
+		hexagonId
+		currentOwnerId
+		currentOwnerStravaId
+		currentOwnerIsPremium
+		currentOwnerImghex
+		currentStravaActivityId
+		activityType
+		captureCount
+		lastCapturedAt
+	}
 }
 
 query HexagonsByParents($parentHexagonIds: [String!]!) {
-  hexagonsByParents(parentHexagonIds: $parentHexagonIds) {
-    hexagonId
-    currentOwnerId
-    currentOwnerStravaId
-    currentOwnerIsPremium
-    currentOwnerImghex
-    currentStravaActivityId
-    activityType
-    captureCount
-    lastCapturedAt
-  }
+	hexagonsByParents(parentHexagonIds: $parentHexagonIds) {
+		hexagonId
+		currentOwnerId
+		currentOwnerStravaId
+		currentOwnerIsPremium
+		currentOwnerImghex
+		currentStravaActivityId
+		activityType
+		captureCount
+		lastCapturedAt
+	}
 }
 
 query HexagonDetail($hexagonId: String!) {
-  hexagon(hexagonId: $hexagonId) {
-    hexagonId
-    captureCount
-    currentActivity {
-      id
-      stravaActivityId
-      name
-      distance
-      averageSpeed
-      startDateLocal
-      movingTime
-    }
-  }
+	hexagon(hexagonId: $hexagonId) {
+		hexagonId
+		captureCount
+		currentActivity {
+			id
+			stravaActivityId
+			name
+			distance
+			averageSpeed
+			startDateLocal
+			movingTime
+		}
+	}
 }
 
 query MyHexagonsCount {
-  myHexagonsCount
+	myHexagonsCount
 }
 
 mutation DeleteMyAccount {
-  deleteMyAccount
+	deleteMyAccount
 }
 
 query MyActivities($limit: Int, $offset: Int) {
-  myActivities(limit: $limit, offset: $offset) {
-    id
-    stravaActivityId
-    userId
-    name
-    type
-    sportType
-    startDate
-    startDateLocal
-    movingTime
-    distance
-    averageSpeed
-    lastHex
-    createdAt
-  }
+	myActivities(limit: $limit, offset: $offset) {
+		id
+		stravaActivityId
+		userId
+		name
+		type
+		sportType
+		startDate
+		startDateLocal
+		movingTime
+		distance
+		averageSpeed
+		lastHex
+		createdAt
+	}
 }
 
 query GetAllHexagons($limit: Int, $offset: Int) {
-  hexagons(limit: $limit, offset: $offset) {
-    id
-    hexagonId
-    currentOwnerId
-    currentOwnerStravaId
-    currentOwnerIsPremium
-    currentOwnerImghex
-    currentActivityId
-    currentStravaActivityId
-    captureCount
-    firstCapturedAt
-    lastCapturedAt
-    activityType
-    routeType
-    createdAt
-    updatedAt
-  }
+	hexagons(limit: $limit, offset: $offset) {
+		id
+		hexagonId
+		currentOwnerId
+		currentOwnerStravaId
+		currentOwnerIsPremium
+		currentOwnerImghex
+		currentActivityId
+		currentStravaActivityId
+		captureCount
+		firstCapturedAt
+		lastCapturedAt
+		activityType
+		routeType
+		createdAt
+		updatedAt
+	}
 }
 
 query GetAllActivities($limit: Int, $offset: Int) {
-  activities(limit: $limit, offset: $offset) {
-    id
-    stravaActivityId
-    userId
-    source
-    name
-    type
-    sportType
-    description
-    startDate
-    startDateLocal
-    timezone
-    movingTime
-    elapsedTime
-    distance
-    elevationGain
-    averageSpeed
-    startLocation {
-      lat
-      lng
-    }
-    endLocation {
-      lat
-      lng
-    }
-    summaryPolyline
-    isManual
-    isPrivate
-    createdAt
-    updatedAt
-  }
+	activities(limit: $limit, offset: $offset) {
+		id
+		stravaActivityId
+		userId
+		source
+		name
+		type
+		sportType
+		description
+		startDate
+		startDateLocal
+		timezone
+		movingTime
+		elapsedTime
+		distance
+		elevationGain
+		averageSpeed
+		startLocation {
+			lat
+			lng
+		}
+		endLocation {
+			lat
+			lng
+		}
+		summaryPolyline
+		isManual
+		isPrivate
+		lastHex
+		createdAt
+		updatedAt
+	}
 }

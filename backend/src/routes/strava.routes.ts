@@ -1,12 +1,15 @@
 import { Request, Response, Router } from 'express';
-import { User } from '../models/User';
-import { generateToken } from '../utils/jwt';
-import { authenticateToken, AuthRequest } from '../middleware/auth';
-import { processActivity, deleteActivityAndRestoreHexagons } from '../services/activityProcessing.service';
-import { StravaOAuthTokenResponse, StravaActivity, StravaAthleteStats } from '../types/strava.types';
-import { Activity } from '../models/Activity';
-import { processAndUploadProfileImage } from '../utils/imageProcessing';
-import { geocodeToHex } from '../utils/geocoding';
+import { User } from '@/models/User';
+import { generateToken } from '@/utils/jwt';
+import { authenticateToken, AuthRequest } from '@/middleware/auth';
+import {
+	processActivity,
+	deleteActivityAndRestoreHexagons,
+} from '@/services/activityProcessing.service';
+import { StravaOAuthTokenResponse, StravaActivity, StravaAthleteStats } from '@/types/strava.types';
+import { Activity } from '@/models/Activity';
+import { processAndUploadProfileImage } from '@/utils/imageProcessing';
+import { geocodeToHex } from '@/utils/geocoding';
 
 const router = Router();
 
@@ -44,7 +47,7 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 		});
 
 		if (!response.ok) {
-			const errorData = await response.json().catch(() => ({})) as Record<string, unknown>;
+			const errorData = (await response.json().catch(() => ({}))) as Record<string, unknown>;
 			console.error('❌ Strava API error:', response.status, errorData);
 
 			const message = typeof errorData.message === 'string' ? errorData.message : '';
@@ -52,7 +55,9 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 				throw new Error('Authorization code has expired. Please try logging in again.');
 			}
 			if (response.status === 400) {
-				throw new Error('Authorization code is invalid or already used. Please try logging in again.');
+				throw new Error(
+					'Authorization code is invalid or already used. Please try logging in again.'
+				);
 			}
 
 			throw new Error(`Strava token exchange failed: ${response.status}`);
@@ -68,7 +73,9 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 		});
 		console.log('👤 Athlete data:', data.athlete);
 
-		const adminStravaId = process.env.ADMIN_STRAVA_ID ? parseInt(process.env.ADMIN_STRAVA_ID, 10) : null;
+		const adminStravaId = process.env.ADMIN_STRAVA_ID
+			? parseInt(process.env.ADMIN_STRAVA_ID, 10)
+			: null;
 		const isAdminStravaId = adminStravaId !== null && data.athlete.id === adminStravaId;
 
 		let user = await User.findOne({ stravaId: data.athlete.id });
@@ -239,7 +246,9 @@ router.get('/api/strava/activities', authenticateToken, async (req: AuthRequest,
 			return isRunning && isAfterCutoff;
 		});
 
-		console.log(`🏃 Filtered to ${runningActivities.length} running activities from last 7 days (after ${cutoffDate.toISOString()}) (from ${activities.length} total)`);
+		console.log(
+			`🏃 Filtered to ${runningActivities.length} running activities from last 7 days (after ${cutoffDate.toISOString()}) (from ${activities.length} total)`
+		);
 
 		const stravaActivityIds = runningActivities.map((a: StravaActivity) => a.id);
 
@@ -248,9 +257,7 @@ router.get('/api/strava/activities', authenticateToken, async (req: AuthRequest,
 			{ stravaActivityId: 1, lastHex: 1 }
 		);
 
-		const storedActivityMap = new Map(
-			storedActivities.map((a) => [a.stravaActivityId, a.lastHex])
-		);
+		const storedActivityMap = new Map(storedActivities.map((a) => [a.stravaActivityId, a.lastHex]));
 
 		const activitiesWithStoredFlag = runningActivities.map((activity: StravaActivity) => ({
 			...activity,
@@ -258,7 +265,9 @@ router.get('/api/strava/activities', authenticateToken, async (req: AuthRequest,
 			lastHex: storedActivityMap.get(activity.id) || undefined,
 		}));
 
-		console.log(`💾 ${storedActivityMap.size} of ${runningActivities.length} activities already stored in database`);
+		console.log(
+			`💾 ${storedActivityMap.size} of ${runningActivities.length} activities already stored in database`
+		);
 
 		res.json({
 			success: true,
@@ -279,43 +288,50 @@ router.get('/api/strava/activities', authenticateToken, async (req: AuthRequest,
 	}
 });
 
-router.get('/api/strava/activities/:id', authenticateToken, async (req: AuthRequest, res: Response) => {
-	try {
-		const activityId = req.params.id;
-		console.log(`🏃 Fetching Strava activity ${activityId} for user:`, req.user?.stravaProfile.firstname);
+router.get(
+	'/api/strava/activities/:id',
+	authenticateToken,
+	async (req: AuthRequest, res: Response) => {
+		try {
+			const activityId = req.params.id;
+			console.log(
+				`🏃 Fetching Strava activity ${activityId} for user:`,
+				req.user?.stravaProfile.firstname
+			);
 
-		const accessToken = req.user!.accessToken;
+			const accessToken = req.user!.accessToken;
 
-		const response = await fetch(`https://www.strava.com/api/v3/activities/${activityId}`, {
-			headers: {
-				Authorization: `Bearer ${accessToken}`,
-			},
-		});
+			const response = await fetch(`https://www.strava.com/api/v3/activities/${activityId}`, {
+				headers: {
+					Authorization: `Bearer ${accessToken}`,
+				},
+			});
 
-		if (!response.ok) {
-			if (response.status === 404) {
-				return res.status(404).json({ error: 'Activity not found' });
+			if (!response.ok) {
+				if (response.status === 404) {
+					return res.status(404).json({ error: 'Activity not found' });
+				}
+				throw new Error(`Strava API error: ${response.status}`);
 			}
-			throw new Error(`Strava API error: ${response.status}`);
+
+			const activity = (await response.json()) as StravaActivity;
+
+			console.log(`✅ Fetched activity ${activityId}`);
+
+			res.json({
+				success: true,
+				activity: activity,
+			});
+		} catch (error: unknown) {
+			const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+			console.error('❌ Strava API error:', errorMessage);
+			res.status(500).json({
+				error: 'Failed to fetch activity details',
+				details: errorMessage,
+			});
 		}
-
-		const activity = (await response.json()) as StravaActivity;
-
-		console.log(`✅ Fetched activity ${activityId}`);
-
-		res.json({
-			success: true,
-			activity: activity,
-		});
-	} catch (error: unknown) {
-		const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-		console.error('❌ Strava API error:', errorMessage);
-		res.status(500).json({
-			error: 'Failed to fetch activity details',
-			details: errorMessage,
-		});
 	}
-});
+);
 
 router.get('/api/strava/stats', authenticateToken, async (req: AuthRequest, res: Response) => {
 	try {
@@ -323,11 +339,14 @@ router.get('/api/strava/stats', authenticateToken, async (req: AuthRequest, res:
 
 		const accessToken = req.user!.accessToken;
 
-		const response = await fetch(`https://www.strava.com/api/v3/athletes/${req.user?.stravaId}/stats`, {
-			headers: {
-				Authorization: `Bearer ${accessToken}`,
-			},
-		});
+		const response = await fetch(
+			`https://www.strava.com/api/v3/athletes/${req.user?.stravaId}/stats`,
+			{
+				headers: {
+					Authorization: `Bearer ${accessToken}`,
+				},
+			}
+		);
 
 		if (!response.ok) {
 			throw new Error(`Strava API error: ${response.status}`);
@@ -354,81 +373,92 @@ router.get('/api/strava/stats', authenticateToken, async (req: AuthRequest, res:
 	}
 });
 
-router.delete('/api/strava/activities/:stravaActivityId', authenticateToken, async (req: AuthRequest, res: Response) => {
-	try {
-		const { stravaActivityId } = req.params;
-		const currentUser = req.user!;
+router.delete(
+	'/api/strava/activities/:stravaActivityId',
+	authenticateToken,
+	async (req: AuthRequest, res: Response) => {
+		try {
+			const { stravaActivityId } = req.params;
+			const currentUser = req.user!;
 
-		if (!stravaActivityId) {
-			return res.status(400).json({ error: 'stravaActivityId is required' });
-		}
+			if (!stravaActivityId) {
+				return res.status(400).json({ error: 'stravaActivityId is required' });
+			}
 
-		const result = await deleteActivityAndRestoreHexagons(parseInt(stravaActivityId), currentUser);
+			const result = await deleteActivityAndRestoreHexagons(
+				parseInt(stravaActivityId),
+				currentUser
+			);
 
-		res.json({
-			success: true,
-			...result,
-		});
-	} catch (error: unknown) {
-		const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-		console.error('❌ Error deleting activity:', error);
+			res.json({
+				success: true,
+				...result,
+			});
+		} catch (error: unknown) {
+			const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+			console.error('❌ Error deleting activity:', error);
 
-		if (errorMessage === 'Activity not found in database') {
-			return res.status(404).json({ error: errorMessage });
-		}
+			if (errorMessage === 'Activity not found in database') {
+				return res.status(404).json({ error: errorMessage });
+			}
 
-		if (errorMessage === 'You can only delete your own activities') {
-			return res.status(403).json({ error: errorMessage });
-		}
+			if (errorMessage === 'You can only delete your own activities') {
+				return res.status(403).json({ error: errorMessage });
+			}
 
-		res.status(500).json({
-			error: 'Failed to delete activity',
-			details: errorMessage,
-		});
-	}
-});
-
-router.post('/api/strava/process-activity', authenticateToken, async (req: AuthRequest, res: Response) => {
-	try {
-		const { activityId } = req.body;
-		const currentUser = req.user!;
-
-		if (!activityId) {
-			return res.status(400).json({ error: 'activityId is required' });
-		}
-
-		const result = await processActivity(activityId, currentUser, req.userId!);
-
-		res.json({
-			success: true,
-			...result,
-		});
-	} catch (error: unknown) {
-		console.error('❌ Error processing activity:', error);
-
-		const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-
-		if (errorMessage.includes('Only running activities')) {
-			return res.status(400).json({
-				error: 'Only running activities are allowed',
+			res.status(500).json({
+				error: 'Failed to delete activity',
 				details: errorMessage,
 			});
 		}
-
-		if (errorMessage.includes('no GPS data')) {
-			return res.status(400).json({ error: errorMessage });
-		}
-
-		if (errorMessage.includes('Strava API error')) {
-			return res.status(502).json({ error: errorMessage });
-		}
-
-		res.status(500).json({
-			error: 'Failed to process activity',
-			details: errorMessage,
-		});
 	}
-});
+);
+
+router.post(
+	'/api/strava/process-activity',
+	authenticateToken,
+	async (req: AuthRequest, res: Response) => {
+		try {
+			const { activityId } = req.body;
+			const currentUser = req.user!;
+
+			if (!activityId) {
+				return res.status(400).json({ error: 'activityId is required' });
+			}
+
+			const result = await processActivity(activityId, currentUser, req.userId!);
+
+			res.json({
+				success: true,
+				...result,
+			});
+		} catch (error: unknown) {
+			console.error('❌ Error processing activity:', error);
+
+			const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+			if (errorMessage.includes('Only running activities')) {
+				return res.status(400).json({
+					error: 'Only running activities are allowed',
+					details: errorMessage,
+				});
+			}
+
+			if (errorMessage.includes('no GPS data')) {
+				return res.status(400).json({ error: errorMessage });
+			}
+
+			if (errorMessage.includes('Strava API error')) {
+				return res.status(502).json({ error: errorMessage });
+			}
+
+			res.status(500).json({
+				error: 'Failed to process activity',
+				details: errorMessage,
+			});
+		}
+	}
+);
 
 router.get('/api/auth/me', authenticateToken, async (req: AuthRequest, res: Response) => {
 	try {
@@ -456,87 +486,95 @@ router.get('/api/auth/me', authenticateToken, async (req: AuthRequest, res: Resp
 	}
 });
 
-router.post('/api/auth/refresh-token', authenticateToken, async (req: AuthRequest, res: Response) => {
-	try {
-		const user = await User.findById(req.userId);
+router.post(
+	'/api/auth/refresh-token',
+	authenticateToken,
+	async (req: AuthRequest, res: Response) => {
+		try {
+			const user = await User.findById(req.userId);
 
-		if (!user) {
-			return res.status(404).json({ error: 'User not found' });
-		}
-
-		const now = Math.floor(Date.now() / 1000);
-		const timeUntilExpiry = user.tokenExpiresAt - now;
-
-		console.log(`🔄 Token refresh requested for user: ${user.stravaProfile.firstname}`);
-		console.log(`⏰ Token expires in ${timeUntilExpiry}s (${Math.floor(timeUntilExpiry / 60)} minutes)`);
-
-		if (timeUntilExpiry < 3600) {
-			console.log(`🔄 Refreshing token (expires in ${timeUntilExpiry}s)...`);
-
-			const response = await fetch('https://www.strava.com/oauth/token', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({
-					client_id: process.env.STRAVA_CLIENT_ID,
-					client_secret: process.env.STRAVA_CLIENT_SECRET,
-					refresh_token: user.refreshToken,
-					grant_type: 'refresh_token',
-				}),
-			});
-
-			if (!response.ok) {
-				const errorData = await response.json().catch(() => ({}));
-				console.error('❌ Token refresh failed:', response.status, errorData);
-
-				if (response.status === 401) {
-					return res.status(401).json({
-						error: 'Token refresh failed - user may have revoked access',
-						needsReauth: true,
-					});
-				}
-
-				throw new Error(`Token refresh failed: ${response.status}`);
+			if (!user) {
+				return res.status(404).json({ error: 'User not found' });
 			}
 
-			const tokenData = await response.json() as {
-				access_token: string;
-				refresh_token: string;
-				expires_at: number;
-				expires_in: number;
-			};
+			const now = Math.floor(Date.now() / 1000);
+			const timeUntilExpiry = user.tokenExpiresAt - now;
 
-			user.accessToken = tokenData.access_token;
-			user.refreshToken = tokenData.refresh_token;
-			user.tokenExpiresAt = tokenData.expires_at;
-			await user.save();
+			console.log(`🔄 Token refresh requested for user: ${user.stravaProfile.firstname}`);
+			console.log(
+				`⏰ Token expires in ${timeUntilExpiry}s (${Math.floor(timeUntilExpiry / 60)} minutes)`
+			);
 
-			console.log(`✅ Token refreshed successfully (new expiry: ${new Date(tokenData.expires_at * 1000).toISOString()})`);
-		} else {
-			console.log(`✅ Token still valid (expires in ${timeUntilExpiry}s), no refresh needed`);
+			if (timeUntilExpiry < 3600) {
+				console.log(`🔄 Refreshing token (expires in ${timeUntilExpiry}s)...`);
+
+				const response = await fetch('https://www.strava.com/oauth/token', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						client_id: process.env.STRAVA_CLIENT_ID,
+						client_secret: process.env.STRAVA_CLIENT_SECRET,
+						refresh_token: user.refreshToken,
+						grant_type: 'refresh_token',
+					}),
+				});
+
+				if (!response.ok) {
+					const errorData = await response.json().catch(() => ({}));
+					console.error('❌ Token refresh failed:', response.status, errorData);
+
+					if (response.status === 401) {
+						return res.status(401).json({
+							error: 'Token refresh failed - user may have revoked access',
+							needsReauth: true,
+						});
+					}
+
+					throw new Error(`Token refresh failed: ${response.status}`);
+				}
+
+				const tokenData = (await response.json()) as {
+					access_token: string;
+					refresh_token: string;
+					expires_at: number;
+					expires_in: number;
+				};
+
+				user.accessToken = tokenData.access_token;
+				user.refreshToken = tokenData.refresh_token;
+				user.tokenExpiresAt = tokenData.expires_at;
+				await user.save();
+
+				console.log(
+					`✅ Token refreshed successfully (new expiry: ${new Date(tokenData.expires_at * 1000).toISOString()})`
+				);
+			} else {
+				console.log(`✅ Token still valid (expires in ${timeUntilExpiry}s), no refresh needed`);
+			}
+
+			res.json({
+				success: true,
+				user: {
+					id: user._id,
+					stravaId: user.stravaId,
+					isAdmin: user.isAdmin,
+					profile: user.stravaProfile,
+					tokenExpiresAt: user.tokenExpiresAt,
+					createdAt: user.createdAt,
+				},
+			});
+		} catch (error: unknown) {
+			const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+			console.error('❌ Error refreshing token:', errorMessage);
+			res.status(500).json({
+				error: 'Failed to refresh token',
+				details: errorMessage,
+			});
 		}
-
-		res.json({
-			success: true,
-			user: {
-				id: user._id,
-				stravaId: user.stravaId,
-				isAdmin: user.isAdmin,
-				profile: user.stravaProfile,
-				tokenExpiresAt: user.tokenExpiresAt,
-				createdAt: user.createdAt,
-			},
-		});
-	} catch (error: unknown) {
-		const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-		console.error('❌ Error refreshing token:', errorMessage);
-		res.status(500).json({
-			error: 'Failed to refresh token',
-			details: errorMessage,
-		});
 	}
-});
+);
 
 router.get('/api/activities/latest', authenticateToken, async (req: AuthRequest, res: Response) => {
 	try {

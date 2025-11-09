@@ -47,6 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 					},
 					tokenExpiresAt: userData.me.tokenExpiresAt,
 					tokenIsExpired: userData.me.tokenIsExpired ?? false,
+					lastHex: userData.me.lastHex || undefined,
 					createdAt: String(userData.me.createdAt),
 					updatedAt: String(userData.me.updatedAt),
 				};

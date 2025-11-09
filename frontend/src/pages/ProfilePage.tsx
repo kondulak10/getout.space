@@ -24,19 +24,20 @@ export function ProfilePage() {
 	const navigate = useNavigate();
 	const [deleteMyAccount, { loading: deletingAccount }] = useMutation(DeleteMyAccountDocument);
 
+	const {
+		activities: storedActivities,
+		loading: loadingStored,
+		removeActivity: deleteStoredActivity,
+		refetch: refetchStoredActivities,
+	} = useStoredActivities();
+
 	const { showModal, activities, loading, infoMessage, openModal, closeModal, handleSaveActivity, handleRemoveActivity } =
-		useActivitiesManager();
+		useActivitiesManager(refetchStoredActivities);
 
 	const handleShowOnMap = (hexId: string) => {
 		closeModal();
 		navigate(`/?hex=${hexId}`);
 	};
-
-	const {
-		activities: storedActivities,
-		loading: loadingStored,
-		removeActivity: deleteStoredActivity,
-	} = useStoredActivities();
 
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const [deletingActivityId, setDeletingActivityId] = useState<string | null>(null);
@@ -71,7 +72,9 @@ export function ProfilePage() {
 			await deleteMyAccount();
 			logout();
 			navigate('/');
-		} catch (error) {
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		} catch (_error) {
+			// Ignore error
 		}
 	};
 
@@ -158,7 +161,7 @@ export function ProfilePage() {
 											</div>
 										</div>
 
-										<div className="flex items-center gap-2 flex-shrink-0">
+										<div className="flex items-center gap-2 shrink-0">
 											{activity.lastHex && (
 												<button
 													onClick={() => navigate(`/?hex=${activity.lastHex}`)}
@@ -177,7 +180,7 @@ export function ProfilePage() {
 												{deletingActivityId === activity.id ? (
 													<FontAwesomeIcon icon="spinner" className="w-4 h-4 animate-spin" />
 												) : (
-													<FontAwesomeIcon icon="trash-alt" className="w-4 h-4" />
+													<FontAwesomeIcon icon="trash" className="w-4 h-4" />
 												)}
 											</button>
 										</div>
@@ -209,7 +212,7 @@ export function ProfilePage() {
 
 				<div className="bg-[rgba(10,10,10,0.9)] backdrop-blur-md border border-red-500/20 rounded-xl p-4 md:p-6">
 					<div className="flex items-start gap-3 mb-4">
-						<FontAwesomeIcon icon="exclamation-triangle" className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+						<FontAwesomeIcon icon="exclamation-triangle" className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
 						<div className="text-sm text-red-400">
 							<p className="font-semibold mb-1">Danger Zone</p>
 							<p className="text-xs">Deleting your account permanently removes all activities and hexagons. This cannot be undone.</p>
@@ -225,7 +228,7 @@ export function ProfilePage() {
 								: 'bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30'
 						}`}
 					>
-						<FontAwesomeIcon icon="trash-alt" className="w-4 h-4" />
+						<FontAwesomeIcon icon="trash" className="w-4 h-4" />
 						{deletingAccount
 							? 'Deleting...'
 							: showDeleteConfirm

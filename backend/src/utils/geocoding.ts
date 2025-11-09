@@ -1,6 +1,10 @@
 import * as h3 from 'h3-js';
 
-export async function geocodeToHex(city?: string, state?: string, country?: string): Promise<string | undefined> {
+export async function geocodeToHex(
+	city?: string,
+	state?: string,
+	country?: string
+): Promise<string | undefined> {
 	try {
 		const locationParts = [city, state, country].filter(Boolean);
 		if (locationParts.length === 0) {
@@ -26,7 +30,7 @@ export async function geocodeToHex(city?: string, state?: string, country?: stri
 			return undefined;
 		}
 
-		const data = await response.json() as {
+		const data = (await response.json()) as {
 			features?: Array<{
 				center?: [number, number];
 				place_name?: string;

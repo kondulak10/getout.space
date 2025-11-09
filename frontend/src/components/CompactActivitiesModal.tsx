@@ -161,7 +161,7 @@ export function CompactActivitiesModal({
 													{deletingIds.has(activity.id) ? (
 														<FontAwesomeIcon icon="spinner" className="w-4 h-4 animate-spin" />
 													) : (
-														<FontAwesomeIcon icon="trash-alt" className="w-4 h-4" />
+														<FontAwesomeIcon icon="trash" className="w-4 h-4" />
 													)}
 												</button>
 											</>

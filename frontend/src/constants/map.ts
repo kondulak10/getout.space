@@ -1,21 +1,19 @@
 export const H3_RESOLUTION = 10;
 
-export const INITIAL_CENTER: [number, number] = [18.2625, 49.8209];
-export const INITIAL_ZOOM = 13;
-
-export const SAMPLE_IMAGE_URL = 'https://fastly.picsum.photos/id/305/536/354.jpg?hmac=u9Mw37522_zEQ1FdKoVv_QXkWMkBOZFzRSXn2MCW0IY';
+export const SAMPLE_IMAGE_URL =
+	"https://fastly.picsum.photos/id/305/536/354.jpg?hmac=u9Mw37522_zEQ1FdKoVv_QXkWMkBOZFzRSXn2MCW0IY";
 
 export const HEX_COLORS = [
-	'#FF6B6B',
-	'#4ECDC4',
-	'#45B7D1',
-	'#96CEB4',
-	'#FFEAA7',
-	'#DFE6E9',
-	'#74B9FF',
-	'#A29BFE',
-	'#FD79A8',
-	'#FDCB6E',
+	"#FF6B6B",
+	"#4ECDC4",
+	"#45B7D1",
+	"#96CEB4",
+	"#FFEAA7",
+	"#DFE6E9",
+	"#74B9FF",
+	"#A29BFE",
+	"#FD79A8",
+	"#FDCB6E",
 ] as const;
 
 export const IMAGE_PROBABILITY = 0.1;

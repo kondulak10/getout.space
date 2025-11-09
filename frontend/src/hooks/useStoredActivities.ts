@@ -21,7 +21,8 @@ export function useStoredActivities() {
 			} else {
 				return false;
 			}
-		} catch (err) {
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		} catch (_err) {
 			return false;
 		}
 	};

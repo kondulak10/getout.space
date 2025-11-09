@@ -51,6 +51,11 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 		if (!mapRef.current) return;
 		const map = mapRef.current;
 
+		// Wait for style to load before adding sources/layers
+		if (!map.isStyleLoaded()) {
+			return;
+		}
+
 		if (map.getSource("hexagons")) {
 			return;
 		}
@@ -113,6 +118,11 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 	const setupParentLayer = useCallback(() => {
 		if (!mapRef.current) return;
 		const map = mapRef.current;
+
+		// Wait for style to load before adding sources/layers
+		if (!map.isStyleLoaded()) {
+			return;
+		}
 
 		if (map.getSource("parent-hexagons")) {
 			return;

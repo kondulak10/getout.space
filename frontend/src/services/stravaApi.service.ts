@@ -173,6 +173,7 @@ export interface ProcessActivityResponse {
 		name: string;
 		distance: number;
 		wasCreated: boolean;
+		lastHex?: string;
 	};
 	hexagons: {
 		totalParsed: number;

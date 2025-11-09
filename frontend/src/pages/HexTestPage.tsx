@@ -51,7 +51,8 @@ export function HexTestPage() {
 						setLoadingStage('complete');
 					}, 100);
 				}, 100);
-			} catch (error) {
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
+			} catch (_error) {
 				toast.error('Failed to load test data', {
 					id: toastId,
 					description: 'Check console for details',

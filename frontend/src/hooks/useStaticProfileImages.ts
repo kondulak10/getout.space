@@ -76,7 +76,9 @@ export function useStaticProfileImages(
 									}
 									layersAddedRef.current.delete(layerId);
 									map.off('error', errorHandler);
-								} catch (cleanupError) {
+								// eslint-disable-next-line @typescript-eslint/no-unused-vars
+								} catch (_cleanupError) {
+									// Ignore error
 								}
 							}
 						};
@@ -98,7 +100,9 @@ export function useStaticProfileImages(
 					} else {
 						map.moveLayer(layerId);
 					}
-				} catch (error) {
+				// eslint-disable-next-line @typescript-eslint/no-unused-vars
+				} catch (_error) {
+					// Ignore error
 				}
 			};
 
@@ -116,7 +120,8 @@ export function useStaticProfileImages(
 
 			const maxImagesPerUser = 30;
 			const interval = 5;
-			let totalImages = 0;
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
+			let _totalImages = 0;
 
 			const imageDetails: Array<{ userId: string; imageUrl: string; count: number; totalHexagons: number }> = [];
 
@@ -129,7 +134,7 @@ export function useStaticProfileImages(
 					const uniqueId = `${hex.currentOwnerId}-${hex.hexagonId}`;
 					const imageUrlWithCacheBust = `${hex.currentOwnerImghex}?t=${cacheBustTimestamp}`;
 					addProfileImage(hex.hexagonId, imageUrlWithCacheBust, uniqueId);
-					totalImages++;
+					_totalImages++;
 				});
 
 				imageDetails.push({
@@ -161,7 +166,9 @@ export function useStaticProfileImages(
 						if (currentMap.getSource(sourceId)) {
 							currentMap.removeSource(sourceId);
 						}
-					} catch (error) {
+					// eslint-disable-next-line @typescript-eslint/no-unused-vars
+					} catch (_error) {
+						// Ignore error
 					}
 				});
 			}

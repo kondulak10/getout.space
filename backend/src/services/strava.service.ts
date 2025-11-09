@@ -1,5 +1,5 @@
-import { User } from '../models/User';
-import { refreshStravaToken } from '../utils/strava';
+import { User } from '@/models/User';
+import { refreshStravaToken } from '@/utils/strava';
 
 export async function getValidAccessToken(userId: string): Promise<string> {
 	const user = await User.findById(userId);
@@ -12,7 +12,9 @@ export async function getValidAccessToken(userId: string): Promise<string> {
 	const timeUntilExpiry = user.tokenExpiresAt - now;
 
 	if (timeUntilExpiry < 3600) {
-		console.log(`🔄 Webhook: Refreshing token for user ${user.stravaProfile.firstname} (expires in ${timeUntilExpiry}s)...`);
+		console.log(
+			`🔄 Webhook: Refreshing token for user ${user.stravaProfile.firstname} (expires in ${timeUntilExpiry}s)...`
+		);
 
 		const tokenData = await refreshStravaToken(user);
 
@@ -21,7 +23,9 @@ export async function getValidAccessToken(userId: string): Promise<string> {
 		user.tokenExpiresAt = tokenData.expires_at;
 		await user.save();
 
-		console.log(`✅ Webhook: Token refreshed successfully (new expiry: ${new Date(tokenData.expires_at * 1000).toISOString()})`);
+		console.log(
+			`✅ Webhook: Token refreshed successfully (new expiry: ${new Date(tokenData.expires_at * 1000).toISOString()})`
+		);
 		return user.accessToken;
 	}
 
@@ -66,7 +70,8 @@ export async function fetchStravaActivity(
 		let errorBody = '';
 		try {
 			errorBody = await response.text();
-		} catch (e) {
+		} catch (_e) {
+			// Ignore error - errorBody will remain empty string
 		}
 
 		console.error(`❌ Strava API error when fetching activity ${activityId}:`, {
@@ -78,7 +83,7 @@ export async function fetchStravaActivity(
 		throw new Error(`Strava API error: ${response.status} ${response.statusText}`);
 	}
 
-	return await response.json() as StravaActivityData;
+	return (await response.json()) as StravaActivityData;
 }
 
 export function isRunningActivity(activity: StravaActivityData): boolean {

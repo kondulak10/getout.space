@@ -1,10 +1,15 @@
 import mongoose from 'mongoose';
 import polyline from '@mapbox/polyline';
-import { Activity, IActivity } from '../models/Activity';
-import { Hexagon, IHexagon } from '../models/Hexagon';
-import { IUser } from '../models/User';
-import { analyzeRouteAndConvertToHexagons } from '../utils/routeToHexagons';
-import { fetchStravaActivity, getValidAccessToken, isRunningActivity, StravaActivityData } from './strava.service';
+import * as h3 from 'h3-js';
+import { Activity, IActivity } from '@/models/Activity';
+import { Hexagon, IHexagon } from '@/models/Hexagon';
+import { IUser } from '@/models/User';
+import { analyzeRouteAndConvertToHexagons } from '@/utils/routeToHexagons';
+import {
+	fetchStravaActivity,
+	getValidAccessToken,
+	isRunningActivity,
+} from '@/services/strava.service';
 
 export interface ProcessActivityResult {
 	activity: {
@@ -13,6 +18,7 @@ export interface ProcessActivityResult {
 		name: string;
 		distance: number;
 		wasCreated: boolean;
+		lastHex?: string;
 	};
 	hexagons: {
 		totalParsed: number;
@@ -45,7 +51,9 @@ export async function processActivity(
 	session.startTransaction();
 
 	try {
-		console.log(`🎯 Processing Strava activity ${stravaActivityId} for user: ${user.stravaProfile.firstname}`);
+		console.log(
+			`🎯 Processing Strava activity ${stravaActivityId} for user: ${user.stravaProfile.firstname}`
+		);
 
 		const accessToken = await getValidAccessToken(userId);
 
@@ -94,13 +102,13 @@ export async function processActivity(
 				? {
 						lat: stravaActivity.start_latlng[0],
 						lng: stravaActivity.start_latlng[1],
-				  }
+					}
 				: undefined;
 			activity.endLocation = stravaActivity.end_latlng
 				? {
 						lat: stravaActivity.end_latlng[0],
 						lng: stravaActivity.end_latlng[1],
-				  }
+					}
 				: undefined;
 			activity.summaryPolyline = stravaActivity.map.summary_polyline;
 			activity.isManual = stravaActivity.manual;
@@ -128,13 +136,13 @@ export async function processActivity(
 					? {
 							lat: stravaActivity.start_latlng[0],
 							lng: stravaActivity.start_latlng[1],
-					  }
+						}
 					: undefined,
 				endLocation: stravaActivity.end_latlng
 					? {
 							lat: stravaActivity.end_latlng[0],
 							lng: stravaActivity.end_latlng[1],
-					  }
+						}
 					: undefined,
 				summaryPolyline: stravaActivity.map.summary_polyline,
 				isManual: stravaActivity.manual,
@@ -149,7 +157,6 @@ export async function processActivity(
 		const hexagonStats = await processHexagons(hexagons, activity, user, routeType, session);
 
 		if (hexagons.length > 0) {
-			const h3 = require('h3-js');
 			const firstHexParent = h3.cellToParent(hexagons[0], 6);
 
 			// Update both user and activity with lastHex
@@ -163,7 +170,9 @@ export async function processActivity(
 		await session.commitTransaction();
 
 		console.log(`✅ Transaction committed`);
-		console.log(`📊 Hexagons: ${hexagonStats.created} created, ${hexagonStats.updated} updated, ${hexagonStats.skipped} skipped`);
+		console.log(
+			`📊 Hexagons: ${hexagonStats.created} created, ${hexagonStats.updated} updated, ${hexagonStats.skipped} skipped`
+		);
 
 		return {
 			activity: {
@@ -172,6 +181,7 @@ export async function processActivity(
 				name: activity.name,
 				distance: activity.distance,
 				wasCreated: wasActivityCreated,
+				lastHex: activity.lastHex,
 			},
 			hexagons: {
 				totalParsed: hexagons.length,
@@ -220,8 +230,6 @@ async function processHexagons(
 	routeType: 'line' | 'area',
 	session: mongoose.ClientSession
 ) {
-	const h3 = require('h3-js');
-
 	const existingHexagons = await Hexagon.find({
 		hexagonId: { $in: hexagons },
 	}).session(session);
@@ -343,7 +351,9 @@ export async function deleteActivityAndRestoreHexagons(
 	session.startTransaction();
 
 	try {
-		console.log(`🗑️ Deleting activity ${stravaActivityId} for user: ${user.stravaProfile.firstname}`);
+		console.log(
+			`🗑️ Deleting activity ${stravaActivityId} for user: ${user.stravaProfile.firstname}`
+		);
 
 		const activity = await Activity.findOne({
 			stravaActivityId: parseInt(String(stravaActivityId)),

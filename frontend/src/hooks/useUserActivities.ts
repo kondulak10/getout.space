@@ -21,8 +21,11 @@ export function useUserActivities() {
 			if (data.success) {
 				setLatestActivity(data.activity);
 			} else {
+				// Ignore error
 			}
-		} catch (err) {
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		} catch (_err) {
+			// Ignore error
 		}
 	};
 
@@ -38,8 +41,8 @@ export function useUserActivities() {
 			} else {
 				setError(data.error || 'Failed to fetch activities');
 			}
-		} catch (err) {
-			setError(err instanceof Error ? err.message : 'Network error');
+		} catch (_err) {
+			setError(_err instanceof Error ? _err.message : 'Network error');
 		} finally {
 			setLoading(false);
 		}
@@ -54,14 +57,19 @@ export function useUserActivities() {
 
 				setStravaActivities((prev) =>
 					prev.map((activity) =>
-						activity.id === activityId ? { ...activity, isStored: true } : activity
+						activity.id === activityId
+							? { ...activity, isStored: true, lastHex: data.activity.lastHex }
+							: activity
 					)
 				);
 
 				await loadLatestActivity();
 			} else {
+				// Ignore error
 			}
-		} catch (err) {
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		} catch (_err) {
+			// Ignore error
 		}
 	};
 
@@ -74,14 +82,17 @@ export function useUserActivities() {
 
 				setStravaActivities((prev) =>
 					prev.map((activity) =>
-						activity.id === activityId ? { ...activity, isStored: false } : activity
+						activity.id === activityId ? { ...activity, isStored: false, lastHex: undefined } : activity
 					)
 				);
 
 				await loadLatestActivity();
 			} else {
+				// Ignore error
 			}
-		} catch (err) {
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		} catch (_err) {
+			// Ignore error
 		}
 	};
 

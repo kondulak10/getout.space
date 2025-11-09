@@ -11,7 +11,8 @@ export function VersionBadge() {
 				const response = await fetch(`${backendUrl}/version`);
 				const data = await response.json();
 				setBackendVersion(data.versionString);
-			} catch (error) {
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
+			} catch (_error) {
 				setBackendVersion('unknown');
 			}
 		};
