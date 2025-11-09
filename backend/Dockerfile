@@ -63,6 +63,7 @@ RUN apk del build-base cairo-dev pango-dev jpeg-dev giflib-dev pixman-dev python
 
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \
