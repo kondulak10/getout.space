@@ -32,7 +32,7 @@ export async function refreshStravaToken(user: IUser): Promise<{
 			errorData = { raw: errorBody };
 		}
 
-		console.error('❌ Token refresh failed:', {
+		console.error('❌ Token refresh failed!', {
 			status: response.status,
 			statusText: response.statusText,
 			userId: user._id,

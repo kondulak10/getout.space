@@ -31,7 +31,17 @@
       "Bash(terraform show:*)",
       "Bash(aws secretsmanager get-secret-value:*)",
       "Bash(aws secretsmanager list-secrets:*)",
-      "Bash(aws ecs describe-services:*)"
+      "Bash(aws ecs describe-services:*)",
+      "Bash(aws ecs describe-task-definition:*)",
+      "Bash(aws ecs update-service:*)",
+      "Bash(curl:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(docker build:*)",
+      "Bash(aws ecr describe-images:*)",
+      "Bash(aws ecs list-task-definitions:*)",
+      "Bash(aws ecs list-tasks:*)",
+      "Bash(aws ecs describe-tasks:*)"
     ],
     "deny": [],
     "ask": []

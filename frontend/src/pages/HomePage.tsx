@@ -7,7 +7,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 export function HomePage() {
 	const { user, isLoading } = useAuth();
 
-	console.log("🔵 HomePage user =", user);
+	console.log("🔵 HomePage isUser =", user);
 	console.log("🔵 HomePage isLoading =", isLoading);
 
 	return (
