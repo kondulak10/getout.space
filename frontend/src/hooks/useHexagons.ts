@@ -350,11 +350,10 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 				debounceTimeoutRef.current = null;
 			}
 
-			const currentMap = mapRef.current;
-			if (currentMap && currentMap.getStyle()) {
+			if (map && map.getStyle()) {
 				try {
-					currentMap.off("moveend", updateHexagons);
-					currentMap.off("zoomend", updateHexagons);
+					map.off("moveend", updateHexagons);
+					map.off("zoomend", updateHexagons);
 				} catch (error) {
 					console.error(error);
 				}
@@ -376,7 +375,7 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 
 		clearCenterCache();
 		updateHexagons();
-	}, [mode, clearCenterCache, updateHexagons]);
+	}, [mode, mapRef, clearCenterCache, updateHexagons]);
 
 	return {
 		totalHexCount: countData?.myHexagonsCount ?? 0,

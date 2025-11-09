@@ -2,16 +2,16 @@ import { HexOverlay } from "@/components/HexOverlay";
 import { HexagonDetailModal } from "@/components/HexagonDetailModal";
 import { HexagonLoadingIndicator } from "@/components/HexagonLoadingIndicator";
 import { VersionBadge } from "@/components/VersionBadge";
+import { useAuth } from "@/contexts/useAuth";
 import { useActivityProfileImages } from "@/hooks/useActivityProfileImages";
 import { useHexagonSelection } from "@/hooks/useHexagonSelection";
 import { useHexagons } from "@/hooks/useHexagons";
 import { useMapView } from "@/hooks/useMapView";
 import { useMapbox } from "@/hooks/useMapbox";
-import { useAuth } from "@/contexts/useAuth";
-import { useMemo, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
 import * as h3 from "h3-js";
 import "mapbox-gl/dist/mapbox-gl.css";
+import { useEffect, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 
 export function HomePage() {
 	const { user } = useAuth();
@@ -20,7 +20,7 @@ export function HomePage() {
 	const { selectedHexagon, hexagonDetailLoading, handleHexagonClick, clearSelection } =
 		useHexagonSelection();
 
-	const hexFromUrl = searchParams.get('hex');
+	const hexFromUrl = searchParams.get("hex");
 
 	const mapCenter = useMemo(() => {
 		// Prioritize hex from URL parameter
@@ -32,7 +32,7 @@ export function HomePage() {
 				const coords = [lng, lat] as [number, number];
 				return coords;
 			} catch (error) {
-				console.error('Invalid hex ID:', hexToUse);
+				console.error("Invalid hex ID:", hexToUse);
 			}
 		}
 		return undefined;
@@ -68,7 +68,7 @@ export function HomePage() {
 					setSearchParams({});
 				}, 1500);
 			} catch (error) {
-				console.error('Failed to navigate to hex:', error);
+				console.error("Failed to navigate to hex:", error);
 			}
 		}
 	}, [hexFromUrl, mapRef, setSearchParams]);
@@ -78,7 +78,7 @@ export function HomePage() {
 	};
 
 	return (
-		<div className="relative w-full h-[100dvh] md:h-screen bg-black">
+		<div className="relative w-full h-dvh md:h-screen bg-black">
 			<div ref={mapContainerRef} className="w-full h-[calc(100dvh-90px)] md:h-full" />
 
 			<VersionBadge />
