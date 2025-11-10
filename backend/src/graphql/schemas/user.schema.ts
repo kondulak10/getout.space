@@ -21,7 +21,6 @@ export const userSchema = gql`
 		stravaProfile: StravaProfile!
 		tokenExpiresAt: Int!
 		tokenIsExpired: Boolean!
-		scope: String!
 		lastHex: String
 		createdAt: Date!
 		updatedAt: Date!

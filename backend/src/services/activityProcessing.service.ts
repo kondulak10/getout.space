@@ -5,11 +5,7 @@ import { Activity, IActivity } from '../models/Activity';
 import { Hexagon, IHexagon } from '../models/Hexagon';
 import { IUser } from '../models/User';
 import { analyzeRouteAndConvertToHexagons } from '../utils/routeToHexagons';
-import {
-	fetchStravaActivity,
-	getValidAccessToken,
-	isRunningActivity,
-} from './strava.service';
+import { fetchStravaActivity, getValidAccessToken, isRunningActivity } from './strava.service';
 import { notificationService } from './notification.service';
 
 export interface ProcessActivityResult {

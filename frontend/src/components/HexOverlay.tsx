@@ -5,6 +5,8 @@ import { useUserActivities } from "@/hooks/useUserActivities";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useNavigate } from "react-router-dom";
 import { ActivitiesManagerModal } from "./ActivitiesManagerModal";
+import { LeaderboardModal } from "./LeaderboardModal";
+import { useMap } from "@/contexts/useMap";
 import "./HexOverlay.css";
 
 interface HexOverlayProps {
@@ -15,6 +17,8 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 	const { user } = useAuth();
 	const { latestActivity } = useUserActivities();
 	const [mobileExpanded, setMobileExpanded] = useState(false);
+	const [showLeaderboard, setShowLeaderboard] = useState(false);
+	const { currentParentHexagonIds } = useMap();
 	const {
 		showModal,
 		activities,
@@ -75,6 +79,13 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 							</div>
 							<div className="text-xs text-gray-400">ID: {user.stravaId}</div>
 						</div>
+						<button
+							onClick={() => setShowLeaderboard(true)}
+							className="bg-white/5 border border-white/10 text-gray-300 p-1.5 rounded-md transition-all cursor-pointer hover:bg-white/10 hover:border-white/20 hover:text-white"
+							title="Regional Leaderboard"
+						>
+							<FontAwesomeIcon icon="trophy" className="w-3.5 h-3.5" />
+						</button>
 						<button
 							onClick={() => navigate("/profile")}
 							className="bg-white/5 border border-white/10 text-gray-300 p-1.5 rounded-md transition-all cursor-pointer hover:bg-white/10 hover:border-white/20 hover:text-white"
@@ -137,6 +148,13 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 									{user.profile.firstname} {user.profile.lastname}
 								</div>
 							</div>
+							<button
+								onClick={() => setShowLeaderboard(true)}
+								className="bg-white/5 border border-white/10 text-gray-300 p-1.5 rounded-md cursor-pointer"
+								title="Regional Leaderboard"
+							>
+								<FontAwesomeIcon icon="trophy" className="w-3.5 h-3.5" />
+							</button>
 							<button
 								onClick={() => navigate("/profile")}
 								className="bg-white/5 border border-white/10 text-gray-300 p-1.5 rounded-md cursor-pointer"
@@ -206,6 +224,13 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 				onDelete={handleRemoveActivity}
 				onShowOnMap={handleShowOnMap}
 			/>
+
+			{showLeaderboard && (
+				<LeaderboardModal
+					parentHexagonIds={currentParentHexagonIds.current}
+					onClose={() => setShowLeaderboard(false)}
+				/>
+			)}
 		</>
 	);
 }

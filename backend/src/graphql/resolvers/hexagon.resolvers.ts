@@ -252,6 +252,114 @@ export const hexagonResolvers = {
 				throw new GraphQLError('Failed to fetch hexagons');
 			}
 		},
+
+		regionalActiveLeaders: async (
+			_: any,
+			{ parentHexagonIds, limit = 10 }: { parentHexagonIds: string[]; limit?: number },
+			context: GraphQLContext
+		) => {
+			requireAuth(context);
+
+			try {
+				console.log(
+					`🏆 Fetching regional active leaders for ${parentHexagonIds.length} parent hexagons`
+				);
+
+				const leaderboard = await Hexagon.aggregate([
+					{
+						$match: {
+							parentHexagonId: { $in: parentHexagonIds },
+						},
+					},
+					{
+						$group: {
+							_id: '$currentOwnerId',
+							hexCount: { $sum: 1 },
+						},
+					},
+					{
+						$sort: { hexCount: -1 },
+					},
+					{
+						$limit: limit,
+					},
+				]);
+
+				const results = await Promise.all(
+					leaderboard.map(async (entry) => {
+						const user = await User.findById(entry._id);
+						return {
+							user,
+							hexCount: entry.hexCount,
+						};
+					})
+				);
+
+				console.log(
+					`✅ Found ${results.length} active leaders in region with hexagons:`,
+					results.map((r) => r.hexCount)
+				);
+
+				return results;
+			} catch (error) {
+				console.error('Error fetching regional active leaders:', error);
+				throw new GraphQLError('Failed to fetch regional active leaders');
+			}
+		},
+
+		regionalOGDiscoverers: async (
+			_: any,
+			{ parentHexagonIds, limit = 10 }: { parentHexagonIds: string[]; limit?: number },
+			context: GraphQLContext
+		) => {
+			requireAuth(context);
+
+			try {
+				console.log(
+					`🎖️ Fetching regional OG discoverers for ${parentHexagonIds.length} parent hexagons`
+				);
+
+				const leaderboard = await Hexagon.aggregate([
+					{
+						$match: {
+							parentHexagonId: { $in: parentHexagonIds },
+						},
+					},
+					{
+						$group: {
+							_id: '$firstCapturedBy',
+							hexCount: { $sum: 1 },
+						},
+					},
+					{
+						$sort: { hexCount: -1 },
+					},
+					{
+						$limit: limit,
+					},
+				]);
+
+				const results = await Promise.all(
+					leaderboard.map(async (entry) => {
+						const user = await User.findById(entry._id);
+						return {
+							user,
+							hexCount: entry.hexCount,
+						};
+					})
+				);
+
+				console.log(
+					`✅ Found ${results.length} OG discoverers in region with hexagons:`,
+					results.map((r) => r.hexCount)
+				);
+
+				return results;
+			} catch (error) {
+				console.error('Error fetching regional OG discoverers:', error);
+				throw new GraphQLError('Failed to fetch regional OG discoverers');
+			}
+		},
 	},
 
 	Mutation: {

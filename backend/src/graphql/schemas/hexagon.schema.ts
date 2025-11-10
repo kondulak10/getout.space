@@ -34,6 +34,11 @@ export const hexagonSchema = gql`
 		updatedAt: Date!
 	}
 
+	type LeaderboardEntry {
+		user: User!
+		hexCount: Int!
+	}
+
 	extend type Query {
 		"""
 		Get all hexagons owned by current user
@@ -88,6 +93,18 @@ export const hexagonSchema = gql`
 		Requires: Authentication + Admin
 		"""
 		hexagons(limit: Int, offset: Int): [Hexagon!]!
+
+		"""
+		Get regional leaderboard - users with most currently owned hexagons in the region
+		Requires: Authentication
+		"""
+		regionalActiveLeaders(parentHexagonIds: [String!]!, limit: Int): [LeaderboardEntry!]!
+
+		"""
+		Get regional OG discoverers - users who first discovered hexagons in the region (even if lost)
+		Requires: Authentication
+		"""
+		regionalOGDiscoverers(parentHexagonIds: [String!]!, limit: Int): [LeaderboardEntry!]!
 	}
 
 	extend type Mutation {

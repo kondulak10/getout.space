@@ -61,7 +61,6 @@ export interface AuthResponse {
 		};
 		tokenExpiresAt: number;
 		tokenIsExpired?: boolean;
-		scope: string;
 		createdAt: string;
 		updatedAt?: string;
 	};

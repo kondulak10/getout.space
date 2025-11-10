@@ -116,7 +116,6 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 				accessToken: data.access_token,
 				refreshToken: data.refresh_token,
 				tokenExpiresAt: data.expires_at,
-				scope: scope,
 				isAdmin: isAdminStravaId,
 				stravaProfile: {
 					firstname: data.athlete.firstname,
@@ -168,7 +167,6 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 		user.accessToken = data.access_token;
 		user.refreshToken = data.refresh_token;
 		user.tokenExpiresAt = data.expires_at;
-		user.scope = scope;
 		user.isAdmin = user.isAdmin || isAdminStravaId;
 		user.stravaProfile = {
 			firstname: data.athlete.firstname,
@@ -214,7 +212,6 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 				profile: user.stravaProfile,
 				tokenExpiresAt: user.tokenExpiresAt,
 				lastHex: user.lastHex,
-				scope: user.scope,
 			},
 		});
 	} catch (error: unknown) {
@@ -501,7 +498,6 @@ router.get('/api/auth/me', authenticateToken, async (req: AuthRequest, res: Resp
 				tokenExpiresAt: user.tokenExpiresAt,
 				createdAt: user.createdAt,
 				lastHex: user.lastHex,
-				scope: user.scope,
 			},
 		});
 	} catch (error: unknown) {
@@ -591,7 +587,6 @@ router.post(
 					profile: user.stravaProfile,
 					tokenExpiresAt: user.tokenExpiresAt,
 					createdAt: user.createdAt,
-					scope: user.scope,
 				},
 			});
 		} catch (error: unknown) {

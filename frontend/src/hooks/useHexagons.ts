@@ -5,6 +5,7 @@ import { useApolloClient, useLazyQuery } from "@apollo/client/react";
 import { gridDisk, latLngToCell } from "h3-js";
 import type { Map as MapboxMap } from "mapbox-gl";
 import React, { useCallback, useEffect, useState } from "react";
+import { useMap } from "@/contexts/useMap";
 
 interface UseHexagonsOptions {
 	mapRef: React.RefObject<MapboxMap | null>;
@@ -15,6 +16,7 @@ export const useHexagons = ({ mapRef, onHexagonClick }: UseHexagonsOptions) => {
 	const [visibleHexCount, setVisibleHexCount] = useState(0);
 	const [userCount, setUserCount] = useState(0);
 	const apolloClient = useApolloClient();
+	const { currentParentHexagonIds } = useMap();
 	const debounceTimeoutRef = React.useRef<number | null>(null);
 	const onHexagonClickRef = React.useRef(onHexagonClick);
 	const lastCenterHexRef = React.useRef<string | null>(null);
@@ -125,6 +127,9 @@ export const useHexagons = ({ mapRef, onHexagonClick }: UseHexagonsOptions) => {
 				}
 
 				const parentHexagonIds = gridDisk(centerParentHex, 1);
+
+				// Store current parent hexagon IDs in context for leaderboard
+				currentParentHexagonIds.current = parentHexagonIds;
 
 				updateParentVisualization(parentHexagonIds);
 

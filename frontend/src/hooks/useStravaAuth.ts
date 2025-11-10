@@ -122,7 +122,6 @@ export function useStravaAuth(options?: UseStravaAuthOptions) {
 					...data.user,
 					tokenIsExpired: data.user.tokenIsExpired ?? false,
 					updatedAt: data.user.updatedAt ?? data.user.createdAt,
-					scope: data.user.scope || 'read,activity:read_all',
 				};
 				login(data.token, user);
 

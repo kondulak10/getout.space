@@ -51,7 +51,10 @@
       "Bash(aws s3:*)",
       "Bash(aws iam get-role-policy:*)",
       "Bash(npm uninstall:*)",
-      "Bash(aws ecs list-services:*)"
+      "Bash(aws ecs list-services:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []

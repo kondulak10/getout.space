@@ -19,7 +19,6 @@ interface User {
   profile: StravaProfile;
   tokenExpiresAt: number;
   tokenIsExpired: boolean;
-  scope: string;
   createdAt: string;
   updatedAt: string;
   lastHex?: string; // Resolution 6 parent hex from most recent activity
