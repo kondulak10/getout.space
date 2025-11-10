@@ -48,7 +48,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 	} = useQuery(MyNotificationsDocument, {
 		variables: { limit: 20 },
 		skip: !isAuthenticated,
-		fetchPolicy: 'cache-and-network', // Use cache but also fetch fresh data
+		fetchPolicy: 'network-only', // Always fetch fresh data, no cache
 	});
 
 	// Mutations

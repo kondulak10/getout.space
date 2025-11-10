@@ -117,7 +117,7 @@ export function ProfilePage() {
 							className="flex items-center gap-2 bg-red-500/20 border border-red-500/40 text-red-400 px-4 py-2 rounded-lg hover:bg-red-500/30 hover:border-red-500/50 hover:text-red-300 transition-all cursor-pointer font-medium"
 						>
 							<FontAwesomeIcon icon="sign-out-alt" className="w-4 h-4" />
-							<span className="hidden md:inline">Logout</span>
+							<span>Logout</span>
 						</button>
 					</div>
 				</div>

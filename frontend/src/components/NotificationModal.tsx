@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark, faBell, faSpinner } from '@fortawesome/pro-solid-svg-icons';
 import { NotificationItem } from './NotificationItem';
@@ -8,7 +9,13 @@ interface NotificationModalProps {
 }
 
 export function NotificationModal({ onClose }: NotificationModalProps) {
-	const { notifications, loading, unreadCount, markAllAsRead } = useNotifications();
+	const { notifications, loading, unreadCount, markAllAsRead, refetch } = useNotifications();
+
+	// Refetch notifications when modal opens
+	useEffect(() => {
+		console.log('📬 NotificationModal opened - refetching notifications...');
+		refetch();
+	}, [refetch]);
 
 	const handleClose = () => {
 		try {
