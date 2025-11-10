@@ -36,6 +36,27 @@ export const hexagonResolvers = {
 		},
 	},
 
+	CaptureHistoryEntry: {
+		user: async (parent: ICaptureHistoryEntry) => {
+			try {
+				const user = await User.findById(parent.userId);
+				return user;
+			} catch (error) {
+				console.error('Error fetching user for capture history entry:', error);
+				return null;
+			}
+		},
+		activity: async (parent: ICaptureHistoryEntry) => {
+			try {
+				const activity = await Activity.findById(parent.activityId);
+				return activity;
+			} catch (error) {
+				console.error('Error fetching activity for capture history entry:', error);
+				return null;
+			}
+		},
+	},
+
 	Query: {
 		myHexagons: async (
 			_: any,
@@ -46,6 +67,7 @@ export const hexagonResolvers = {
 
 			try {
 				const hexagons = await Hexagon.find({ currentOwnerId: user._id })
+					.select('-captureHistory')
 					.sort({ lastCapturedAt: -1 })
 					.limit(limit)
 					.skip(offset);
@@ -66,6 +88,7 @@ export const hexagonResolvers = {
 			try {
 				const MAX_HEXAGONS = 5000;
 				const hexagons = await Hexagon.find({ currentOwnerId: user._id })
+					.select('-captureHistory')
 					.limit(MAX_HEXAGONS)
 					.sort({ lastCapturedAt: -1 });
 
@@ -98,7 +121,10 @@ export const hexagonResolvers = {
 
 			try {
 				const MAX_HEXAGONS = 10000;
-				const hexagons = await Hexagon.find({}).limit(MAX_HEXAGONS).sort({ lastCapturedAt: -1 });
+				const hexagons = await Hexagon.find({})
+					.select('-captureHistory')
+					.limit(MAX_HEXAGONS)
+					.sort({ lastCapturedAt: -1 });
 
 				const hexagonsInBbox = hexagons.filter((hex) => {
 					const center = h3.cellToLatLng(hex.hexagonId);
@@ -120,31 +146,6 @@ export const hexagonResolvers = {
 			}
 		},
 
-		myHexagonsByParents: async (
-			_: any,
-			{ parentHexagonIds }: { parentHexagonIds: string[] },
-			context: GraphQLContext
-		) => {
-			const user = requireAuth(context);
-
-			try {
-				console.log(`📡 Fetching user hexagons under ${parentHexagonIds.length} parent hexagons`);
-
-				const hexagons = await Hexagon.find({
-					parentHexagonId: { $in: parentHexagonIds },
-					currentOwnerId: user._id,
-				});
-
-				console.log(
-					`✅ Fetched ${hexagons.length} user hexagons from ${parentHexagonIds.length} parents`
-				);
-				return hexagons;
-			} catch (error) {
-				console.error('Error fetching user hexagons by parents:', error);
-				throw new GraphQLError('Failed to fetch hexagons by parent IDs');
-			}
-		},
-
 		hexagonsByParents: async (
 			_: any,
 			{ parentHexagonIds }: { parentHexagonIds: string[] },
@@ -157,7 +158,7 @@ export const hexagonResolvers = {
 
 				const hexagons = await Hexagon.find({
 					parentHexagonId: { $in: parentHexagonIds },
-				});
+				}).select('-captureHistory');
 
 				console.log(
 					`✅ Fetched ${hexagons.length} hexagons from ${parentHexagonIds.length} parents`
@@ -166,18 +167,6 @@ export const hexagonResolvers = {
 			} catch (error) {
 				console.error('Error fetching hexagons by parents:', error);
 				throw new GraphQLError('Failed to fetch hexagons by parent IDs');
-			}
-		},
-
-		myHexagonsCount: async (_: any, __: any, context: GraphQLContext) => {
-			const user = requireAuth(context);
-
-			try {
-				const count = await Hexagon.countDocuments({ currentOwnerId: user._id });
-				return count;
-			} catch (error) {
-				console.error('Error counting user hexagons:', error);
-				throw new GraphQLError('Failed to count hexagons');
 			}
 		},
 
@@ -202,6 +191,7 @@ export const hexagonResolvers = {
 
 			try {
 				const hexagons = await Hexagon.find({ currentOwnerId: userId })
+					.select('-captureHistory')
 					.sort({ lastCapturedAt: -1 })
 					.limit(limit)
 					.skip(offset);
@@ -232,7 +222,10 @@ export const hexagonResolvers = {
 			requireAuth(context);
 
 			try {
-				const hexagons = await Hexagon.find().sort({ captureCount: -1 }).limit(limit);
+				const hexagons = await Hexagon.find()
+					.select('-captureHistory')
+					.sort({ captureCount: -1 })
+					.limit(limit);
 				return hexagons;
 			} catch (error) {
 				console.error('Error fetching contested hexagons:', error);
@@ -249,6 +242,7 @@ export const hexagonResolvers = {
 
 			try {
 				const hexagons = await Hexagon.find()
+					.select('-captureHistory')
 					.sort({ lastCapturedAt: -1 })
 					.limit(limit)
 					.skip(offset);

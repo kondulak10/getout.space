@@ -59,20 +59,6 @@ mutation RefreshUserToken($id: ID!) {
 	}
 }
 
-query MyHexagonsByParents($parentHexagonIds: [String!]!) {
-	myHexagonsByParents(parentHexagonIds: $parentHexagonIds) {
-		hexagonId
-		currentOwnerId
-		currentOwnerStravaId
-		currentOwnerIsPremium
-		currentOwnerImghex
-		currentStravaActivityId
-		activityType
-		captureCount
-		lastCapturedAt
-	}
-}
-
 query HexagonsByParents($parentHexagonIds: [String!]!) {
 	hexagonsByParents(parentHexagonIds: $parentHexagonIds) {
 		hexagonId
@@ -91,6 +77,24 @@ query HexagonDetail($hexagonId: String!) {
 	hexagon(hexagonId: $hexagonId) {
 		hexagonId
 		captureCount
+		firstCapturedAt
+		lastCapturedAt
+		currentOwner {
+			id
+			stravaId
+			stravaProfile {
+				firstname
+				profile
+			}
+		}
+		firstCapturedBy {
+			id
+			stravaId
+			stravaProfile {
+				firstname
+				profile
+			}
+		}
 		currentActivity {
 			id
 			stravaActivityId
@@ -100,11 +104,30 @@ query HexagonDetail($hexagonId: String!) {
 			startDateLocal
 			movingTime
 		}
+		captureHistory {
+			userId
+			user {
+				id
+				stravaId
+				stravaProfile {
+					firstname
+					profile
+				}
+			}
+			stravaId
+			activityId
+			activity {
+				id
+				stravaActivityId
+				distance
+				averageSpeed
+				startDateLocal
+			}
+			stravaActivityId
+			capturedAt
+			activityType
+		}
 	}
-}
-
-query MyHexagonsCount {
-	myHexagonsCount
 }
 
 mutation DeleteMyAccount {

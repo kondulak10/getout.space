@@ -8,12 +8,10 @@ import { ActivitiesManagerModal } from "./ActivitiesManagerModal";
 import "./HexOverlay.css";
 
 interface HexOverlayProps {
-	view: "only-you" | "battle";
-	onViewChange: (view: "only-you" | "battle") => void;
 	onActivityChanged?: () => void;
 }
 
-export function HexOverlay({ view, onViewChange, onActivityChanged }: HexOverlayProps) {
+export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 	const { user } = useAuth();
 	const { latestActivity } = useUserActivities();
 	const [mobileExpanded, setMobileExpanded] = useState(false);
@@ -84,34 +82,6 @@ export function HexOverlay({ view, onViewChange, onActivityChanged }: HexOverlay
 						>
 							<FontAwesomeIcon icon="cog" className="w-3.5 h-3.5" />
 						</button>
-					</div>
-
-					<div className="mb-3">
-						<div className="relative flex bg-white/5 border border-white/10 rounded-lg p-0.5 overflow-hidden">
-							<div
-								className={`hex-switch-slider absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] rounded-md transition-all z-0 animate-holographic ${
-									view === "only-you" ? "left-1/2" : "left-0.5"
-								}`}
-							></div>
-							<button
-								onClick={() => onViewChange(view === "battle" ? "only-you" : "battle")}
-								className={`flex-1 relative z-10 flex items-center justify-center px-2 py-1.5 text-xs font-medium bg-transparent border-0 transition-all cursor-pointer ${
-									view === "battle" ? "text-white" : "text-white/30"
-								}`}
-							>
-								<FontAwesomeIcon icon="swords" className="w-3 h-3 mr-1.5" />
-								Battle
-							</button>
-							<button
-								onClick={() => onViewChange(view === "only-you" ? "battle" : "only-you")}
-								className={`flex-1 relative z-10 flex items-center justify-center px-2 py-1.5 text-xs font-medium bg-transparent border-0 transition-all cursor-pointer ${
-									view === "only-you" ? "text-white" : "text-white/30"
-								}`}
-							>
-								<FontAwesomeIcon icon="user" className="w-3 h-3 mr-1.5" />
-								Solo
-							</button>
-						</div>
 					</div>
 
 					{latestActivity && (
@@ -204,32 +174,6 @@ export function HexOverlay({ view, onViewChange, onActivityChanged }: HexOverlay
 
 				<div className="bg-[rgba(10,10,10,0.95)] backdrop-blur-md border-t border-white/10 p-2">
 					<div className="flex items-center justify-center gap-2">
-						<div className="flex-shrink-0 relative flex bg-white/5 border border-white/10 rounded-lg p-0.5 overflow-hidden" style={{ width: '180px', height: '44px' }}>
-							<div
-								className={`hex-switch-slider absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] rounded-md transition-all z-0 ${
-									view === "only-you" ? "left-1/2" : "left-0.5"
-								}`}
-							></div>
-							<button
-								onClick={() => onViewChange(view === "battle" ? "only-you" : "battle")}
-								className={`flex-1 relative z-10 flex items-center justify-center gap-1.5 py-2 text-xs font-medium bg-transparent border-0 cursor-pointer ${
-									view === "battle" ? "text-white" : "text-white/30"
-								}`}
-							>
-								<FontAwesomeIcon icon="swords" className="w-4 h-4" />
-								<span>Battle</span>
-							</button>
-							<button
-								onClick={() => onViewChange(view === "only-you" ? "battle" : "only-you")}
-								className={`flex-1 relative z-10 flex items-center justify-center gap-1.5 py-2 text-xs font-medium bg-transparent border-0 cursor-pointer ${
-									view === "only-you" ? "text-white" : "text-white/30"
-								}`}
-							>
-								<FontAwesomeIcon icon="user" className="w-4 h-4" />
-								<span>Solo</span>
-							</button>
-						</div>
-
 						<button
 							onClick={() => setMobileExpanded(!mobileExpanded)}
 							className="flex-shrink-0 bg-white/5 border border-white/10 text-gray-300 p-2.5 rounded-md cursor-pointer"

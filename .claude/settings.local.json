@@ -45,7 +45,9 @@
       "Bash(export MSYS_NO_PATHCONV=1)",
       "Bash(aws logs describe-log-streams:*)",
       "Bash(aws logs get-log-events:*)",
-      "Bash(printenv:*)"
+      "Bash(printenv:*)",
+      "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\components\\MapViewToggle.tsx\")",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": []

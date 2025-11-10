@@ -1,29 +1,23 @@
 import { getUserColor } from "@/constants/hexagonColors";
-import {
-	HexagonsByParentsDocument,
-	MyHexagonsByParentsDocument,
-	MyHexagonsCountDocument,
-} from "@/gql/graphql";
+import { HexagonsByParentsDocument } from "@/gql/graphql";
 import { h3ToGeoJSON } from "@/utils/hexagonUtils";
-import { useApolloClient, useLazyQuery, useQuery } from "@apollo/client/react";
+import { useApolloClient, useLazyQuery } from "@apollo/client/react";
 import { gridDisk, latLngToCell } from "h3-js";
 import type { Map as MapboxMap } from "mapbox-gl";
 import React, { useCallback, useEffect, useState } from "react";
 
 interface UseHexagonsOptions {
 	mapRef: React.RefObject<MapboxMap | null>;
-	mode: "only-you" | "battle";
 	onHexagonClick?: (hexagonId: string) => void;
 }
 
-export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions) => {
+export const useHexagons = ({ mapRef, onHexagonClick }: UseHexagonsOptions) => {
 	const [visibleHexCount, setVisibleHexCount] = useState(0);
 	const [userCount, setUserCount] = useState(0);
 	const apolloClient = useApolloClient();
 	const debounceTimeoutRef = React.useRef<number | null>(null);
 	const onHexagonClickRef = React.useRef(onHexagonClick);
 	const lastCenterHexRef = React.useRef<string | null>(null);
-	const modeRef = React.useRef(mode);
 	const isMountedRef = React.useRef(true);
 	const clickHandlerRef = React.useRef<((e: mapboxgl.MapMouseEvent) => void) | null>(null);
 	const mouseEnterHandlerRef = React.useRef<(() => void) | null>(null);
@@ -32,28 +26,17 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 
 	useEffect(() => {
 		apolloClient.cache.evict({ fieldName: "hexagonsByParents" });
-		apolloClient.cache.evict({ fieldName: "myHexagonsByParents" });
 		apolloClient.cache.gc();
 	}, [apolloClient]);
 
 	useEffect(() => {
 		onHexagonClickRef.current = onHexagonClick;
-		modeRef.current = mode;
-	}, [onHexagonClick, mode]);
+	}, [onHexagonClick]);
 
-	const { data: countData } = useQuery(MyHexagonsCountDocument, {
-		skip: mode !== "only-you",
-	});
-
-	const [fetchMyHexagons, { data: myHexagonsData, loading: myLoading }] = useLazyQuery(
-		MyHexagonsByParentsDocument
-	);
-	const [fetchAllHexagons, { data: allHexagonsData, loading: allLoading }] =
+	const [fetchAllHexagons, { data: allHexagonsData, loading }] =
 		useLazyQuery(HexagonsByParentsDocument);
 
-	const hexagonsData =
-		mode === "only-you" ? myHexagonsData?.myHexagonsByParents : allHexagonsData?.hexagonsByParents;
-	const loading = mode === "only-you" ? myLoading : allLoading;
+	const hexagonsData = allHexagonsData?.hexagonsByParents;
 
 	const setupParentLayer = useCallback(() => {
 		if (!mapRef.current) return;
@@ -131,8 +114,6 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 
 			if (!bounds) return;
 
-			const currentMode = modeRef.current;
-
 			try {
 				const centerLat = (bounds.getNorth() + bounds.getSouth()) / 2;
 				const centerLng = (bounds.getEast() + bounds.getWest()) / 2;
@@ -147,16 +128,12 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 
 				updateParentVisualization(parentHexagonIds);
 
-				if (currentMode === "only-you") {
-					fetchMyHexagons({ variables: { parentHexagonIds } });
-				} else {
-					fetchAllHexagons({ variables: { parentHexagonIds } });
-				}
+				fetchAllHexagons({ variables: { parentHexagonIds } });
 			} catch (error) {
 				console.error("Error in updateHexagons:", error);
 			}
 		}, 300);
-	}, [mapRef, fetchMyHexagons, fetchAllHexagons, updateParentVisualization]);
+	}, [mapRef, fetchAllHexagons, updateParentVisualization]);
 
 	// Initialize ref immediately - before any effects run
 	updateHexagonsRef.current = updateHexagonsImpl;
@@ -167,9 +144,9 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 	}, [updateHexagonsImpl]);
 
 	// Stable wrapper that always calls the latest version
-	const updateHexagons = useCallback(() => {
-		updateHexagonsRef.current?.();
-	}, []);
+	// const updateHexagons = useCallback(() => {
+	// 	updateHexagonsRef.current?.();
+	// }, []);
 
 	const refetchHexagons = useCallback(() => {
 		// Clear cache and force update on next moveend
@@ -205,10 +182,8 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 			new Date().toISOString()
 		);
 
-		if (mode === "battle") {
-			const uniqueUsers = new Set(hexagonsData.map((hex) => hex.currentOwnerId));
-			setUserCount(uniqueUsers.size);
-		}
+		const uniqueUsers = new Set(hexagonsData.map((hex) => hex.currentOwnerId));
+		setUserCount(uniqueUsers.size);
 
 		const features = hexagonsData.map((hex) => {
 			const feature = h3ToGeoJSON(hex.hexagonId);
@@ -250,7 +225,7 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 		} catch (error) {
 			console.error("Error calculating parent hex for cache:", error);
 		}
-	}, [hexagonsData, mapRef, mode]);
+	}, [hexagonsData, mapRef]);
 
 	// Separate effect to attach/detach map event listeners with stable references
 	useEffect(() => {
@@ -340,15 +315,7 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 		};
 	}, [mapRef, clearCenterCache, updateHexagonsImpl]);
 
-	useEffect(() => {
-		if (!mapRef.current) return;
-
-		clearCenterCache();
-		updateHexagons();
-	}, [mode, mapRef, clearCenterCache, updateHexagons]);
-
 	return {
-		totalHexCount: countData?.myHexagonsCount ?? 0,
 		visibleHexCount,
 		userCount,
 		loading,

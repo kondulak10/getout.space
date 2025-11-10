@@ -289,11 +289,14 @@ resource "aws_cloudfront_distribution" "cdn" {
   provider = aws.main
 
   origin {
-    domain_name = aws_s3_bucket.website.bucket_regional_domain_name
+    domain_name = aws_s3_bucket_website_configuration.website.website_endpoint
     origin_id   = "S3-CDN-${var.domain_name}"
 
-    s3_origin_config {
-      origin_access_identity = aws_cloudfront_origin_access_identity.oai.cloudfront_access_identity_path
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
     }
   }
 
@@ -307,7 +310,7 @@ resource "aws_cloudfront_distribution" "cdn" {
     target_origin_id = "S3-CDN-${var.domain_name}"
 
     forwarded_values {
-      query_string = true # Enable cache-busting with ?t=timestamp
+      query_string = true  # Use query strings for cache busting with ?t=timestamp
 
       cookies {
         forward = "none"

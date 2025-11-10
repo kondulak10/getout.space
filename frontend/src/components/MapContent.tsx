@@ -5,19 +5,16 @@ import { useMap } from "@/contexts/useMap";
 import { useActivityProfileImages } from "@/hooks/useActivityProfileImages";
 import { useHexagonSelection } from "@/hooks/useHexagonSelection";
 import { useHexagons } from "@/hooks/useHexagons";
-import { useMapView } from "@/hooks/useMapView";
 import { useEffect } from "react";
 
 export function MapContent() {
 	const { mapRef, refetchHexagonsRef } = useMap();
 
-	const { mapView, setMapView } = useMapView();
 	const { selectedHexagon, hexagonDetailLoading, handleHexagonClick, clearSelection } =
 		useHexagonSelection();
 
 	const { loading, refetchHexagons, hexagonsData } = useHexagons({
 		mapRef,
-		mode: mapView,
 		onHexagonClick: handleHexagonClick,
 	});
 
@@ -38,17 +35,13 @@ export function MapContent() {
 	return (
 		<>
 			<HexOverlay
-				view={mapView}
-				onViewChange={setMapView}
 				onActivityChanged={handleActivityChanged}
 			/>
 			<HexagonLoadingIndicator isLoading={loading} />
 
 			{(selectedHexagon || hexagonDetailLoading) && (
 				<HexagonDetailModal
-					activity={selectedHexagon?.activity}
-					hexagonId={selectedHexagon?.hexagonId}
-					captureCount={selectedHexagon?.captureCount}
+					hexagonData={selectedHexagon ?? undefined}
 					loading={hexagonDetailLoading}
 					onClose={clearSelection}
 				/>
