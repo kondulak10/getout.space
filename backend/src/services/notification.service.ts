@@ -77,8 +77,7 @@ export const notificationService = {
 			.sort({ createdAt: -1 })
 			.limit(limit)
 			.skip(offset)
-			.populate('triggeredById', 'stravaProfile.firstname stravaProfile.username')
-			.populate('relatedActivityId', 'name type');
+			.lean(); // Use lean() for better performance - no Mongoose document overhead
 	},
 
 	/**
@@ -91,9 +90,7 @@ export const notificationService = {
 			.sort({ createdAt: -1 })
 			.limit(limit)
 			.skip(offset)
-			.populate('ownerId', 'stravaProfile.firstname stravaProfile.username stravaId')
-			.populate('triggeredById', 'stravaProfile.firstname stravaProfile.username stravaId')
-			.populate('relatedActivityId', 'name type stravaActivityId');
+			.lean(); // Use lean() for better performance - no Mongoose document overhead
 	},
 
 	/**
