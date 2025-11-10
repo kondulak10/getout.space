@@ -42,8 +42,11 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 
 		if (!scope.includes('activity:read_all')) {
 			return res.status(403).json({
-				error: 'Insufficient permissions',
-				details: `Required scope 'activity:read_all' not granted. Granted scope: '${scope}'`
+				error: 'Insufficient Permissions',
+				details: `GetOut needs access to all your activities (including private ones) to work properly. ` +
+					`You declined the 'View data about your private activities' permission. ` +
+					`Please try registering again and accept all permissions. ` +
+					`(Granted: '${scope}', Required: 'read,activity:read_all')`
 			});
 		}
 

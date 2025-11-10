@@ -54,16 +54,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				};
 				setUser(newUser);
 
-				// Check if user has insufficient permissions
-				const hasActivityReadAll = userData.me.scope.includes('activity:read_all');
-				if (!hasActivityReadAll) {
-					alert(
-						"Unfortunately, during registration you did not grant us the 'activity:read_all' permission. " +
-						"The app cannot work properly with limited settings. " +
-						"Please delete your user account and login again to grant the required permissions. " +
-						"Sorry for the inconvenience."
-					);
-				}
+				// Note: Scope validation now happens during registration in backend.
+				// Users cannot register without 'activity:read_all' permission.
 
 				const now = Math.floor(Date.now() / 1000);
 				const timeUntilExpiry = userData.me.tokenExpiresAt - now;
