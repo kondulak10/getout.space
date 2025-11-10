@@ -1,4 +1,4 @@
-import { IUser } from '@/models/User';
+import { IUser } from '../models/User';
 
 export async function refreshStravaToken(user: IUser): Promise<{
 	access_token: string;

@@ -1,15 +1,15 @@
 import { Request, Response, Router } from 'express';
-import { User } from '@/models/User';
-import { generateToken } from '@/utils/jwt';
-import { authenticateToken, AuthRequest } from '@/middleware/auth';
+import { User } from '../models/User';
+import { generateToken } from '../utils/jwt';
+import { authenticateToken, AuthRequest } from '../middleware/auth';
 import {
 	processActivity,
 	deleteActivityAndRestoreHexagons,
-} from '@/services/activityProcessing.service';
-import { StravaOAuthTokenResponse, StravaActivity, StravaAthleteStats } from '@/types/strava.types';
-import { Activity } from '@/models/Activity';
-import { processAndUploadProfileImage } from '@/utils/imageProcessing';
-import { geocodeToHex } from '@/utils/geocoding';
+} from '../services/activityProcessing.service';
+import { StravaOAuthTokenResponse, StravaActivity, StravaAthleteStats } from '../types/strava.types';
+import { Activity } from '../models/Activity';
+import { processAndUploadProfileImage } from '../utils/imageProcessing';
+import { geocodeToHex } from '../utils/geocoding';
 
 const router = Router();
 

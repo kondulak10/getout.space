@@ -1,9 +1,9 @@
 import { GraphQLError } from 'graphql';
 import * as h3 from 'h3-js';
-import { User } from '@/models/User';
-import { Activity } from '@/models/Activity';
-import { Hexagon, IHexagon, ICaptureHistoryEntry } from '@/models/Hexagon';
-import { GraphQLContext, requireAuth, requireAdmin } from '@/graphql/resolvers/auth.helpers';
+import { User } from '../../models/User';
+import { Activity } from '../../models/Activity';
+import { Hexagon, IHexagon, ICaptureHistoryEntry } from '../../models/Hexagon';
+import { GraphQLContext, requireAuth, requireAdmin } from './auth.helpers';
 
 export const hexagonResolvers = {
 	Hexagon: {

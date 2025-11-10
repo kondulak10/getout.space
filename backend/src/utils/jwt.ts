@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { IUser } from '@/models/User';
+import { IUser } from '../models/User';
 
 const JWT_SECRET_RAW = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = '7d';

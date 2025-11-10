@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { User, IUser } from '@/models/User';
-import { verifyToken, extractTokenFromHeader, JWTPayload } from '@/utils/jwt';
+import { User, IUser } from '../models/User';
+import { verifyToken, extractTokenFromHeader, JWTPayload } from '../utils/jwt';
 
 export interface AuthRequest extends Request {
 	user?: IUser;

@@ -1,8 +1,8 @@
 import { GraphQLError } from 'graphql';
-import { User } from '@/models/User';
-import { Activity, IActivity } from '@/models/Activity';
-import { Hexagon } from '@/models/Hexagon';
-import { GraphQLContext, requireAuth, requireAdmin } from '@/graphql/resolvers/auth.helpers';
+import { User } from '../../models/User';
+import { Activity, IActivity } from '../../models/Activity';
+import { Hexagon } from '../../models/Hexagon';
+import { GraphQLContext, requireAuth, requireAdmin } from './auth.helpers';
 import mongoose from 'mongoose';
 
 export const activityResolvers = {

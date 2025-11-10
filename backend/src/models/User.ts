@@ -1,5 +1,5 @@
 import mongoose, { Document, Schema } from 'mongoose';
-import { encrypt, decrypt } from '@/utils/encryption';
+import { encrypt, decrypt } from '../utils/encryption';
 
 export interface IStravaProfile {
 	firstname: string;

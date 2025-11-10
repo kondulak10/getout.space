@@ -1,5 +1,5 @@
 import { latLngToCell, polygonToCells, gridPathCells } from 'h3-js';
-import { H3_RESOLUTION, CLOSE_THRESHOLD } from '@/constants/map';
+import { H3_RESOLUTION, CLOSE_THRESHOLD } from '../constants/map';
 
 export type RouteType = 'line' | 'area';
 

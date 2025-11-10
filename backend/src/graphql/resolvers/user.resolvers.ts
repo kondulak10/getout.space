@@ -1,9 +1,9 @@
 import { GraphQLError } from 'graphql';
-import { User, IUser } from '@/models/User';
-import { Activity } from '@/models/Activity';
-import { Hexagon } from '@/models/Hexagon';
-import { refreshStravaToken } from '@/utils/strava';
-import { GraphQLContext, requireAuth, requireAdmin } from '@/graphql/resolvers/auth.helpers';
+import { User, IUser } from '../../models/User';
+import { Activity } from '../../models/Activity';
+import { Hexagon } from '../../models/Hexagon';
+import { refreshStravaToken } from '../../utils/strava';
+import { GraphQLContext, requireAuth, requireAdmin } from './auth.helpers';
 
 export const userResolvers = {
 	User: {

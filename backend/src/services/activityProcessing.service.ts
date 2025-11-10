@@ -1,16 +1,16 @@
 import mongoose from 'mongoose';
 import polyline from '@mapbox/polyline';
 import * as h3 from 'h3-js';
-import { Activity, IActivity } from '@/models/Activity';
-import { Hexagon, IHexagon } from '@/models/Hexagon';
-import { IUser } from '@/models/User';
-import { analyzeRouteAndConvertToHexagons } from '@/utils/routeToHexagons';
+import { Activity, IActivity } from '../models/Activity';
+import { Hexagon, IHexagon } from '../models/Hexagon';
+import { IUser } from '../models/User';
+import { analyzeRouteAndConvertToHexagons } from '../utils/routeToHexagons';
 import {
 	fetchStravaActivity,
 	getValidAccessToken,
 	isRunningActivity,
-} from '@/services/strava.service';
-import { notificationService } from '@/services/notification.service';
+} from './strava.service';
+import { notificationService } from './notification.service';
 
 export interface ProcessActivityResult {
 	activity: {

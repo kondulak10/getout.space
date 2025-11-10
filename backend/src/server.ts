@@ -1,16 +1,15 @@
-import 'module-alias/register';
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
-import { connectDatabase } from '@/config/database';
-import { typeDefs } from '@/graphql/schemas/index';
-import { resolvers } from '@/graphql/resolvers/index';
-import testRoutes from '@/routes/test.routes';
-import stravaRoutes from '@/routes/strava.routes';
-import webhookRoutes from '@/routes/webhook.routes';
+import { connectDatabase } from './config/database';
+import { typeDefs } from './graphql/schemas/index';
+import { resolvers } from './graphql/resolvers/index';
+import testRoutes from './routes/test.routes';
+import stravaRoutes from './routes/strava.routes';
+import webhookRoutes from './routes/webhook.routes';
 import expressPlayground from 'graphql-playground-middleware-express';
 
 const PORT = process.env.PORT || 4000;

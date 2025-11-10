@@ -1,5 +1,5 @@
 import { GraphQLError } from 'graphql';
-import { IUser } from '@/models/User';
+import { IUser } from '../../models/User';
 
 export interface GraphQLContext {
 	user?: IUser;

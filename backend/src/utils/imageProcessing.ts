@@ -1,6 +1,6 @@
 import { createCanvas, loadImage } from 'canvas';
 import axios from 'axios';
-import { uploadImageToS3, getProfileImageKey } from '@/utils/s3Upload';
+import { uploadImageToS3, getProfileImageKey } from './s3Upload';
 
 async function downloadImage(url: string): Promise<Buffer> {
 	try {

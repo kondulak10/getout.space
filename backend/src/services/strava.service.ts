@@ -1,5 +1,5 @@
-import { User } from '@/models/User';
-import { refreshStravaToken } from '@/utils/strava';
+import { User } from '../models/User';
+import { refreshStravaToken } from '../utils/strava';
 
 export async function getValidAccessToken(userId: string): Promise<string> {
 	const user = await User.findById(userId);

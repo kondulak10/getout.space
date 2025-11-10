@@ -1,8 +1,8 @@
 import { gql } from 'graphql-tag';
-import { userSchema } from '@/graphql/schemas/user.schema';
-import { activitySchema } from '@/graphql/schemas/activity.schema';
-import { hexagonSchema } from '@/graphql/schemas/hexagon.schema';
-import { notificationTypeDefs } from '@/graphql/schemas/notification.schema';
+import { userSchema } from './user.schema';
+import { activitySchema } from './activity.schema';
+import { hexagonSchema } from './hexagon.schema';
+import { notificationTypeDefs } from './notification.schema';
 
 const baseSchema = gql`
 	scalar Date

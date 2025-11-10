@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import * as version from '@/version';
+import * as version from '../version';
 
 const router = Router();
 

@@ -1,7 +1,7 @@
 import { Request, Response, Router } from 'express';
-import { User } from '@/models/User';
-import { processActivity } from '@/services/activityProcessing.service';
-import { sendSlackNotification } from '@/services/slack.service';
+import { User } from '../models/User';
+import { processActivity } from '../services/activityProcessing.service';
+import { sendSlackNotification } from '../services/slack.service';
 
 const router = Router();
 

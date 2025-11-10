@@ -1,11 +1,11 @@
 import merge from 'lodash/merge';
-import { userResolvers } from '@/graphql/resolvers/user.resolvers';
-import { activityResolvers } from '@/graphql/resolvers/activity.resolvers';
-import { hexagonResolvers } from '@/graphql/resolvers/hexagon.resolvers';
-import { notificationResolvers } from '@/graphql/resolvers/notification.resolvers';
-import { DateScalar } from '@/graphql/scalars/date.scalar';
+import { userResolvers } from './user.resolvers';
+import { activityResolvers } from './activity.resolvers';
+import { hexagonResolvers } from './hexagon.resolvers';
+import { notificationResolvers } from './notification.resolvers';
+import { DateScalar } from '../scalars/date.scalar';
 
-export { GraphQLContext } from '@/graphql/resolvers/auth.helpers';
+export { GraphQLContext } from './auth.helpers';
 
 const dateResolvers = {
 	Date: DateScalar,
