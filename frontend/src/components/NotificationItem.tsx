@@ -21,8 +21,8 @@ interface NotificationItemProps {
 		type: 'positive' | 'negative' | 'neutral';
 		message: string;
 		read: boolean;
-		relatedActivityId?: string;
-		createdAt: string;
+		relatedActivityId: string | null;
+		createdAt: unknown;
 	};
 	onClose: () => void;
 }
@@ -66,7 +66,7 @@ export function NotificationItem({ notification, onClose }: NotificationItemProp
 				<div className="flex-1 min-w-0">
 					<p className="text-sm text-gray-200">{notification.message}</p>
 					<p className="text-xs text-gray-500 mt-1">
-						{formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+						{formatDistanceToNow(new Date(notification.createdAt as string), { addSuffix: true })}
 					</p>
 				</div>
 

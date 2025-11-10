@@ -1,12 +1,12 @@
 import { createContext, useContext, ReactNode } from 'react';
 import { useQuery, useMutation } from '@apollo/client/react';
 import {
-	MY_UNREAD_NOTIFICATION_COUNT,
-	MY_NOTIFICATIONS,
-	MARK_NOTIFICATION_AS_READ,
-	MARK_ALL_NOTIFICATIONS_AS_READ,
-	DELETE_NOTIFICATION,
-} from '@/graphql/notifications';
+	MyUnreadNotificationCountDocument,
+	MyNotificationsDocument,
+	MarkNotificationAsReadDocument,
+	MarkAllNotificationsAsReadDocument,
+	DeleteNotificationDocument,
+} from '@/gql/graphql';
 import { useAuth } from '@/contexts/useAuth';
 
 interface Notification {
@@ -14,8 +14,8 @@ interface Notification {
 	type: 'positive' | 'negative' | 'neutral';
 	message: string;
 	read: boolean;
-	relatedActivityId?: string;
-	createdAt: string;
+	relatedActivityId: string | null;
+	createdAt: unknown;
 }
 
 interface NotificationContextType {
@@ -34,7 +34,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 	const { isAuthenticated } = useAuth();
 
 	// Query for unread count with polling every 30 seconds
-	const { data: countData, refetch: refetchCount } = useQuery(MY_UNREAD_NOTIFICATION_COUNT, {
+	const { data: countData, refetch: refetchCount } = useQuery(MyUnreadNotificationCountDocument, {
 		skip: !isAuthenticated,
 		pollInterval: 30000, // Poll every 30 seconds
 		fetchPolicy: 'network-only', // Always fetch fresh data
@@ -45,23 +45,23 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 		data: notificationsData,
 		loading,
 		refetch: refetchNotifications,
-	} = useQuery(MY_NOTIFICATIONS, {
+	} = useQuery(MyNotificationsDocument, {
 		variables: { limit: 20 },
 		skip: !isAuthenticated,
 		fetchPolicy: 'cache-and-network', // Use cache but also fetch fresh data
 	});
 
 	// Mutations
-	const [markAsReadMutation] = useMutation(MARK_NOTIFICATION_AS_READ, {
-		refetchQueries: [MY_UNREAD_NOTIFICATION_COUNT, MY_NOTIFICATIONS],
+	const [markAsReadMutation] = useMutation(MarkNotificationAsReadDocument, {
+		refetchQueries: [MyUnreadNotificationCountDocument, MyNotificationsDocument],
 	});
 
-	const [markAllAsReadMutation] = useMutation(MARK_ALL_NOTIFICATIONS_AS_READ, {
-		refetchQueries: [MY_UNREAD_NOTIFICATION_COUNT, MY_NOTIFICATIONS],
+	const [markAllAsReadMutation] = useMutation(MarkAllNotificationsAsReadDocument, {
+		refetchQueries: [MyUnreadNotificationCountDocument, MyNotificationsDocument],
 	});
 
-	const [deleteNotificationMutation] = useMutation(DELETE_NOTIFICATION, {
-		refetchQueries: [MY_UNREAD_NOTIFICATION_COUNT, MY_NOTIFICATIONS],
+	const [deleteNotificationMutation] = useMutation(DeleteNotificationDocument, {
+		refetchQueries: [MyUnreadNotificationCountDocument, MyNotificationsDocument],
 	});
 
 	const markAsRead = async (id: string) => {

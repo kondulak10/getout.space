@@ -7,8 +7,9 @@ import {
 	GetUsersCountDocument,
 	GetHexagonsCountDocument,
 	GetActivitiesCountDocument,
+	AllNotificationsDocument,
+	NotificationsCountDocument,
 } from "@/gql/graphql";
-import { ALL_NOTIFICATIONS, NOTIFICATIONS_COUNT } from "@/graphql/notifications";
 import { useState } from "react";
 import { HEXAGON_COLORS } from "@/constants/hexagonColors";
 
@@ -20,7 +21,7 @@ export default function AdminPage() {
 	const { data: usersCountData } = useQuery(GetUsersCountDocument);
 	const { data: hexagonsCountData } = useQuery(GetHexagonsCountDocument);
 	const { data: activitiesCountData } = useQuery(GetActivitiesCountDocument);
-	const { data: notificationsCountData } = useQuery(NOTIFICATIONS_COUNT);
+	const { data: notificationsCountData } = useQuery(NotificationsCountDocument);
 
 	const [fetchUsers] = useLazyQuery(GetUsersDocument, {
 		fetchPolicy: 'network-only',
@@ -34,7 +35,7 @@ export default function AdminPage() {
 		fetchPolicy: 'network-only',
 	});
 
-	const [fetchNotifications] = useLazyQuery(ALL_NOTIFICATIONS, {
+	const [fetchNotifications] = useLazyQuery(AllNotificationsDocument, {
 		fetchPolicy: 'network-only',
 	});
 
@@ -112,7 +113,7 @@ export default function AdminPage() {
 
 		console.log('=== AUTH EXPORT ===');
 		if (currentUser) {
-			console.log('Current User:', `${currentUser.stravaProfile.firstname} ${currentUser.stravaProfile.lastname}`);
+			console.log('Current User:', `${currentUser.profile.firstname} ${currentUser.profile.lastname}`);
 			console.log('Strava ID:', currentUser.stravaId);
 			console.log('Is Admin:', currentUser.isAdmin);
 			const expiryDate = new Date(currentUser.tokenExpiresAt * 1000);
