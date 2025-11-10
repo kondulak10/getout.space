@@ -111,13 +111,18 @@ export function useStravaAuth(options?: UseStravaAuthOptions) {
 
 	const handleOAuthCallback = async (code: string) => {
 		try {
-			const data = await exchangeCodeForToken(code);
+			// Get scope from URL params - Strava returns this in the redirect
+			const urlParams = new URLSearchParams(window.location.search);
+			const grantedScope = urlParams.get('scope') || 'read,activity:read_all';
+
+			const data = await exchangeCodeForToken(code, grantedScope);
 
 			if (data.success && data.token && data.user) {
 				const user = {
 					...data.user,
 					tokenIsExpired: data.user.tokenIsExpired ?? false,
 					updatedAt: data.user.updatedAt ?? data.user.createdAt,
+					scope: data.user.scope || 'read,activity:read_all',
 				};
 				login(data.token, user);
 

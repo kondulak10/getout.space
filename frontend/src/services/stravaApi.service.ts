@@ -61,6 +61,7 @@ export interface AuthResponse {
 		};
 		tokenExpiresAt: number;
 		tokenIsExpired?: boolean;
+		scope: string;
 		createdAt: string;
 		updatedAt?: string;
 	};
@@ -76,13 +77,13 @@ export async function getStravaAuthUrl(): Promise<string> {
 	return data.authUrl;
 }
 
-export async function exchangeCodeForToken(code: string): Promise<AuthResponse> {
+export async function exchangeCodeForToken(code: string, scope: string): Promise<AuthResponse> {
 	const response = await fetch(`${BACKEND_URL}/api/strava/callback`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
 		},
-		body: JSON.stringify({ code }),
+		body: JSON.stringify({ code, scope }),
 	});
 
 	const data = await response.json();

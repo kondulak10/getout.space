@@ -29,10 +29,22 @@ router.get('/api/strava/auth', (req: Request, res: Response) => {
 
 router.post('/api/strava/callback', async (req: Request, res: Response) => {
 	try {
-		const { code } = req.body;
+		const { code, scope } = req.body;
 
 		if (!code) {
 			return res.status(400).json({ error: 'Authorization code is required' });
+		}
+
+		// Validate scope - Strava returns this in the authorization redirect
+		if (!scope) {
+			return res.status(400).json({ error: 'Scope is required - not provided by authorization redirect' });
+		}
+
+		if (!scope.includes('activity:read_all')) {
+			return res.status(403).json({
+				error: 'Insufficient permissions',
+				details: `Required scope 'activity:read_all' not granted. Granted scope: '${scope}'`
+			});
 		}
 
 		console.log('🔐 Exchanging authorization code for tokens...');
@@ -77,10 +89,10 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 		});
 		console.log('👤 Athlete data:', data.athlete);
 
-		// Note: Strava does NOT return a 'scope' field in the token exchange response.
-		// If token exchange succeeds, the requested scopes were granted.
-		// We store the scopes we requested since the exchange succeeded.
-		const grantedScope = 'read,activity:read_all';
+		// Note: Strava returns 'scope' in the authorization redirect (before token exchange),
+		// not in the token exchange response. We receive it from the frontend.
+		// The frontend extracted it from the URL params and sent it to us.
+		console.log(`✅ Granted scope: ${scope}`);
 
 		const adminStravaId = process.env.ADMIN_STRAVA_ID
 			? parseInt(process.env.ADMIN_STRAVA_ID, 10)
@@ -101,7 +113,7 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 				accessToken: data.access_token,
 				refreshToken: data.refresh_token,
 				tokenExpiresAt: data.expires_at,
-				scope: grantedScope,
+				scope: scope,
 				isAdmin: isAdminStravaId,
 				stravaProfile: {
 					firstname: data.athlete.firstname,
@@ -153,7 +165,7 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 		user.accessToken = data.access_token;
 		user.refreshToken = data.refresh_token;
 		user.tokenExpiresAt = data.expires_at;
-		user.scope = grantedScope;
+		user.scope = scope;
 		user.isAdmin = user.isAdmin || isAdminStravaId;
 		user.stravaProfile = {
 			firstname: data.athlete.firstname,

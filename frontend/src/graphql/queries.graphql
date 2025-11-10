@@ -17,6 +17,7 @@ query Me {
 		}
 		tokenExpiresAt
 		tokenIsExpired
+		scope
 		lastHex
 		createdAt
 		updatedAt
@@ -217,4 +218,36 @@ query GetHexagonsCount {
 
 query GetActivitiesCount {
 	activitiesCount
+}
+
+query RegionalActiveLeaders($parentHexagonIds: [String!]!, $limit: Int) {
+	regionalActiveLeaders(parentHexagonIds: $parentHexagonIds, limit: $limit) {
+		user {
+			id
+			stravaId
+			stravaProfile {
+				firstname
+				lastname
+				profile
+				imghex
+			}
+		}
+		hexCount
+	}
+}
+
+query RegionalOGDiscoverers($parentHexagonIds: [String!]!, $limit: Int) {
+	regionalOGDiscoverers(parentHexagonIds: $parentHexagonIds, limit: $limit) {
+		user {
+			id
+			stravaId
+			stravaProfile {
+				firstname
+				lastname
+				profile
+				imghex
+			}
+		}
+		hexCount
+	}
 }
