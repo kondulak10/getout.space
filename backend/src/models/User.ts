@@ -65,7 +65,8 @@ const userSchema = new Schema<IUser>(
 		},
 		scope: {
 			type: String,
-			required: true,
+			required: false,
+			default: 'read,activity:read_all',
 		},
 		isAdmin: {
 			type: Boolean,

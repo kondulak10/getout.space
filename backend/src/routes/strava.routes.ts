@@ -6,7 +6,11 @@ import {
 	processActivity,
 	deleteActivityAndRestoreHexagons,
 } from '../services/activityProcessing.service';
-import { StravaOAuthTokenResponse, StravaActivity, StravaAthleteStats } from '../types/strava.types';
+import {
+	StravaOAuthTokenResponse,
+	StravaActivity,
+	StravaAthleteStats,
+} from '../types/strava.types';
 import { Activity } from '../models/Activity';
 import { processAndUploadProfileImage } from '../utils/imageProcessing';
 import { geocodeToHex } from '../utils/geocoding';
@@ -70,9 +74,13 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 			expires_at: data.expires_at,
 			expires_in: data.expires_in,
 			expires_at_date: data.expires_at ? new Date(data.expires_at * 1000).toISOString() : 'N/A',
-			scope: data.scope,
 		});
 		console.log('👤 Athlete data:', data.athlete);
+
+		// Note: Strava does NOT return a 'scope' field in the token exchange response.
+		// If token exchange succeeds, the requested scopes were granted.
+		// We store the scopes we requested since the exchange succeeded.
+		const grantedScope = 'read,activity:read_all';
 
 		const adminStravaId = process.env.ADMIN_STRAVA_ID
 			? parseInt(process.env.ADMIN_STRAVA_ID, 10)
@@ -93,7 +101,7 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 				accessToken: data.access_token,
 				refreshToken: data.refresh_token,
 				tokenExpiresAt: data.expires_at,
-				scope: data.scope,
+				scope: grantedScope,
 				isAdmin: isAdminStravaId,
 				stravaProfile: {
 					firstname: data.athlete.firstname,
@@ -145,7 +153,7 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 		user.accessToken = data.access_token;
 		user.refreshToken = data.refresh_token;
 		user.tokenExpiresAt = data.expires_at;
-		user.scope = data.scope;
+		user.scope = grantedScope;
 		user.isAdmin = user.isAdmin || isAdminStravaId;
 		user.stravaProfile = {
 			firstname: data.athlete.firstname,
