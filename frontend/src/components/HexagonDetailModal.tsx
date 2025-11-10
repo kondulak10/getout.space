@@ -57,7 +57,7 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 
 	const renderUserAvatar = (
 		user?: {
-			stravaProfile?: { firstname?: string; profile?: string };
+			stravaProfile?: { firstname?: string; profile?: string; imghex?: string };
 			stravaId?: number;
 		},
 		size: 'sm' | 'md' | 'lg' = 'md',
@@ -80,17 +80,19 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 
 		const displayName =
 			user.stravaProfile?.firstname || (user.stravaId ? `User ${user.stravaId}` : 'Unknown');
+		const imghexUrl = user.stravaProfile?.imghex;
 		const profileUrl = user.stravaProfile?.profile;
+		const imageUrl = imghexUrl || profileUrl;
 		const sizeClasses = size === 'lg' ? 'w-16 h-16' : size === 'md' ? 'w-12 h-12' : 'w-10 h-10';
 		const iconSize = size === 'lg' ? 'w-8 h-8' : size === 'md' ? 'w-6 h-6' : 'w-5 h-5';
 
 		return (
 			<div className="flex items-center gap-3">
-				{profileUrl ? (
+				{imageUrl ? (
 					<img
-						src={profileUrl}
+						src={imageUrl}
 						alt={displayName}
-						className={`${sizeClasses} rounded-full border-2 border-white/20 object-cover shadow-lg`}
+						className={`${sizeClasses} ${imghexUrl ? '' : 'rounded-full'} border-2 border-white/20 object-cover shadow-lg`}
 						onError={(e) => {
 							(e.target as HTMLImageElement).style.display = 'none';
 							const fallback = (e.target as HTMLImageElement).nextElementSibling;
@@ -104,7 +106,7 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 						<FontAwesomeIcon icon={faUser} className={`${iconSize} text-orange-400`} />
 					</div>
 				)}
-				{profileUrl && (
+				{imageUrl && (
 					<div
 						className={`${sizeClasses} rounded-full bg-gradient-to-br from-orange-500/30 to-orange-600/30 border-2 border-orange-500/40 flex items-center justify-center shadow-lg`}
 						style={{ display: 'none' }}

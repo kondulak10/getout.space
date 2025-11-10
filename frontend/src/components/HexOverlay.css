@@ -9,3 +9,16 @@
 }
 
 /* Strava official orange: #FC5200 */
+
+@keyframes subtle-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+.subtle-pulse {
+  animation: subtle-pulse 2s ease-in-out infinite;
+}

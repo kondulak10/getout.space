@@ -107,35 +107,13 @@ export default function AdminPage() {
 		}
 	};
 
-	const handleExportAuth = () => {
+	const handleExportAuth = async () => {
 		const TOKEN_KEY = 'getout_auth_token';
 		const token = localStorage.getItem(TOKEN_KEY);
-
-		console.log('=== AUTH EXPORT ===');
-		if (currentUser) {
-			console.log('Current User:', `${currentUser.profile.firstname} ${currentUser.profile.lastname}`);
-			console.log('Strava ID:', currentUser.stravaId);
-			console.log('Is Admin:', currentUser.isAdmin);
-			const expiryDate = new Date(currentUser.tokenExpiresAt * 1000);
-			console.log('Token Expires:', expiryDate.toLocaleString());
-			console.log('Token Expired:', currentUser.tokenIsExpired);
-			console.log('');
+		if (token) {
+			await navigator.clipboard.writeText(token);
+			console.log('Token copied to clipboard');
 		}
-		console.log('To transfer authentication to localhost:');
-		console.log('');
-		console.log('STEP 1: Copy the token to localStorage');
-		console.log('  - Open DevTools Console (F12) in localhost');
-		console.log('  - Paste and run this command:');
-		console.log(`  localStorage.setItem("${TOKEN_KEY}", "${token}")`);
-		console.log('');
-		console.log('STEP 2: Ensure JWT_SECRET matches');
-		console.log('  - For the token to work on localhost backend,');
-		console.log('  - Your localhost JWT_SECRET must match production');
-		console.log('  - Set in backend/.env: JWT_SECRET=<same_as_production>');
-		console.log('');
-		console.log('STEP 3: Refresh the page');
-		console.log('');
-		console.log('NOTE: Token and backend must use the same JWT_SECRET to work.');
 	};
 
 	return (

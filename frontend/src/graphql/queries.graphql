@@ -85,6 +85,7 @@ query HexagonDetail($hexagonId: String!) {
 			stravaProfile {
 				firstname
 				profile
+				imghex
 			}
 		}
 		firstCapturedBy {
@@ -93,6 +94,7 @@ query HexagonDetail($hexagonId: String!) {
 			stravaProfile {
 				firstname
 				profile
+				imghex
 			}
 		}
 		currentActivity {
@@ -112,6 +114,7 @@ query HexagonDetail($hexagonId: String!) {
 				stravaProfile {
 					firstname
 					profile
+					imghex
 				}
 			}
 			stravaId

@@ -14,13 +14,18 @@ type TabType = 'active' | 'og';
 export function LeaderboardModal({ parentHexagonIds, onClose }: LeaderboardModalProps) {
 	const [activeTab, setActiveTab] = useState<TabType>('active');
 
+	const safeParentHexagonIds = Array.isArray(parentHexagonIds) ? parentHexagonIds.filter(Boolean) : [];
+	const shouldSkip = safeParentHexagonIds.length === 0;
+
 	const {
 		data: activeLeadersData,
 		loading: activeLoading,
 		error: activeError,
 	} = useQuery(RegionalActiveLeadersDocument, {
-		variables: { parentHexagonIds, limit: 10 },
-		skip: parentHexagonIds.length === 0,
+		variables: { parentHexagonIds: safeParentHexagonIds, limit: 10 },
+		skip: shouldSkip,
+		errorPolicy: 'all',
+		fetchPolicy: 'no-cache',
 	});
 
 	const {
@@ -28,13 +33,15 @@ export function LeaderboardModal({ parentHexagonIds, onClose }: LeaderboardModal
 		loading: ogLoading,
 		error: ogError,
 	} = useQuery(RegionalOgDiscoverersDocument, {
-		variables: { parentHexagonIds, limit: 10 },
-		skip: parentHexagonIds.length === 0,
+		variables: { parentHexagonIds: safeParentHexagonIds, limit: 10 },
+		skip: shouldSkip,
+		errorPolicy: 'all',
+		fetchPolicy: 'no-cache',
 	});
 
 	const renderUserAvatar = (
 		user?: {
-			stravaProfile?: { firstname?: string | null; lastname?: string | null; profile?: string | null };
+			stravaProfile?: { firstname?: string | null; lastname?: string | null; profile?: string | null; imghex?: string | null };
 			stravaId?: number;
 		} | null,
 		size: 'sm' | 'md' = 'md'
@@ -51,18 +58,20 @@ export function LeaderboardModal({ parentHexagonIds, onClose }: LeaderboardModal
 			);
 		}
 
-		const displayName = `${user.stravaProfile?.firstname || ''} ${user.stravaProfile?.lastname || ''}`.trim() || `User ${user.stravaId}`;
+		const displayName = user.stravaProfile?.firstname || `User ${user.stravaId}`;
+		const imghexUrl = user.stravaProfile?.imghex;
 		const profileUrl = user.stravaProfile?.profile;
+		const imageUrl = imghexUrl || profileUrl;
 		const sizeClasses = size === 'md' ? 'w-12 h-12' : 'w-10 h-10';
 		const iconSize = size === 'md' ? 'w-6 h-6' : 'w-5 h-5';
 
 		return (
 			<div className="flex items-center gap-3">
-				{profileUrl ? (
+				{imageUrl ? (
 					<img
-						src={profileUrl}
+						src={imageUrl}
 						alt={displayName}
-						className={`${sizeClasses} rounded-full border-2 border-white/20 object-cover shadow-lg`}
+						className={`${sizeClasses} ${imghexUrl ? '' : 'rounded-full'} border-2 border-white/20 object-cover shadow-lg`}
 						onError={(e) => {
 							(e.target as HTMLImageElement).style.display = 'none';
 							const fallback = (e.target as HTMLImageElement).nextElementSibling;
@@ -76,7 +85,7 @@ export function LeaderboardModal({ parentHexagonIds, onClose }: LeaderboardModal
 						<FontAwesomeIcon icon={faUser} className={`${iconSize} text-orange-400`} />
 					</div>
 				)}
-				{profileUrl && (
+				{imageUrl && (
 					<div
 						className={`${sizeClasses} rounded-full bg-gradient-to-br from-orange-500/30 to-orange-600/30 border-2 border-orange-500/40 flex items-center justify-center shadow-lg`}
 						style={{ display: 'none' }}
@@ -164,10 +173,18 @@ export function LeaderboardModal({ parentHexagonIds, onClose }: LeaderboardModal
 		);
 	};
 
+	const handleClose = () => {
+		try {
+			onClose();
+		} catch (error) {
+			console.error('Error closing leaderboard modal:', error);
+		}
+	};
+
 	return (
 		<div
 			className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-			onClick={onClose}
+			onClick={handleClose}
 		>
 			<div
 				className="bg-gradient-to-b from-[rgba(10,10,10,0.98)] to-[rgba(5,5,5,0.98)] backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
@@ -180,7 +197,8 @@ export function LeaderboardModal({ parentHexagonIds, onClose }: LeaderboardModal
 						<h2 className="text-lg font-bold text-gray-100">Regional Leaderboard</h2>
 					</div>
 					<button
-						onClick={onClose}
+						type="button"
+						onClick={handleClose}
 						className="text-gray-400 hover:text-gray-200 transition-colors p-1 hover:bg-white/10 rounded-lg"
 					>
 						<FontAwesomeIcon icon={faXmark} className="w-5 h-5" />
@@ -190,6 +208,7 @@ export function LeaderboardModal({ parentHexagonIds, onClose }: LeaderboardModal
 				{/* Tabs */}
 				<div className="flex gap-2 p-5 pb-0">
 					<button
+						type="button"
 						onClick={() => setActiveTab('active')}
 						className={`flex-1 px-4 py-3 rounded-lg font-semibold text-sm transition-all ${
 							activeTab === 'active'
@@ -204,6 +223,7 @@ export function LeaderboardModal({ parentHexagonIds, onClose }: LeaderboardModal
 						<div className="text-xs mt-1 opacity-80">Most hexes currently owned</div>
 					</button>
 					<button
+						type="button"
 						onClick={() => setActiveTab('og')}
 						className={`flex-1 px-4 py-3 rounded-lg font-semibold text-sm transition-all ${
 							activeTab === 'og'

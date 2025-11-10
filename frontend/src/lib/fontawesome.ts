@@ -26,6 +26,7 @@ import {
 	faCheckCircle,
 	faExclamationTriangle,
 	faInfoCircle,
+	faTrophy,
 } from '@fortawesome/pro-solid-svg-icons';
 
 import {
@@ -65,6 +66,7 @@ library.add(
 	faCheckCircle,
 	faExclamationTriangle,
 	faInfoCircle,
+	faTrophy,
 	faUserRegular,
 	faHeartRegular,
 	faStarRegular,

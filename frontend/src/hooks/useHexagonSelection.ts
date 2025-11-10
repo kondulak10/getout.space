@@ -13,6 +13,7 @@ export interface SelectedHexagonData {
 		stravaProfile?: {
 			firstname?: string;
 			profile?: string;
+			imghex?: string;
 		};
 	};
 	firstCapturedBy?: {
@@ -21,6 +22,7 @@ export interface SelectedHexagonData {
 		stravaProfile?: {
 			firstname?: string;
 			profile?: string;
+			imghex?: string;
 		};
 	};
 	activity: {
@@ -39,6 +41,7 @@ export interface SelectedHexagonData {
 			stravaProfile?: {
 				firstname?: string;
 				profile?: string;
+				imghex?: string;
 			};
 		};
 		activityId: string;
@@ -92,6 +95,7 @@ export function useHexagonSelection() {
 									? {
 											firstname: data.hexagon.currentOwner.stravaProfile.firstname ?? undefined,
 											profile: data.hexagon.currentOwner.stravaProfile.profile ?? undefined,
+											imghex: data.hexagon.currentOwner.stravaProfile.imghex ?? undefined,
 									  }
 									: undefined,
 						  }
@@ -105,6 +109,7 @@ export function useHexagonSelection() {
 											firstname:
 												data.hexagon.firstCapturedBy.stravaProfile.firstname ?? undefined,
 											profile: data.hexagon.firstCapturedBy.stravaProfile.profile ?? undefined,
+											imghex: data.hexagon.firstCapturedBy.stravaProfile.imghex ?? undefined,
 									  }
 									: undefined,
 						  }
@@ -135,6 +140,7 @@ export function useHexagonSelection() {
 											? {
 													firstname: entry.user.stravaProfile.firstname ?? undefined,
 													profile: entry.user.stravaProfile.profile ?? undefined,
+													imghex: entry.user.stravaProfile.imghex ?? undefined,
 											  }
 											: undefined,
 								  }

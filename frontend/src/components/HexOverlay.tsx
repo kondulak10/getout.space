@@ -6,7 +6,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useNavigate } from "react-router-dom";
 import { ActivitiesManagerModal } from "./ActivitiesManagerModal";
 import { LeaderboardModal } from "./LeaderboardModal";
+import { NotificationDropdown } from "./NotificationDropdown";
+import { NotificationModal } from "./NotificationModal";
 import { useMap } from "@/contexts/useMap";
+import { ErrorBoundary } from "./ErrorBoundary";
 import "./HexOverlay.css";
 
 interface HexOverlayProps {
@@ -18,6 +21,7 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 	const { latestActivity } = useUserActivities();
 	const [mobileExpanded, setMobileExpanded] = useState(false);
 	const [showLeaderboard, setShowLeaderboard] = useState(false);
+	const [showNotifications, setShowNotifications] = useState(false);
 	const { currentParentHexagonIds } = useMap();
 	const {
 		showModal,
@@ -70,22 +74,36 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 					<div className="flex items-center gap-2 mb-3">
 						<img
 							src={user.profile.imghex || user.profile.profile}
-							alt={`${user.profile.firstname} ${user.profile.lastname}`}
+							alt={user.profile.firstname}
 							className="w-12 h-12 object-cover hex-clip"
 						/>
 						<div className="flex-1 min-w-0">
 							<div className="font-semibold text-sm text-gray-100 truncate">
-								{user.profile.firstname} {user.profile.lastname}
+								{user.profile.firstname}
 							</div>
 							<div className="text-xs text-gray-400">ID: {user.stravaId}</div>
 						</div>
 						<button
-							onClick={() => setShowLeaderboard(true)}
-							className="bg-white/5 border border-white/10 text-gray-300 p-1.5 rounded-md transition-all cursor-pointer hover:bg-white/10 hover:border-white/20 hover:text-white"
+							type="button"
+							onClick={(e) => {
+								e.preventDefault();
+								e.stopPropagation();
+								try {
+									setShowLeaderboard(true);
+								} catch (error) {
+									console.error('Error opening leaderboard:', error);
+								}
+							}}
+							className="bg-white/5 border border-white/10 text-yellow-400 p-1.5 rounded-md transition-all cursor-pointer hover:bg-white/10 hover:border-white/20 hover:text-yellow-300 subtle-pulse"
 							title="Regional Leaderboard"
 						>
 							<FontAwesomeIcon icon="trophy" className="w-3.5 h-3.5" />
 						</button>
+						<NotificationDropdown 
+							bellClassName="bg-white/5 border border-white/10 text-gray-300 p-1.5 rounded-md transition-all cursor-pointer hover:bg-white/10 hover:border-white/20 hover:text-white relative"
+							iconClassName="w-3.5 h-3.5"
+							onClick={() => setShowNotifications(true)}
+						/>
 						<button
 							onClick={() => navigate("/profile")}
 							className="bg-white/5 border border-white/10 text-gray-300 p-1.5 rounded-md transition-all cursor-pointer hover:bg-white/10 hover:border-white/20 hover:text-white"
@@ -145,16 +163,30 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 							/>
 							<div className="flex-1 min-w-0">
 								<div className="font-semibold text-xs text-gray-100 truncate">
-									{user.profile.firstname} {user.profile.lastname}
+									{user.profile.firstname}
 								</div>
 							</div>
 							<button
-								onClick={() => setShowLeaderboard(true)}
-								className="bg-white/5 border border-white/10 text-gray-300 p-1.5 rounded-md cursor-pointer"
+								type="button"
+								onClick={(e) => {
+									e.preventDefault();
+									e.stopPropagation();
+									try {
+										setShowLeaderboard(true);
+									} catch (error) {
+										console.error('Error opening leaderboard:', error);
+									}
+								}}
+								className="bg-white/5 border border-white/10 text-yellow-400 p-1.5 rounded-md cursor-pointer subtle-pulse"
 								title="Regional Leaderboard"
 							>
 								<FontAwesomeIcon icon="trophy" className="w-3.5 h-3.5" />
 							</button>
+							<NotificationDropdown 
+								bellClassName="bg-white/5 border border-white/10 text-gray-300 p-1.5 rounded-md cursor-pointer relative"
+								iconClassName="w-3.5 h-3.5"
+								onClick={() => setShowNotifications(true)}
+							/>
 							<button
 								onClick={() => navigate("/profile")}
 								className="bg-white/5 border border-white/10 text-gray-300 p-1.5 rounded-md cursor-pointer"
@@ -226,10 +258,18 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 			/>
 
 			{showLeaderboard && (
-				<LeaderboardModal
-					parentHexagonIds={currentParentHexagonIds.current}
-					onClose={() => setShowLeaderboard(false)}
-				/>
+				<ErrorBoundary>
+					<LeaderboardModal
+						parentHexagonIds={Array.isArray(currentParentHexagonIds.current) ? currentParentHexagonIds.current : []}
+						onClose={() => setShowLeaderboard(false)}
+					/>
+				</ErrorBoundary>
+			)}
+
+			{showNotifications && (
+				<ErrorBoundary>
+					<NotificationModal onClose={() => setShowNotifications(false)} />
+				</ErrorBoundary>
 			)}
 		</>
 	);

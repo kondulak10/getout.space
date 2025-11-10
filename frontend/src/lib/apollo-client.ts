@@ -114,6 +114,11 @@ export const apolloClient = new ApolloClient({
     typePolicies: {
       User: {
         keyFields: ['id'],
+        fields: {
+          stravaProfile: {
+            merge: false,
+          },
+        },
       },
     },
   }),

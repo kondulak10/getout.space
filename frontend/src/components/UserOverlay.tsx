@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/useAuth';
 import { useUserActivities } from '@/hooks/useUserActivities';
 import { useActivitiesManager } from '@/hooks/useActivitiesManager';
 import { ActivitiesManagerModal } from './ActivitiesManagerModal';
 import { NotificationDropdown } from './NotificationDropdown';
+import { NotificationModal } from './NotificationModal';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 interface UserOverlayProps {
@@ -13,6 +15,7 @@ interface UserOverlayProps {
 export function UserOverlay({ onActivityChanged }: UserOverlayProps) {
 	const { user } = useAuth();
 	const { latestActivity } = useUserActivities();
+	const [showNotifications, setShowNotifications] = useState(false);
 	const { showModal, activities, loading, infoMessage, openModal, closeModal, handleSaveActivity, handleRemoveActivity } =
 		useActivitiesManager(onActivityChanged);
 	const navigate = useNavigate();
@@ -55,18 +58,18 @@ export function UserOverlay({ onActivityChanged }: UserOverlayProps) {
 				<div className="flex items-center gap-3">
 					<img
 						src={user.profile.imghex || user.profile.profile}
-						alt={`${user.profile.firstname} ${user.profile.lastname}`}
+						alt={user.profile.firstname}
 						className="w-12 h-12 object-cover"
 						style={{ clipPath: user.profile.imghex ? 'none' : 'circle(50%)' }}
 					/>
 					<div className="flex-1">
 						<div className="font-semibold text-sm text-gray-900">
-							{user.profile.firstname} {user.profile.lastname}
+							{user.profile.firstname}
 						</div>
 						<div className="text-xs text-gray-500">Strava ID: {user.stravaId}</div>
 					</div>
 					<div className="flex items-center gap-1">
-						<NotificationDropdown />
+						<NotificationDropdown onClick={() => setShowNotifications(true)} />
 						<button
 							onClick={() => navigate('/profile')}
 							className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded transition-colors"
@@ -115,6 +118,10 @@ export function UserOverlay({ onActivityChanged }: UserOverlayProps) {
 				onDelete={handleRemoveActivity}
 				onShowOnMap={handleShowOnMap}
 			/>
+
+			{showNotifications && (
+				<NotificationModal onClose={() => setShowNotifications(false)} />
+			)}
 		</div>
 	);
 }

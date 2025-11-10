@@ -98,12 +98,12 @@ export function ProfilePage() {
 						<div className="flex items-center gap-4">
 							<img
 								src={user.profile.imghex || user.profile.profile}
-								alt={`${user.profile.firstname} ${user.profile.lastname}`}
+								alt={user.profile.firstname}
 								className="w-16 h-16 md:w-20 md:h-20 object-cover hex-clip"
 							/>
 							<div>
 								<h1 className="text-xl md:text-2xl font-bold text-gray-100">
-									{user.profile.firstname} {user.profile.lastname}
+									{user.profile.firstname}
 								</h1>
 								<p className="text-sm text-gray-400">ID: {user.stravaId}</p>
 								{user.isAdmin && <span className="text-xs text-purple-400 font-semibold">👑 Admin</span>}
