@@ -1,16 +1,16 @@
-import 'dotenv/config';
-import express from 'express';
-import cors from 'cors';
-import path from 'path';
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
-import { connectDatabase } from './config/database';
-import { typeDefs } from './graphql/schemas/index';
-import { resolvers } from './graphql/resolvers/index';
-import testRoutes from './routes/test.routes';
-import stravaRoutes from './routes/strava.routes';
-import webhookRoutes from './routes/webhook.routes';
+import cors from 'cors';
+import 'dotenv/config';
+import express from 'express';
 import expressPlayground from 'graphql-playground-middleware-express';
+import path from 'path';
+import { connectDatabase } from './config/database';
+import { resolvers } from './graphql/resolvers/index';
+import { typeDefs } from './graphql/schemas/index';
+import stravaRoutes from './routes/strava.routes';
+import testRoutes from './routes/test.routes';
+import webhookRoutes from './routes/webhook.routes';
 
 const PORT = process.env.PORT || 4000;
 
@@ -96,7 +96,7 @@ const startApolloServer = async () => {
 	app.listen(PORT, () => {
 		console.log(`
 ╔═══════════════════════════════════════════╗
-║   🚀 GetOut Backend                      ║
+║   🚀 GetOut Backend!                      ║
 ╠═══════════════════════════════════════════╣
 ║   Health:   http://localhost:${PORT}/health     ║
 ║   GraphQL:  http://localhost:${PORT}/graphql    ║
