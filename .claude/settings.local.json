@@ -47,7 +47,9 @@
       "Bash(aws logs get-log-events:*)",
       "Bash(printenv:*)",
       "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\components\\MapViewToggle.tsx\")",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(aws s3:*)",
+      "Bash(aws iam get-role-policy:*)"
     ],
     "deny": [],
     "ask": []
