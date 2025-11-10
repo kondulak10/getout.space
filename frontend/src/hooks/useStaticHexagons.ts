@@ -34,7 +34,7 @@ export function useStaticHexagons({ mapRef, mockData }: UseStaticHexagonsOptions
 			source: 'hexagons',
 			paint: {
 				'fill-color': ['get', 'color'],
-				'fill-opacity': 0.45,
+				'fill-opacity': 0.5,
 			},
 		});
 
@@ -71,9 +71,9 @@ export function useStaticHexagons({ mapRef, mockData }: UseStaticHexagonsOptions
 			type: 'line',
 			source: 'parent-hexagons',
 			paint: {
-				'line-color': '#FFFFFF',
+				'line-color': '#BBBBBB',
 				'line-width': 2,
-				'line-opacity': 0.6,
+				'line-opacity': 0.5,
 			},
 		});
 	}, [mapRef]);

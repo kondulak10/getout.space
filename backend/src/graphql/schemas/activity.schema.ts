@@ -58,6 +58,12 @@ export const activitySchema = gql`
 		Requires: Authentication + Admin
 		"""
 		activities(limit: Int, offset: Int): [Activity!]!
+
+		"""
+		Get total count of all activities (Admin only)
+		Requires: Authentication + Admin
+		"""
+		activitiesCount: Int!
 	}
 
 	extend type Mutation {

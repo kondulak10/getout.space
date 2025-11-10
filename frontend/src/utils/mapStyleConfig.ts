@@ -73,7 +73,7 @@ export function configureMapStyle(map: MapboxMap) {
 
 				try {
 					if (layer.type === 'background') {
-						map.setPaintProperty(layer.id, 'background-color', '#121212');
+						map.setPaintProperty(layer.id, 'background-color', '#0a0a0a');
 					} else if (layer.type === 'fill') {
 						const currentColor = map.getPaintProperty(layer.id, 'fill-color');
 						if (currentColor) {
@@ -85,8 +85,12 @@ export function configureMapStyle(map: MapboxMap) {
 								map.setPaintProperty(layer.id, 'fill-color', '#0a0a0a');
 								map.setPaintProperty(layer.id, 'fill-opacity', 0.7);
 							}
+							else if (layer.id.includes('landuse') && (layer.id.includes('wood') || layer.id.includes('forest') || layer.id.includes('park'))) {
+								map.setPaintProperty(layer.id, 'fill-color', '#0c0c0c');
+								map.setPaintProperty(layer.id, 'fill-opacity', 0.8);
+							}
 							else {
-								map.setPaintProperty(layer.id, 'fill-color', '#1e1e1e');
+								map.setPaintProperty(layer.id, 'fill-color', '#101010');
 								map.setPaintProperty(layer.id, 'fill-opacity', 0.6);
 							}
 						}
@@ -103,11 +107,11 @@ export function configureMapStyle(map: MapboxMap) {
 								map.setPaintProperty(layer.id, 'line-opacity', 0);
 							}
 							else if (layer.id.includes('major') || layer.id.includes('primary') || layer.id.includes('motorway')) {
-								map.setPaintProperty(layer.id, 'line-color', '#888888');
+								map.setPaintProperty(layer.id, 'line-color', '#cccccc');
 								map.setPaintProperty(layer.id, 'line-opacity', 0.9);
 							}
 							else {
-								map.setPaintProperty(layer.id, 'line-color', '#666666');
+								map.setPaintProperty(layer.id, 'line-color', '#aaaaaa');
 								map.setPaintProperty(layer.id, 'line-opacity', 0.7);
 							}
 						}

@@ -43,10 +43,10 @@
     "h3-js": "^4.3.0",
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
+    "module-alias": "^2.2.3",
     "mongoose": "^8.1.1",
     "passport": "^0.7.0",
-    "passport-jwt": "^4.0.1",
-    "module-alias": "^2.2.3"
+    "passport-jwt": "^4.0.1"
   },
   "devDependencies": {
     "@types/body-parser": "^1.19.5",
@@ -67,6 +67,7 @@
     "prettier": "^3.6.2",
     "ts-node": "^10.9.2",
     "tsc-alias": "^1.8.8",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.3.3"
   }
 }

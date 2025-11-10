@@ -70,6 +70,12 @@ export const hexagonSchema = gql`
 		myHexagonsCount: Int!
 
 		"""
+		Get total count of all hexagons (Admin only)
+		Requires: Authentication + Admin
+		"""
+		hexagonsCount: Int!
+
+		"""
 		Get hexagons owned by a specific user
 		Requires: Authentication
 		"""

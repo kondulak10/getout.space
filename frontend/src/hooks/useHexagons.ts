@@ -80,9 +80,9 @@ export const useHexagons = ({ mapRef, mode, onHexagonClick }: UseHexagonsOptions
 			type: "line",
 			source: "parent-hexagons",
 			paint: {
-				"line-color": "#FFFFFF",
+				"line-color": "#BBBBBB",
 				"line-width": 2,
-				"line-opacity": 0.6,
+				"line-opacity": 0.5,
 			},
 		});
 	}, [mapRef]);

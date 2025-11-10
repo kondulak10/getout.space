@@ -86,7 +86,7 @@ export function MapView({ user }: MapViewProps) {
 						source: "hexagons",
 						paint: {
 							"fill-color": ["get", "color"],
-							"fill-opacity": 0.35,
+							"fill-opacity": 0.5,
 						},
 					});
 					console.log("✓ Hexagon-fills layer added");

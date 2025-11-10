@@ -31,6 +31,18 @@ export const userResolvers = {
 			}
 		},
 
+		usersCount: async (_: any, __: any, context: GraphQLContext) => {
+			requireAdmin(context);
+
+			try {
+				const count = await User.countDocuments();
+				return count;
+			} catch (error) {
+				console.error('Error counting users:', error);
+				throw new GraphQLError('Failed to count users');
+			}
+		},
+
 		user: async (_: any, { id }: { id: string }, context: GraphQLContext) => {
 			const currentUser = requireAuth(context);
 

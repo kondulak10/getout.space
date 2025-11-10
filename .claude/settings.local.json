@@ -44,7 +44,8 @@
       "Bash(aws ecs describe-tasks:*)",
       "Bash(export MSYS_NO_PATHCONV=1)",
       "Bash(aws logs describe-log-streams:*)",
-      "Bash(aws logs get-log-events:*)"
+      "Bash(aws logs get-log-events:*)",
+      "Bash(printenv:*)"
     ],
     "deny": [],
     "ask": []

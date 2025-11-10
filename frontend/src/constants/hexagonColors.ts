@@ -1,28 +1,42 @@
 export const HEXAGON_COLORS = [
-	"#5D3FFF",
-	"#4DFFFF",
-	"#B3FF66",
-	"#FFEB3B",
-	"#FF4444",
-	"#FF6B35",
-	"#A0FF44",
-	"#FF4FA7",
-	"#E366FF",
-	"#9C5FFF",
-	"#66FFE0",
-	"#FFB84D",
-	"#FF66B8",
-	"#5FE8FF",
-	"#CCFF33",
+	"#6B5AFF",  // Vibrant purple-blue
+	"#00E5FF",  // Bright cyan
+	"#00FF88",  // Bright emerald green
+	"#FFEE44",  // Bright yellow
+	"#FF5555",  // Bright red
+	"#FF8844",  // Bright orange
+	"#FF55DD",  // Bright magenta-pink
+	"#CC66FF",  // Bright lavender
+	"#AAFF44",  // Bright lime green
+	"#FFAADD",  // Bright soft pink
+	"#44FFCC",  // Bright turquoise
+	"#CC9955",  // Bright brown-gold
 ] as const;
 
 export type HexagonColor = typeof HEXAGON_COLORS[number];
 
+// Map to store user ID -> color index assignments
+const userColorMap = new Map<string, number>();
+let nextColorIndex = 0;
+
 export function getUserColor(userId: string): HexagonColor {
-	let hash = 0;
-	for (let i = 0; i < userId.length; i++) {
-		hash = userId.charCodeAt(i) + ((hash << 5) - hash);
+	// Check if we've already assigned a color to this user
+	let colorIndex = userColorMap.get(userId);
+
+	if (colorIndex === undefined) {
+		// New user - assign next color sequentially
+		colorIndex = nextColorIndex % HEXAGON_COLORS.length;
+		userColorMap.set(userId, colorIndex);
+		nextColorIndex++;
+
+		console.log(`🎨 NEW user color assigned: userId="${userId}" → index=${colorIndex} → color=${HEXAGON_COLORS[colorIndex]} (total users: ${userColorMap.size})`);
 	}
-	const colorIndex = Math.abs(hash) % HEXAGON_COLORS.length;
+
 	return HEXAGON_COLORS[colorIndex];
+}
+
+// Optional: Function to reset color assignments (useful for testing)
+export function resetUserColors() {
+	userColorMap.clear();
+	nextColorIndex = 0;
 }

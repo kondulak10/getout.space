@@ -21,6 +21,7 @@ export const userSchema = gql`
 		stravaProfile: StravaProfile!
 		tokenExpiresAt: Int!
 		tokenIsExpired: Boolean!
+		scope: String!
 		lastHex: String
 		createdAt: Date!
 		updatedAt: Date!
@@ -38,6 +39,12 @@ export const userSchema = gql`
 		Requires: Authentication + Admin
 		"""
 		users: [User!]!
+
+		"""
+		Get total count of all users (Admin only)
+		Requires: Authentication + Admin
+		"""
+		usersCount: Int!
 
 		"""
 		Get user by ID (Admin only, or own profile)

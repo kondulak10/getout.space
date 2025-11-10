@@ -4,6 +4,7 @@ export interface StravaOAuthTokenResponse {
 	expires_in: number;
 	refresh_token: string;
 	access_token: string;
+	scope: string;
 	athlete: {
 		id: number;
 		username?: string;

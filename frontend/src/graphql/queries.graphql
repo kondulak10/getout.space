@@ -183,3 +183,15 @@ query GetAllActivities($limit: Int, $offset: Int) {
 		updatedAt
 	}
 }
+
+query GetUsersCount {
+	usersCount
+}
+
+query GetHexagonsCount {
+	hexagonsCount
+}
+
+query GetActivitiesCount {
+	activitiesCount
+}

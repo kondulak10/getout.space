@@ -105,6 +105,18 @@ export const activityResolvers = {
 				throw new GraphQLError('Failed to fetch activities');
 			}
 		},
+
+		activitiesCount: async (_: any, __: any, context: GraphQLContext) => {
+			requireAdmin(context);
+
+			try {
+				const count = await Activity.countDocuments();
+				return count;
+			} catch (error) {
+				console.error('Error counting activities:', error);
+				throw new GraphQLError('Failed to count activities');
+			}
+		},
 	},
 
 	Mutation: {

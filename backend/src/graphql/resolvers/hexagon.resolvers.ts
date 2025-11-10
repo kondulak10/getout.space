@@ -181,6 +181,18 @@ export const hexagonResolvers = {
 			}
 		},
 
+		hexagonsCount: async (_: any, __: any, context: GraphQLContext) => {
+			requireAdmin(context);
+
+			try {
+				const count = await Hexagon.countDocuments();
+				return count;
+			} catch (error) {
+				console.error('Error counting all hexagons:', error);
+				throw new GraphQLError('Failed to count hexagons');
+			}
+		},
+
 		userHexagons: async (
 			_: any,
 			{ userId, limit = 1000, offset = 0 }: { userId: string; limit?: number; offset?: number },

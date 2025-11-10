@@ -47,11 +47,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 					},
 					tokenExpiresAt: userData.me.tokenExpiresAt,
 					tokenIsExpired: userData.me.tokenIsExpired ?? false,
+					scope: userData.me.scope,
 					lastHex: userData.me.lastHex || undefined,
 					createdAt: String(userData.me.createdAt),
 					updatedAt: String(userData.me.updatedAt),
 				};
 				setUser(newUser);
+
+				// Check if user has insufficient permissions
+				const hasActivityReadAll = userData.me.scope.includes('activity:read_all');
+				if (!hasActivityReadAll) {
+					alert(
+						"Unfortunately, during registration you did not grant us the 'activity:read_all' permission. " +
+						"The app cannot work properly with limited settings. " +
+						"Please delete your user account and login again to grant the required permissions. " +
+						"Sorry for the inconvenience."
+					);
+				}
 
 				const now = Math.floor(Date.now() / 1000);
 				const timeUntilExpiry = userData.me.tokenExpiresAt - now;
