@@ -10,6 +10,7 @@ import {
 	getValidAccessToken,
 	isRunningActivity,
 } from '@/services/strava.service';
+import { notificationService } from '@/services/notification.service';
 
 export interface ProcessActivityResult {
 	activity: {
@@ -174,6 +175,48 @@ export async function processActivity(
 			`📊 Hexagons: ${hexagonStats.created} created, ${hexagonStats.updated} updated, ${hexagonStats.skipped} skipped`
 		);
 
+		// Create notifications after successful transaction
+		const newHexCount = hexagonStats.created;
+		const stolenCount =
+			hexagonStats.affectedUsers.size > 0
+				? Array.from(hexagonStats.affectedUsers.values()).reduce((sum, count) => sum + count, 0)
+				: 0;
+
+		// Create notification for the activity owner
+		if (newHexCount > 0 || stolenCount > 0) {
+			try {
+				await notificationService.createActivityNotification(userId, activity._id, {
+					newHexCount,
+					stolenCount,
+				});
+				console.log(
+					`📬 Created notification for activity owner: ${newHexCount} new, ${stolenCount} stolen`
+				);
+			} catch (error) {
+				console.error('❌ Error creating activity notification:', error);
+			}
+		}
+
+		// Create notifications for affected users (those who lost hexes)
+		if (hexagonStats.affectedUsers.size > 0) {
+			const thiefName = user.stravaProfile?.firstname || user.stravaProfile?.username || 'Someone';
+
+			for (const [affectedUserId, count] of hexagonStats.affectedUsers) {
+				try {
+					await notificationService.createStolenNotification(
+						affectedUserId,
+						userId,
+						thiefName,
+						count,
+						activity._id
+					);
+					console.log(`📬 Created stolen notification for user ${affectedUserId}: ${count} hexes`);
+				} catch (error) {
+					console.error(`❌ Error creating stolen notification for user ${affectedUserId}:`, error);
+				}
+			}
+		}
+
 		return {
 			activity: {
 				id: activity._id,
@@ -245,6 +288,9 @@ async function processHexagons(
 	const updatedIds: string[] = [];
 	const skippedIds: string[] = [];
 
+	// Track notification data
+	const affectedUsers = new Map<string, number>(); // userId -> count of hexes stolen from them
+
 	const activityDate = activity.startDate.getTime();
 
 	for (const hexagonId of hexagons) {
@@ -303,6 +349,10 @@ async function processHexagons(
 						},
 					};
 					updateDoc.$inc = { captureCount: 1 };
+
+					// Track affected user for notifications
+					const previousOwnerId = existingHex.currentOwnerId.toString();
+					affectedUsers.set(previousOwnerId, (affectedUsers.get(previousOwnerId) || 0) + 1);
 				}
 
 				bulkUpdateOps.push({
@@ -340,6 +390,7 @@ async function processHexagons(
 		createdIds,
 		updatedIds,
 		skippedIds,
+		affectedUsers, // Return map of affected users for notifications
 	};
 }
 

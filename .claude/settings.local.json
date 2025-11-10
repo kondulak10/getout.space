@@ -49,7 +49,9 @@
       "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\components\\MapViewToggle.tsx\")",
       "Bash(rm:*)",
       "Bash(aws s3:*)",
-      "Bash(aws iam get-role-policy:*)"
+      "Bash(aws iam get-role-policy:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(aws ecs list-services:*)"
     ],
     "deny": [],
     "ask": []

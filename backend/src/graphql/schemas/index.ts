@@ -2,6 +2,7 @@ import { gql } from 'graphql-tag';
 import { userSchema } from '@/graphql/schemas/user.schema';
 import { activitySchema } from '@/graphql/schemas/activity.schema';
 import { hexagonSchema } from '@/graphql/schemas/hexagon.schema';
+import { notificationTypeDefs } from '@/graphql/schemas/notification.schema';
 
 const baseSchema = gql`
 	scalar Date
@@ -15,4 +16,10 @@ const baseSchema = gql`
 	}
 `;
 
-export const typeDefs = [baseSchema, userSchema, activitySchema, hexagonSchema];
+export const typeDefs = [
+	baseSchema,
+	userSchema,
+	activitySchema,
+	hexagonSchema,
+	notificationTypeDefs,
+];

@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/useAuth';
 import { useUserActivities } from '@/hooks/useUserActivities';
 import { useActivitiesManager } from '@/hooks/useActivitiesManager';
 import { ActivitiesManagerModal } from './ActivitiesManagerModal';
+import { NotificationDropdown } from './NotificationDropdown';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 interface UserOverlayProps {
@@ -64,13 +65,16 @@ export function UserOverlay({ onActivityChanged }: UserOverlayProps) {
 						</div>
 						<div className="text-xs text-gray-500">Strava ID: {user.stravaId}</div>
 					</div>
-					<button
-						onClick={() => navigate('/profile')}
-						className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded transition-colors"
-						title="Profile"
-					>
-						<FontAwesomeIcon icon="user" className="w-4 h-4" />
-					</button>
+					<div className="flex items-center gap-1">
+						<NotificationDropdown />
+						<button
+							onClick={() => navigate('/profile')}
+							className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded transition-colors"
+							title="Profile"
+						>
+							<FontAwesomeIcon icon="user" className="w-4 h-4" />
+						</button>
+					</div>
 				</div>
 
 				{latestActivity && (

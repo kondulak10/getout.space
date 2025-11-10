@@ -8,6 +8,7 @@ import {
 	GetHexagonsCountDocument,
 	GetActivitiesCountDocument,
 } from "@/gql/graphql";
+import { ALL_NOTIFICATIONS, NOTIFICATIONS_COUNT } from "@/graphql/notifications";
 import { useState } from "react";
 import { HEXAGON_COLORS } from "@/constants/hexagonColors";
 
@@ -19,6 +20,7 @@ export default function AdminPage() {
 	const { data: usersCountData } = useQuery(GetUsersCountDocument);
 	const { data: hexagonsCountData } = useQuery(GetHexagonsCountDocument);
 	const { data: activitiesCountData } = useQuery(GetActivitiesCountDocument);
+	const { data: notificationsCountData } = useQuery(NOTIFICATIONS_COUNT);
 
 	const [fetchUsers] = useLazyQuery(GetUsersDocument, {
 		fetchPolicy: 'network-only',
@@ -29,6 +31,10 @@ export default function AdminPage() {
 	});
 
 	const [fetchActivities] = useLazyQuery(GetAllActivitiesDocument, {
+		fetchPolicy: 'network-only',
+	});
+
+	const [fetchNotifications] = useLazyQuery(ALL_NOTIFICATIONS, {
 		fetchPolicy: 'network-only',
 	});
 
@@ -80,6 +86,21 @@ export default function AdminPage() {
 			}
 		} catch (error) {
 			console.error('Error fetching activities:', error);
+		} finally {
+			setLoadingEntity(null);
+		}
+	};
+
+	const handleFetchNotifications = async () => {
+		setLoadingEntity('notifications');
+		try {
+			const result = await fetchNotifications({ variables: { limit: 1000 } });
+			if (result.data) {
+				console.log('=== NOTIFICATIONS ===');
+				console.log(result.data.notifications);
+			}
+		} catch (error) {
+			console.error('Error fetching notifications:', error);
 		} finally {
 			setLoadingEntity(null);
 		}
@@ -222,6 +243,31 @@ export default function AdminPage() {
 							</h3>
 							<p className="text-sm text-gray-500 text-center">
 								{loadingEntity === 'activities' ? 'Loading...' : 'View all activities in console'}
+							</p>
+						</button>
+
+						<button
+							onClick={handleFetchNotifications}
+							disabled={loadingEntity !== null}
+							className={`
+								flex flex-col items-center justify-center
+								p-6 rounded-lg border-2 transition-all
+								${loadingEntity === 'notifications'
+									? 'border-yellow-500 bg-yellow-50'
+									: loadingEntity !== null
+										? 'border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed'
+										: 'border-gray-300 bg-white hover:border-yellow-500 hover:bg-yellow-50 cursor-pointer'
+								}
+							`}
+						>
+							<div className="text-4xl mb-3">
+								{loadingEntity === 'notifications' ? '⏳' : '🔔'}
+							</div>
+							<h3 className="text-lg font-semibold mb-1">
+								Notifications {notificationsCountData?.notificationsCount !== undefined && `(${notificationsCountData.notificationsCount})`}
+							</h3>
+							<p className="text-sm text-gray-500 text-center">
+								{loadingEntity === 'notifications' ? 'Loading...' : 'View all notifications in console'}
 							</p>
 						</button>
 

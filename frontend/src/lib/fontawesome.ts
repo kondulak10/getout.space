@@ -22,6 +22,10 @@ import {
 	faStar,
 	faLocationDot,
 	faSwords,
+	faBell,
+	faCheckCircle,
+	faExclamationTriangle,
+	faInfoCircle,
 } from '@fortawesome/pro-solid-svg-icons';
 
 import {
@@ -57,6 +61,10 @@ library.add(
 	faStar,
 	faLocationDot,
 	faSwords,
+	faBell,
+	faCheckCircle,
+	faExclamationTriangle,
+	faInfoCircle,
 	faUserRegular,
 	faHeartRegular,
 	faStarRegular,
