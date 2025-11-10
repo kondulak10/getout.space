@@ -12,10 +12,6 @@
     "resolveJsonModule": true,
     "moduleResolution": "node",
     "types": ["node"],
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
-    },
     "composite": true
   },
   "include": ["src/**/*"],

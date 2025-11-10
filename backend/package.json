@@ -4,7 +4,7 @@
   "description": "Backend API for getout.space - Strava location capture game",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "nodemon --exec ts-node -r tsconfig-paths/register src/server.ts",
+    "dev": "nodemon --exec ts-node src/server.ts",
     "prebuild": "node scripts/generate-version.js",
     "build": "tsc",
     "start": "node dist/server.js",
@@ -14,9 +14,6 @@
     "format:check": "prettier --check \"src/**/*.ts\"",
     "docker:build": "docker build -t getout-backend .",
     "docker:run": "docker run -p 4000:4000 --env-file .env getout-backend"
-  },
-  "_moduleAliases": {
-    "@/": "dist/"
   },
   "keywords": [
     "strava",

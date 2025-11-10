@@ -52,8 +52,8 @@ const startApolloServer = async () => {
 		'/graphql',
 		expressMiddleware(server, {
 			context: async ({ req }) => {
-				const { verifyToken, extractTokenFromHeader } = await import('@/utils/jwt');
-				const { User } = await import('@/models/User');
+				const { verifyToken, extractTokenFromHeader } = await import('./utils/jwt');
+				const { User } = await import('./models/User');
 
 				const token = extractTokenFromHeader(req.headers.authorization);
 
