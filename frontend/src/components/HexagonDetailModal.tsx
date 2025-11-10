@@ -51,6 +51,8 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 		stravaProfile?: { firstname?: string; profile?: string };
 		stravaId?: number;
 	}) => {
+		console.log('🖼️ Rendering avatar for user:', user);
+
 		if (!user) {
 			return (
 				<div className="flex items-center gap-2">
@@ -63,25 +65,34 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 		}
 
 		const displayName = user.stravaProfile?.firstname || (user.stravaId ? `User ${user.stravaId}` : 'Unknown User');
+		const profileUrl = user.stravaProfile?.profile;
+
+		console.log('Profile URL:', profileUrl);
 
 		return (
 			<div className="flex items-center gap-2">
-				{user.stravaProfile?.profile ? (
+				{profileUrl ? (
 					<img
-						src={user.stravaProfile.profile}
+						src={profileUrl}
 						alt={displayName}
-						className="w-8 h-8 rounded-full border border-white/20"
+						className="w-8 h-8 rounded-full border border-white/20 object-cover"
 						onError={(e) => {
-							// Fallback if image fails to load
+							console.error('❌ Failed to load profile image:', profileUrl);
 							(e.target as HTMLImageElement).style.display = 'none';
 							const fallback = (e.target as HTMLImageElement).nextElementSibling;
 							if (fallback) (fallback as HTMLElement).style.display = 'flex';
 						}}
 					/>
-				) : null}
-				<div className="w-8 h-8 rounded-full bg-orange-500/20 border border-orange-500/40 flex items-center justify-center" style={{ display: user.stravaProfile?.profile ? 'none' : 'flex' }}>
-					<UserIcon className="w-4 h-4 text-orange-500" />
-				</div>
+				) : (
+					<div className="w-8 h-8 rounded-full bg-orange-500/20 border border-orange-500/40 flex items-center justify-center">
+						<UserIcon className="w-4 h-4 text-orange-500" />
+					</div>
+				)}
+				{profileUrl && (
+					<div className="w-8 h-8 rounded-full bg-orange-500/20 border border-orange-500/40 flex items-center justify-center" style={{ display: 'none' }}>
+						<UserIcon className="w-4 h-4 text-orange-500" />
+					</div>
+				)}
 				<span className="text-sm font-medium text-gray-200">{displayName}</span>
 			</div>
 		);

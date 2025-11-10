@@ -21,6 +21,7 @@ export async function uploadImageToS3(
 			Body: buffer,
 			ContentType: contentType,
 			CacheControl: 'public, max-age=31536000',
+			ACL: 'public-read', // Allow public access via S3 website endpoint
 		});
 
 		await s3Client.send(command);
