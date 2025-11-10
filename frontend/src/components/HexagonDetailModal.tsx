@@ -1,4 +1,14 @@
-import { X, ExternalLink, Loader2, User as UserIcon, Crown, Trophy, Flame, Sparkles } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+	faXmark,
+	faExternalLink,
+	faSpinner,
+	faUser,
+	faCrown,
+	faTrophy,
+	faFire,
+	faSparkles,
+} from '@fortawesome/pro-solid-svg-icons';
 import { SelectedHexagonData } from '@/hooks/useHexagonSelection';
 import { ErrorBoundary } from './ErrorBoundary';
 
@@ -61,7 +71,7 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 					<div
 						className={`${sizeClasses} rounded-full bg-gray-500/20 border-2 border-gray-500/40 flex items-center justify-center`}
 					>
-						<UserIcon className={`${iconSize} text-gray-500`} />
+						<FontAwesomeIcon icon={faUser} className={`${iconSize} text-gray-500`} />
 					</div>
 					{showName && <span className="text-sm font-medium text-gray-400">Unknown</span>}
 				</div>
@@ -91,7 +101,7 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 					<div
 						className={`${sizeClasses} rounded-full bg-gradient-to-br from-orange-500/30 to-orange-600/30 border-2 border-orange-500/40 flex items-center justify-center shadow-lg`}
 					>
-						<UserIcon className={`${iconSize} text-orange-400`} />
+						<FontAwesomeIcon icon={faUser} className={`${iconSize} text-orange-400`} />
 					</div>
 				)}
 				{profileUrl && (
@@ -99,7 +109,7 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 						className={`${sizeClasses} rounded-full bg-gradient-to-br from-orange-500/30 to-orange-600/30 border-2 border-orange-500/40 flex items-center justify-center shadow-lg`}
 						style={{ display: 'none' }}
 					>
-						<UserIcon className={`${iconSize} text-orange-400`} />
+						<FontAwesomeIcon icon={faUser} className={`${iconSize} text-orange-400`} />
 					</div>
 				)}
 				{showName && <span className="text-base font-bold text-gray-100">{displayName}</span>}
@@ -151,14 +161,14 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 				{/* Header */}
 				<div className="flex items-center justify-between p-5 border-b border-white/10 sticky top-0 bg-[rgba(10,10,10,0.98)] backdrop-blur-md z-10">
 					<div className="flex items-center gap-2">
-						<Trophy className="w-5 h-5 text-orange-500" />
+						<FontAwesomeIcon icon={faTrophy} className="w-5 h-5 text-orange-500" />
 						<h2 className="text-lg font-bold text-gray-100">Battle Arena</h2>
 					</div>
 					<button
 						onClick={onClose}
 						className="text-gray-400 hover:text-gray-200 transition-colors p-1 hover:bg-white/10 rounded-lg"
 					>
-						<X className="w-5 h-5" />
+						<FontAwesomeIcon icon={faXmark} className="w-5 h-5" />
 					</button>
 				</div>
 
@@ -173,18 +183,18 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 					>
 						{loading ? (
 							<div className="flex items-center justify-center py-12">
-								<Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+								<FontAwesomeIcon icon={faSpinner} spin className="w-8 h-8 text-orange-500" />
 							</div>
 						) : hexagonData && activity ? (
 							<>
 								{/* Current Champion Card */}
 								<div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-orange-500/20 via-orange-600/10 to-transparent border-2 border-orange-500/40 p-5 shadow-xl">
 									<div className="absolute top-2 right-2">
-										<Crown className="w-8 h-8 text-yellow-400 drop-shadow-lg animate-pulse" />
+										<FontAwesomeIcon icon={faCrown} className="w-8 h-8 text-yellow-400 drop-shadow-lg animate-pulse" />
 									</div>
 
 									<div className="flex items-center gap-2 mb-4">
-										<Trophy className="w-5 h-5 text-orange-400" />
+										<FontAwesomeIcon icon={faTrophy} className="w-5 h-5 text-orange-400" />
 										<h3 className="text-sm font-bold text-orange-400 uppercase tracking-wide">
 											Current Champion
 										</h3>
@@ -219,7 +229,7 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 										rel="noopener noreferrer"
 										className="inline-flex items-center gap-2 bg-[#FC5200] hover:bg-[#E34402] text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:scale-105 shadow-lg"
 									>
-										<ExternalLink className="w-4 h-4" />
+										<FontAwesomeIcon icon={faExternalLink} className="w-4 h-4" />
 										View Activity
 									</a>
 								</div>
@@ -227,7 +237,7 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 								{/* OG Discoverer Badge */}
 								<div className="rounded-xl bg-gradient-to-br from-blue-500/20 via-blue-600/10 to-transparent border-2 border-blue-500/30 p-4 shadow-lg">
 									<div className="flex items-center gap-2 mb-3">
-										<Sparkles className="w-5 h-5 text-blue-400" />
+										<FontAwesomeIcon icon={faSparkles} className="w-5 h-5 text-blue-400" />
 										<h3 className="text-sm font-bold text-blue-400 uppercase tracking-wide">
 											OG Discoverer
 										</h3>
@@ -247,7 +257,7 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 								{/* Battle Stats */}
 								<div className="rounded-xl bg-white/5 border border-white/10 p-4">
 									<div className="flex items-center gap-2 mb-3">
-										<Flame className="w-5 h-5 text-red-400" />
+										<FontAwesomeIcon icon={faFire} className="w-5 h-5 text-red-400" />
 										<h3 className="text-sm font-bold text-gray-300 uppercase tracking-wide">
 											Battle Stats
 										</h3>
@@ -264,7 +274,7 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 								{fighters.length > 0 && (
 									<div className="space-y-3">
 										<div className="flex items-center gap-2">
-											<Trophy className="w-5 h-5 text-yellow-400" />
+											<FontAwesomeIcon icon={faTrophy} className="w-5 h-5 text-yellow-400" />
 											<h3 className="text-sm font-bold text-gray-300 uppercase tracking-wide">
 												Top Fighters
 											</h3>
@@ -287,7 +297,7 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 													<div className="flex items-center gap-3 flex-1">
 														<div className="flex items-center justify-center w-8">
 															{index < 3 ? (
-																<Trophy className={`w-5 h-5 ${getMedalColor(index)}`} />
+																<FontAwesomeIcon icon={faTrophy} className={`w-5 h-5 ${getMedalColor(index)}`} />
 															) : (
 																<span className="text-sm font-bold text-gray-500">
 																	#{index + 1}
@@ -320,7 +330,7 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 							</>
 						) : (
 							<div className="text-center py-12 text-gray-400">
-								<Trophy className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+								<FontAwesomeIcon icon={faTrophy} className="w-12 h-12 text-gray-600 mx-auto mb-3" />
 								<p>No activity data found for this hexagon.</p>
 							</div>
 						)}

@@ -8,7 +8,8 @@ import { useStaticProfileImages } from '@/hooks/useStaticProfileImages';
 import { loadTestData } from '@/utils/loadTestData';
 import type { MockData, MockHexagon } from '@/utils/mockHexData';
 import { MockHexagonModal } from '@/components/MockHexagonModal';
-import { Loader2 } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSpinner } from '@fortawesome/pro-solid-svg-icons';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 function HexTestPageContent() {
@@ -138,7 +139,7 @@ function HexTestPageContent() {
 			{loadingStage !== 'complete' && (
 				<div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
 					<div className="bg-black/90 border border-white/20 rounded-xl p-6 flex flex-col items-center gap-4">
-						<Loader2 className="w-8 h-8 animate-spin text-white" />
+						<FontAwesomeIcon icon={faSpinner} spin className="w-8 h-8 text-white" />
 						<div className="text-white font-medium">
 							{loadingStage === 'generating' && 'Generating mock data...'}
 							{loadingStage === 'hexagons' && 'Rendering hexagons...'}

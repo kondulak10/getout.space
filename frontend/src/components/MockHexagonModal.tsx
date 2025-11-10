@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { X, MapPin, User, Activity } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faXmark, faLocationDot, faUser, faChartLine } from '@fortawesome/pro-solid-svg-icons';
 import type { MockHexagon, MockUser } from '@/utils/mockHexData';
 import { formatDate } from '@/utils/dateFormatter';
 
@@ -40,14 +41,14 @@ export function MockHexagonModal({
 						onClick={onClose}
 						className="text-gray-400 hover:text-gray-200 transition-colors cursor-pointer"
 					>
-						<X className="w-5 h-5" />
+						<FontAwesomeIcon icon={faXmark} className="w-5 h-5" />
 					</button>
 				</div>
 
 				<div className="p-6 space-y-6">
 					<div className="bg-white/5 rounded-lg p-4">
 						<div className="flex items-center gap-2 text-gray-400 text-sm mb-2">
-							<MapPin className="w-4 h-4" />
+							<FontAwesomeIcon icon={faLocationDot} className="w-4 h-4" />
 							<span>Hexagon ID</span>
 						</div>
 						<div className="text-gray-100 font-mono text-sm break-all">
@@ -57,7 +58,7 @@ export function MockHexagonModal({
 
 					<div className="bg-white/5 rounded-lg p-4">
 						<div className="flex items-center gap-2 text-gray-400 text-sm mb-2">
-							<User className="w-4 h-4" />
+							<FontAwesomeIcon icon={faUser} className="w-4 h-4" />
 							<span>Current Owner</span>
 						</div>
 						<div className="flex items-center gap-3">
@@ -83,7 +84,7 @@ export function MockHexagonModal({
 
 					<div className="bg-white/5 rounded-lg p-4">
 						<div className="flex items-center gap-2 text-gray-400 text-sm mb-3">
-							<Activity className="w-4 h-4" />
+							<FontAwesomeIcon icon={faChartLine} className="w-4 h-4" />
 							<span>Activity Details</span>
 						</div>
 						<div className="space-y-2">
