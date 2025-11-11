@@ -4,6 +4,7 @@ node_modules/
 # Build output
 dist/
 build/
+*.tsbuildinfo
 
 # Auto-generated files
 src/version.ts
