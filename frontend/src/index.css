@@ -67,4 +67,44 @@
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
+
+  /* Custom Scrollbar Styling */
+  /* For Webkit browsers (Chrome, Safari, Edge) */
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    border: 2px solid rgba(255, 255, 255, 0.05);
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: rgba(252, 82, 0, 0.5);
+  }
+
+  *::-webkit-scrollbar-thumb:active {
+    background: rgba(252, 82, 0, 0.7);
+  }
+
+  /* For Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.05);
+  }
+
+  /* Thinner scrollbar for mobile/touch devices */
+  @media (hover: none) and (pointer: coarse) {
+    *::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+  }
 }

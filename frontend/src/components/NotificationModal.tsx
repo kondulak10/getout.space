@@ -1,21 +1,38 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXmark, faBell, faSpinner } from '@fortawesome/pro-solid-svg-icons';
+import { faBell, faSpinner, faChevronLeft, faChevronRight } from '@fortawesome/pro-solid-svg-icons';
 import { NotificationItem } from './NotificationItem';
 import { useNotifications } from '@/contexts/useNotifications';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from '@/components/ui/dialog';
 
 interface NotificationModalProps {
 	onClose: () => void;
 }
 
+const NOTIFICATIONS_PER_PAGE = 5;
+
 export function NotificationModal({ onClose }: NotificationModalProps) {
 	const { notifications, loading, unreadCount, markAllAsRead, refetch } = useNotifications();
+	const [currentPage, setCurrentPage] = useState(1);
 
 	// Refetch notifications when modal opens
 	useEffect(() => {
 		console.log('📬 NotificationModal opened - refetching notifications...');
 		refetch();
 	}, [refetch]);
+
+	// Calculate pagination
+	const totalPages = Math.ceil(notifications.length / NOTIFICATIONS_PER_PAGE);
+	const startIndex = (currentPage - 1) * NOTIFICATIONS_PER_PAGE;
+	const endIndex = startIndex + NOTIFICATIONS_PER_PAGE;
+	const paginatedNotifications = notifications.slice(startIndex, endIndex);
+
+	// Reset to page 1 if current page is out of bounds
+	useEffect(() => {
+		if (currentPage > totalPages && totalPages > 0) {
+			setCurrentPage(1);
+		}
+	}, [currentPage, totalPages]);
 
 	const handleClose = () => {
 		try {
@@ -26,44 +43,29 @@ export function NotificationModal({ onClose }: NotificationModalProps) {
 	};
 
 	return (
-		<div
-			className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-			onClick={handleClose}
-		>
-			<div
-				className="bg-gradient-to-b from-[rgba(10,10,10,0.98)] to-[rgba(5,5,5,0.98)] backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-				onClick={(e) => e.stopPropagation()}
-			>
-				<div className="flex items-center justify-between p-5 border-b border-white/10 sticky top-0 bg-[rgba(10,10,10,0.98)] backdrop-blur-md z-10">
-					<div className="flex items-center gap-2">
+		<Dialog open={true} onOpenChange={(open) => !open && handleClose()}>
+			<DialogContent>
+				<DialogHeader className="pr-20">
+					<DialogTitle className="flex items-center gap-2">
 						<FontAwesomeIcon icon={faBell} className="w-5 h-5 text-orange-500" />
-						<h2 className="text-lg font-bold text-gray-100">Notifications</h2>
+						Alerts
 						{unreadCount > 0 && (
 							<span className="bg-orange-500 text-white text-xs rounded-full px-2 py-0.5 font-semibold">
 								{unreadCount > 9 ? '9+' : unreadCount}
 							</span>
 						)}
-					</div>
-					<div className="flex items-center gap-3">
-						{unreadCount > 0 && (
-							<button
-								onClick={markAllAsRead}
-								className="text-sm text-orange-400 hover:text-orange-300 transition-colors"
-							>
-								Mark all as read
-							</button>
-						)}
+					</DialogTitle>
+					{unreadCount > 0 && (
 						<button
-							type="button"
-							onClick={handleClose}
-							className="text-gray-400 hover:text-gray-200 transition-colors p-1 hover:bg-white/10 rounded-lg"
+							onClick={markAllAsRead}
+							className="absolute right-20 top-5 text-sm text-orange-400 hover:text-orange-300 hover:underline transition-colors px-2 py-1 rounded"
 						>
-							<FontAwesomeIcon icon={faXmark} className="w-5 h-5" />
+							Mark all as read
 						</button>
-					</div>
-				</div>
+					)}
+				</DialogHeader>
 
-				<div className="p-5">
+				<DialogBody>
 					{loading ? (
 						<div className="flex items-center justify-center py-12">
 							<FontAwesomeIcon icon={faSpinner} spin className="w-8 h-8 text-orange-500" />
@@ -71,21 +73,49 @@ export function NotificationModal({ onClose }: NotificationModalProps) {
 					) : notifications.length === 0 ? (
 						<div className="text-center py-12 text-gray-400">
 							<FontAwesomeIcon icon={faBell} className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-							<p>No notifications yet</p>
+							<p>No alerts yet</p>
 						</div>
 					) : (
-						<div className="space-y-2">
-							{notifications.map((notification) => (
-								<NotificationItem
-									key={notification.id}
-									notification={notification}
-								/>
-							))}
-						</div>
+						<>
+							<div className="space-y-2">
+								{paginatedNotifications.map((notification) => (
+									<NotificationItem
+										key={notification.id}
+										notification={notification}
+									/>
+								))}
+							</div>
+
+							{totalPages > 1 && (
+								<div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-700">
+									<button
+										onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+										disabled={currentPage === 1}
+										className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-400 hover:text-orange-400 disabled:text-gray-600 disabled:cursor-not-allowed transition-colors"
+									>
+										<FontAwesomeIcon icon={faChevronLeft} className="w-3 h-3" />
+										Previous
+									</button>
+
+									<span className="text-sm text-gray-400">
+										Page {currentPage} of {totalPages}
+									</span>
+
+									<button
+										onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+										disabled={currentPage === totalPages}
+										className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-400 hover:text-orange-400 disabled:text-gray-600 disabled:cursor-not-allowed transition-colors"
+									>
+										Next
+										<FontAwesomeIcon icon={faChevronRight} className="w-3 h-3" />
+									</button>
+								</div>
+							)}
+						</>
 					)}
-				</div>
-			</div>
-		</div>
+				</DialogBody>
+			</DialogContent>
+		</Dialog>
 	);
 }
 

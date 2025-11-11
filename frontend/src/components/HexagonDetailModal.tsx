@@ -1,6 +1,5 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-	faXmark,
 	faExternalLink,
 	faSpinner,
 	faUser,
@@ -11,6 +10,7 @@ import {
 } from '@fortawesome/pro-solid-svg-icons';
 import { SelectedHexagonData } from '@/hooks/useHexagonSelection';
 import { ErrorBoundary } from './ErrorBoundary';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from '@/components/ui/dialog';
 
 interface HexagonDetailModalProps {
 	hexagonData?: SelectedHexagonData;
@@ -92,7 +92,7 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 					<img
 						src={imageUrl}
 						alt={displayName}
-						className={`${sizeClasses} ${imghexUrl ? '' : 'rounded-full'} border-2 border-white/20 object-cover shadow-lg`}
+						className={`${sizeClasses} ${imghexUrl ? '' : 'rounded-full'} object-cover shadow-lg`}
 						onError={(e) => {
 							(e.target as HTMLImageElement).style.display = 'none';
 							const fallback = (e.target as HTMLImageElement).nextElementSibling;
@@ -152,29 +152,16 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 	};
 
 	return (
-		<div
-			className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-			onClick={onClose}
-		>
-			<div
-				className="bg-gradient-to-b from-[rgba(10,10,10,0.98)] to-[rgba(5,5,5,0.98)] backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-				onClick={(e) => e.stopPropagation()}
-			>
-				{/* Header */}
-				<div className="flex items-center justify-between p-5 border-b border-white/10 sticky top-0 bg-[rgba(10,10,10,0.98)] backdrop-blur-md z-10">
-					<div className="flex items-center gap-2">
+		<Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>
 						<FontAwesomeIcon icon={faTrophy} className="w-5 h-5 text-orange-500" />
-						<h2 className="text-lg font-bold text-gray-100">Battle Arena</h2>
-					</div>
-					<button
-						onClick={onClose}
-						className="text-gray-400 hover:text-gray-200 transition-colors p-1 hover:bg-white/10 rounded-lg"
-					>
-						<FontAwesomeIcon icon={faXmark} className="w-5 h-5" />
-					</button>
-				</div>
+						Battle Arena
+					</DialogTitle>
+				</DialogHeader>
 
-				<div className="p-5 space-y-5">
+				<DialogBody className="space-y-5">
 					<ErrorBoundary
 						fallback={
 							<div className="text-center py-12 text-red-400">
@@ -337,8 +324,8 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 							</div>
 						)}
 					</ErrorBoundary>
-				</div>
-			</div>
-		</div>
+				</DialogBody>
+			</DialogContent>
+		</Dialog>
 	);
 }

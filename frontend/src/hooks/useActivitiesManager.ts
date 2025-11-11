@@ -12,8 +12,7 @@ export function useActivitiesManager(onActivityProcessed?: () => void) {
 		removeActivity,
 	} = useUserActivities();
 
-	const openModal = async () => {
-		await loadStravaActivities();
+	const openModal = () => {
 		setShowModal(true);
 	};
 
@@ -48,6 +47,7 @@ export function useActivitiesManager(onActivityProcessed?: () => void) {
 		infoMessage,
 		openModal,
 		closeModal,
+		loadStravaActivities,
 		handleSaveActivity,
 		handleRemoveActivity,
 	};

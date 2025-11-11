@@ -59,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				const now = Math.floor(Date.now() / 1000);
 				const timeUntilExpiry = userData.me.tokenExpiresAt - now;
 
-				if (timeUntilExpiry < 3600 && timeUntilExpiry > 0) {
+				if (timeUntilExpiry < 3600) {
 					console.log(`🔄 Token expires in ${Math.floor(timeUntilExpiry / 60)} minutes, refreshing...`);
 					try {
 						const refreshResponse = await refreshToken();

@@ -14,6 +14,7 @@ import {
 import { Activity } from '../models/Activity';
 import { processAndUploadProfileImage } from '../utils/imageProcessing';
 import { geocodeToHex } from '../utils/geocoding';
+import { getValidAccessToken } from '../services/strava.service';
 
 const router = Router();
 
@@ -236,7 +237,7 @@ router.get('/api/strava/activities', authenticateToken, async (req: AuthRequest,
 
 		console.log(`📄 Fetching page ${page} with ${per_page} activities per page`);
 
-		const accessToken = req.user!.accessToken;
+		const accessToken = await getValidAccessToken(req.userId!);
 
 		const stravaUrl = new URL('https://www.strava.com/api/v3/athlete/activities');
 		stravaUrl.searchParams.set('page', page.toString());
@@ -326,7 +327,7 @@ router.get(
 				req.user?.stravaProfile.firstname
 			);
 
-			const accessToken = req.user!.accessToken;
+			const accessToken = await getValidAccessToken(req.userId!);
 
 			const response = await fetch(`https://www.strava.com/api/v3/activities/${activityId}`, {
 				headers: {
@@ -364,7 +365,7 @@ router.get('/api/strava/stats', authenticateToken, async (req: AuthRequest, res:
 	try {
 		console.log('📊 Fetching Strava stats for user:', req.user?.stravaProfile.firstname);
 
-		const accessToken = req.user!.accessToken;
+		const accessToken = await getValidAccessToken(req.userId!);
 
 		const response = await fetch(
 			`https://www.strava.com/api/v3/athletes/${req.user?.stravaId}/stats`,

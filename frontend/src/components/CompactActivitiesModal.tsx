@@ -12,6 +12,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from '@/components/ui/dialog';
 import { formatDate, formatDistance } from '@/utils/dateFormatter';
 
 interface CompactActivitiesModalProps {
@@ -89,25 +90,14 @@ export function CompactActivitiesModal({
 
 
 	return (
-		<div
-			className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-			onClick={onClose}
-		>
-			<div
-				className="bg-[rgba(10,10,10,0.95)] border border-white/10 rounded-xl shadow-2xl max-w-3xl w-full max-h-[90dvh] flex flex-col"
-				onClick={(e) => e.stopPropagation()}
-			>
-				<div className="flex items-center justify-between p-4 border-b border-white/10">
-					<h2 className="text-lg font-semibold text-gray-100">Your Strava Activities</h2>
-					<button
-						onClick={onClose}
-						className="text-gray-400 hover:text-gray-200 transition-colors cursor-pointer"
-					>
-						<FontAwesomeIcon icon="times" className="w-5 h-5" />
-					</button>
-				</div>
+		<>
+			<Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+				<DialogContent className="max-w-3xl">
+					<DialogHeader>
+						<DialogTitle>Your Strava Activities</DialogTitle>
+					</DialogHeader>
 
-				<div className="flex-1 overflow-auto p-4">
+				<DialogBody className="p-4">
 					{loading ? (
 						<div className="flex items-center justify-center py-12">
 							<FontAwesomeIcon icon="spinner" className="w-8 h-8 animate-spin text-gray-400" />
@@ -190,23 +180,25 @@ export function CompactActivitiesModal({
 							))}
 						</div>
 					)}
-				</div>
+				</DialogBody>
 
 				{!loading && activities.length > 0 && (
-					<div className="border-t border-white/10 bg-white/5">
-						<div className="p-4 text-center text-sm text-gray-400">
+					<DialogFooter className="bg-white/5 flex-col space-y-0">
+						<div className="p-4 text-center text-sm text-gray-400 w-full border-b border-white/5">
 							Total: {activities.length} {activities.length === 1 ? 'activity' : 'activities'}
 							{' • '}
 							{activities.filter((a) => a.isStored).length} processed
 						</div>
-						<div className="px-4 pb-4 text-center text-xs text-amber-400/90 border-t border-white/5 pt-3">
+						<div className="px-4 pb-4 text-center text-xs text-amber-400/90 pt-3 w-full">
 							You cannot fetch activities older than 7 days.
 						</div>
-					</div>
+					</DialogFooter>
 				)}
-			</div>
+			</DialogContent>
+		</Dialog>
 
-			<AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+		{/* Separate AlertDialog for delete confirmation */}
+		<AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
 				<AlertDialogContent className="bg-[rgba(10,10,10,0.95)] border border-white/10 text-gray-100">
 					<AlertDialogHeader>
 						<AlertDialogTitle className="text-gray-100">Delete Activity</AlertDialogTitle>
@@ -224,6 +216,6 @@ export function CompactActivitiesModal({
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>
-		</div>
+		</>
 	);
 }

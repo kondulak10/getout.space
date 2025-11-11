@@ -1,8 +1,9 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXmark, faTrophy, faSpinner, faUser, faCrown, faSparkles } from '@fortawesome/pro-solid-svg-icons';
+import { faTrophy, faSpinner, faUser, faCrown, faSparkles } from '@fortawesome/pro-solid-svg-icons';
 import { useQuery } from '@apollo/client/react';
 import { RegionalActiveLeadersDocument, RegionalOgDiscoverersDocument } from '@/gql/graphql';
 import { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from '@/components/ui/dialog';
 
 interface LeaderboardModalProps {
 	parentHexagonIds: string[];
@@ -71,7 +72,7 @@ export function LeaderboardModal({ parentHexagonIds, onClose }: LeaderboardModal
 					<img
 						src={imageUrl}
 						alt={displayName}
-						className={`${sizeClasses} ${imghexUrl ? '' : 'rounded-full'} border-2 border-white/20 object-cover shadow-lg`}
+						className={`${sizeClasses} ${imghexUrl ? '' : 'rounded-full'} object-cover shadow-lg`}
 						onError={(e) => {
 							(e.target as HTMLImageElement).style.display = 'none';
 							const fallback = (e.target as HTMLImageElement).nextElementSibling;
@@ -182,31 +183,18 @@ export function LeaderboardModal({ parentHexagonIds, onClose }: LeaderboardModal
 	};
 
 	return (
-		<div
-			className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-			onClick={handleClose}
-		>
-			<div
-				className="bg-gradient-to-b from-[rgba(10,10,10,0.98)] to-[rgba(5,5,5,0.98)] backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-				onClick={(e) => e.stopPropagation()}
-			>
-				{/* Header */}
-				<div className="flex items-center justify-between p-5 border-b border-white/10 sticky top-0 bg-[rgba(10,10,10,0.98)] backdrop-blur-md z-10">
-					<div className="flex items-center gap-2">
+		<Dialog open={true} onOpenChange={(open) => !open && handleClose()}>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>
 						<FontAwesomeIcon icon={faTrophy} className="w-5 h-5 text-orange-500" />
-						<h2 className="text-lg font-bold text-gray-100">Regional Leaderboard</h2>
-					</div>
-					<button
-						type="button"
-						onClick={handleClose}
-						className="text-gray-400 hover:text-gray-200 transition-colors p-1 hover:bg-white/10 rounded-lg"
-					>
-						<FontAwesomeIcon icon={faXmark} className="w-5 h-5" />
-					</button>
-				</div>
+						Regional Leaderboard
+					</DialogTitle>
+				</DialogHeader>
 
-				{/* Tabs */}
-				<div className="flex gap-2 p-5 pb-0">
+				<DialogBody className="space-y-5 p-5">
+					{/* Tabs */}
+					<div className="flex gap-2">
 					<button
 						type="button"
 						onClick={() => setActiveTab('active')}
@@ -237,11 +225,12 @@ export function LeaderboardModal({ parentHexagonIds, onClose }: LeaderboardModal
 						</div>
 						<div className="text-xs mt-1 opacity-80">First to discover hexes</div>
 					</button>
-				</div>
+					</div>
 
-				{/* Content */}
-				<div className="p-5">{renderLeaderboard()}</div>
-			</div>
-		</div>
+					{/* Content */}
+					{renderLeaderboard()}
+				</DialogBody>
+			</DialogContent>
+		</Dialog>
 	);
 }

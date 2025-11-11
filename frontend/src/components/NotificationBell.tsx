@@ -6,9 +6,10 @@ interface NotificationBellProps {
 	className?: string;
 	iconClassName?: string;
 	onClick?: () => void;
+	showLabel?: boolean;
 }
 
-export function NotificationBell({ className, iconClassName, onClick }: NotificationBellProps) {
+export function NotificationBell({ className, iconClassName, onClick, showLabel = false }: NotificationBellProps) {
 	const { unreadCount } = useNotifications();
 
 	console.log('🔔 NotificationBell rendering, unreadCount:', unreadCount);
@@ -18,12 +19,15 @@ export function NotificationBell({ className, iconClassName, onClick }: Notifica
 
 	return (
 		<button onClick={onClick} className={className || defaultClassName}>
-			<FontAwesomeIcon icon={faBell} className={iconClassName || defaultIconClassName} />
-			{unreadCount > 0 && (
-				<span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">
-					{unreadCount > 9 ? '9+' : unreadCount}
-				</span>
-			)}
+			<div className="relative inline-flex">
+				<FontAwesomeIcon icon={faBell} className={iconClassName || defaultIconClassName} />
+				{unreadCount > 0 && (
+					<span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] rounded-full h-4 w-4 flex items-center justify-center font-bold">
+						{unreadCount > 9 ? '9+' : unreadCount}
+					</span>
+				)}
+			</div>
+			{showLabel && <span className="text-[10px] font-medium">Alerts</span>}
 		</button>
 	);
 }

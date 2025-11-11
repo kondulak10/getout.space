@@ -242,14 +242,14 @@ export default function AdminPage() {
 						>
 							<div className="text-4xl mb-3">{loadingEntity === "notifications" ? "⏳" : "🔔"}</div>
 							<h3 className="text-lg font-semibold mb-1">
-								Notifications{" "}
+								Alerts{" "}
 								{notificationsCountData?.notificationsCount !== undefined &&
 									`(${notificationsCountData.notificationsCount})`}
 							</h3>
 							<p className="text-sm text-gray-500 text-center">
 								{loadingEntity === "notifications"
 									? "Loading..."
-									: "View all notifications in console"}
+									: "View all alerts in console"}
 							</p>
 						</button>
 

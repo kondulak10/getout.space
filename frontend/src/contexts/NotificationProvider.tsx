@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useCallback } from 'react';
 import { useQuery, useMutation } from '@apollo/client/react';
 import {
 	MyUnreadNotificationCountDocument,
@@ -13,10 +13,9 @@ import { NotificationContext } from './NotificationContext';
 export function NotificationProvider({ children }: { children: ReactNode }) {
 	const { isAuthenticated } = useAuth();
 
-	// Query for unread count with polling every 30 seconds
+	// Query for unread count on page load only
 	const { data: countData, refetch: refetchCount } = useQuery(MyUnreadNotificationCountDocument, {
 		skip: !isAuthenticated,
-		pollInterval: 30000, // Poll every 30 seconds
 		fetchPolicy: 'network-only', // Always fetch fresh data
 	});
 
@@ -44,22 +43,28 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 		refetchQueries: [MyUnreadNotificationCountDocument, MyNotificationsDocument],
 	});
 
-	const markAsRead = async (id: string) => {
-		await markAsReadMutation({ variables: { id } });
-	};
+	const markAsRead = useCallback(
+		async (id: string) => {
+			await markAsReadMutation({ variables: { id } });
+		},
+		[markAsReadMutation]
+	);
 
-	const markAllAsRead = async () => {
+	const markAllAsRead = useCallback(async () => {
 		await markAllAsReadMutation();
-	};
+	}, [markAllAsReadMutation]);
 
-	const deleteNotification = async (id: string) => {
-		await deleteNotificationMutation({ variables: { id } });
-	};
+	const deleteNotification = useCallback(
+		async (id: string) => {
+			await deleteNotificationMutation({ variables: { id } });
+		},
+		[deleteNotificationMutation]
+	);
 
-	const refetch = () => {
+	const refetch = useCallback(() => {
 		refetchCount();
 		refetchNotifications();
-	};
+	}, [refetchCount, refetchNotifications]);
 
 	return (
 		<NotificationContext.Provider

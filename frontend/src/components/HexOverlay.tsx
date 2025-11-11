@@ -4,7 +4,7 @@ import { useActivitiesManager } from "@/hooks/useActivitiesManager";
 import { useUserActivities } from "@/hooks/useUserActivities";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useNavigate } from "react-router-dom";
-import { ActivitiesManagerModal } from "./ActivitiesManagerModal";
+import { ActivitiesModal } from "./ActivitiesModal";
 import { LeaderboardModal } from "./LeaderboardModal";
 import { NotificationDropdown } from "./NotificationDropdown";
 import { NotificationModal } from "./NotificationModal";
@@ -19,7 +19,6 @@ interface HexOverlayProps {
 export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 	const { user } = useAuth();
 	const { latestActivity } = useUserActivities();
-	const [mobileExpanded, setMobileExpanded] = useState(false);
 	const [showLeaderboard, setShowLeaderboard] = useState(false);
 	const [showNotifications, setShowNotifications] = useState(false);
 	const { currentParentHexagonIds } = useMap();
@@ -27,18 +26,13 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 		showModal,
 		activities,
 		loading,
-		infoMessage,
 		openModal,
 		closeModal,
+		loadStravaActivities,
 		handleSaveActivity,
 		handleRemoveActivity,
 	} = useActivitiesManager(onActivityChanged);
 	const navigate = useNavigate();
-
-	const handleShowOnMap = (hexId: string) => {
-		closeModal();
-		navigate(`/?hex=${hexId}`);
-	};
 
 	if (!user) {
 		return (
@@ -70,8 +64,8 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 	return (
 		<>
 			<div className="hidden md:block absolute top-4 right-4 z-10">
-				<div className="bg-[rgba(10,10,10,0.9)] backdrop-blur-md border border-white/10 rounded-xl p-3 min-w-72 shadow-2xl">
-					<div className="flex items-center gap-2 mb-3">
+				<div className="bg-[rgba(10,10,10,0.9)] backdrop-blur-md border border-white/10 rounded-xl p-3 shadow-2xl">
+					<div className="flex items-center gap-3 mb-3">
 						<img
 							src={user.profile.imghex || user.profile.profile}
 							alt={user.profile.firstname}
@@ -83,6 +77,18 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 							</div>
 							<div className="text-xs text-gray-400">ID: {user.stravaId}</div>
 						</div>
+					</div>
+
+					<div className="grid grid-cols-2 gap-2 mb-3">
+						<button
+							onClick={() => openModal()}
+							disabled={loading}
+							className="flex items-center justify-start gap-2 bg-white/5 border border-white/10 text-gray-300 px-3 py-2 rounded-md transition-all cursor-pointer hover:bg-white/10 hover:border-white/20 hover:text-white disabled:opacity-50"
+							title="Activities"
+						>
+							<FontAwesomeIcon icon="running" className="w-3.5 h-3.5" />
+							<span className="text-xs font-medium">Activities</span>
+						</button>
 						<button
 							type="button"
 							onClick={(e) => {
@@ -94,32 +100,35 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 									console.error('Error opening leaderboard:', error);
 								}
 							}}
-							className="bg-white/5 border border-white/10 text-yellow-400 p-1.5 rounded-md transition-all cursor-pointer hover:bg-white/10 hover:border-white/20 hover:text-yellow-300 subtle-pulse"
+							className="flex items-center justify-start gap-2 bg-white/5 border border-white/10 text-yellow-400 px-3 py-2 rounded-md transition-all cursor-pointer hover:bg-white/10 hover:border-white/20 hover:text-yellow-300 subtle-pulse"
 							title="Regional Leaderboard"
 						>
 							<FontAwesomeIcon icon="trophy" className="w-3.5 h-3.5" />
+							<span className="text-xs font-medium">Leaders</span>
 						</button>
-						<NotificationDropdown 
-							bellClassName="bg-white/5 border border-white/10 text-gray-300 p-1.5 rounded-md transition-all cursor-pointer hover:bg-white/10 hover:border-white/20 hover:text-white relative"
+						<NotificationDropdown
+							bellClassName="flex items-center justify-start gap-2 bg-white/5 border border-white/10 text-gray-300 px-3 py-2 rounded-md transition-all cursor-pointer hover:bg-white/10 hover:border-white/20 hover:text-white relative"
 							iconClassName="w-3.5 h-3.5"
 							onClick={() => setShowNotifications(true)}
+							showLabel={true}
 						/>
 						<button
 							onClick={() => navigate("/profile")}
-							className="bg-white/5 border border-white/10 text-gray-300 p-1.5 rounded-md transition-all cursor-pointer hover:bg-white/10 hover:border-white/20 hover:text-white"
-							title="Settings"
+							className="flex items-center justify-start gap-2 bg-white/5 border border-white/10 text-gray-300 px-3 py-2 rounded-md transition-all cursor-pointer hover:bg-white/10 hover:border-white/20 hover:text-white"
+							title="Profile"
 						>
-							<FontAwesomeIcon icon="cog" className="w-3.5 h-3.5" />
+							<FontAwesomeIcon icon="user" className="w-3.5 h-3.5" />
+							<span className="text-xs font-medium">Profile</span>
 						</button>
 					</div>
 
 					{latestActivity && (
-						<div className="pt-2 border-t border-white/10 mb-3">
+						<div className="pt-2 pb-1 border-t border-white/10">
 							<div className="text-[11px] text-gray-400 mb-1">
 								Latest: {formatDate(latestActivity.startDate)}
 							</div>
 							<div className="flex items-center justify-between gap-2">
-								<div className="text-sm font-medium text-gray-200 truncate flex-1 max-w-[180px]">
+								<div className="text-sm font-medium text-gray-200 truncate flex-1">
 									{latestActivity.name}
 								</div>
 								<div className="text-xs text-gray-300 whitespace-nowrap">
@@ -128,133 +137,64 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 							</div>
 						</div>
 					)}
-
-					<div>
-						<button
-							onClick={openModal}
-							disabled={loading}
-							className="strava-link bg-transparent border-0 text-[#FC5200] text-sm font-medium underline cursor-pointer p-0 transition-all flex items-center hover:text-[#E34402] disabled:opacity-50 disabled:cursor-not-allowed"
-						>
-							{loading ? (
-								<>
-									<FontAwesomeIcon icon="spinner" className="animate-spin mr-2" />
-									Loading...
-								</>
-							) : (
-								"Fetch your latest from Strava"
-							)}
-						</button>
-					</div>
 				</div>
 			</div>
 
 			<div className="md:hidden fixed bottom-0 left-0 right-0 z-10 safe-area-bottom">
-				<div
-					className={`bg-[rgba(10,10,10,0.95)] backdrop-blur-md border-t border-white/10 transition-all duration-300 ${
-						mobileExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0 overflow-hidden"
-					}`}
-				>
-					<div className="p-3 space-y-3">
-						<div className="flex items-center gap-2">
-							<img
-								src={user.profile.imghex || user.profile.profile}
-								alt={user.profile.firstname}
-								className="w-10 h-10 object-cover hex-clip"
-							/>
-							<div className="flex-1 min-w-0">
-								<div className="font-semibold text-xs text-gray-100 truncate">
-									{user.profile.firstname}
-								</div>
-							</div>
-							<button
-								type="button"
-								onClick={(e) => {
-									e.preventDefault();
-									e.stopPropagation();
-									try {
-										setShowLeaderboard(true);
-									} catch (error) {
-										console.error('Error opening leaderboard:', error);
-									}
-								}}
-								className="bg-white/5 border border-white/10 text-yellow-400 p-1.5 rounded-md cursor-pointer subtle-pulse"
-								title="Regional Leaderboard"
-							>
-								<FontAwesomeIcon icon="trophy" className="w-3.5 h-3.5" />
-							</button>
-							<NotificationDropdown 
-								bellClassName="bg-white/5 border border-white/10 text-gray-300 p-1.5 rounded-md cursor-pointer relative"
-								iconClassName="w-3.5 h-3.5"
-								onClick={() => setShowNotifications(true)}
-							/>
-							<button
-								onClick={() => navigate("/profile")}
-								className="bg-white/5 border border-white/10 text-gray-300 p-1.5 rounded-md cursor-pointer"
-								title="Settings"
-							>
-								<FontAwesomeIcon icon="cog" className="w-3.5 h-3.5" />
-							</button>
-						</div>
-
-						{latestActivity && (
-							<div className="pt-2 border-t border-white/10">
-								<div className="text-[10px] text-gray-400 mb-1">
-									Latest: {formatDate(latestActivity.startDate)}
-								</div>
-								<div className="flex items-center justify-between gap-2">
-									<div className="text-xs font-medium text-gray-200 truncate flex-1 max-w-[150px]">
-										{latestActivity.name}
-									</div>
-									<div className="text-xs text-gray-300">
-										{formatDistance(latestActivity.distance)}
-									</div>
-								</div>
-							</div>
-						)}
-
+				<div className="bg-[rgba(10,10,10,0.95)] backdrop-blur-md border-t border-white/10 p-3">
+					<div className="grid grid-cols-4 gap-2">
 						<button
-							onClick={openModal}
+							onClick={() => openModal()}
 							disabled={loading}
-							className="w-full text-[#FC5200] text-sm font-medium underline cursor-pointer py-2"
+							className="flex flex-col items-center justify-center gap-1 bg-white/5 border border-white/10 text-gray-300 px-3 py-3 rounded-lg transition-all cursor-pointer hover:bg-white/10 hover:border-white/20 hover:text-white disabled:opacity-50"
 						>
-							{loading ? "Loading..." : "Fetch from Strava"}
+							<FontAwesomeIcon icon="running" className="w-5 h-5" />
+							<span className="text-[10px] font-medium">Activities</span>
 						</button>
-					</div>
-				</div>
 
-				<div className="bg-[rgba(10,10,10,0.95)] backdrop-blur-md border-t border-white/10 p-2">
-					<div className="flex items-center justify-center gap-2">
 						<button
-							onClick={() => setMobileExpanded(!mobileExpanded)}
-							className="flex-shrink-0 bg-white/5 border border-white/10 text-gray-300 p-2.5 rounded-md cursor-pointer"
-							style={{ height: '44px' }}
+							type="button"
+							onClick={(e) => {
+								e.preventDefault();
+								e.stopPropagation();
+								try {
+									setShowLeaderboard(true);
+								} catch (error) {
+									console.error('Error opening leaderboard:', error);
+								}
+							}}
+							className="flex flex-col items-center justify-center gap-1 bg-white/5 border border-white/10 text-yellow-400 px-3 py-3 rounded-lg transition-all cursor-pointer hover:bg-white/10 hover:border-white/20 hover:text-yellow-300 subtle-pulse"
 						>
-							<FontAwesomeIcon
-								icon={mobileExpanded ? "chevron-down" : "chevron-up"}
-								className="w-3.5 h-3.5"
-							/>
+							<FontAwesomeIcon icon="trophy" className="w-5 h-5" />
+							<span className="text-[10px] font-medium">Leaders</span>
+						</button>
+
+						<NotificationDropdown
+							bellClassName="flex flex-col items-center justify-center gap-1 bg-white/5 border border-white/10 text-gray-300 px-3 py-3 rounded-lg transition-all cursor-pointer hover:bg-white/10 hover:border-white/20 hover:text-white"
+							iconClassName="w-5 h-5"
+							onClick={() => setShowNotifications(true)}
+							showLabel={true}
+						/>
+
+						<button
+							onClick={() => navigate("/profile")}
+							className="flex flex-col items-center justify-center gap-1 bg-white/5 border border-white/10 text-gray-300 px-3 py-3 rounded-lg transition-all cursor-pointer hover:bg-white/10 hover:border-white/20 hover:text-white"
+						>
+							<FontAwesomeIcon icon="user" className="w-5 h-5" />
+							<span className="text-[10px] font-medium">Profile</span>
 						</button>
 					</div>
-
-					{latestActivity && (
-						<div className="mt-2 text-center">
-							<div className="text-xs text-gray-400">
-								Your latest activity: {formatDate(latestActivity.startDate)}
-							</div>
-						</div>
-					)}
 				</div>
 			</div>
 
-			<ActivitiesManagerModal
+			<ActivitiesModal
 				isOpen={showModal}
-				activities={activities}
-				loading={loading}
-				infoMessage={infoMessage}
 				onClose={closeModal}
+				onFetchActivities={loadStravaActivities}
+				stravaActivities={activities}
+				loadingStrava={loading}
 				onProcess={handleSaveActivity}
-				onDelete={handleRemoveActivity}
-				onShowOnMap={handleShowOnMap}
+				onDeleteStrava={handleRemoveActivity}
 			/>
 
 			{showLeaderboard && (
