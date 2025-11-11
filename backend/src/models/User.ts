@@ -94,7 +94,8 @@ userSchema.pre('save', function (next) {
 	next();
 });
 
-userSchema.post('init', function (doc) {
+// Helper function to decrypt tokens on a single user document
+function decryptUserTokens(doc: IUser) {
 	try {
 		if (doc.accessToken && doc.accessToken.includes(':')) {
 			doc.accessToken = decrypt(doc.accessToken);
@@ -118,33 +119,27 @@ userSchema.post('init', function (doc) {
 			'- token may be in old format or corrupted'
 		);
 	}
+}
+
+// post('init') hook - fires when each document is loaded from DB
+// Should cover all queries, but can be unreliable in practice
+userSchema.post('init', function (doc) {
+	decryptUserTokens(doc);
 });
 
+// post('findOne', 'findById') hook - explicit coverage for single-doc queries
+// Ensures decryption happens even if post('init') doesn't fire
 userSchema.post(['findOne', 'findById'], function (doc) {
 	if (doc) {
-		try {
-			if (doc.accessToken && doc.accessToken.includes(':')) {
-				doc.accessToken = decrypt(doc.accessToken);
-			}
-		} catch (error) {
-			console.error(
-				'Failed to decrypt accessToken for user:',
-				doc._id,
-				'- token may be in old format or corrupted'
-			);
-		}
+		decryptUserTokens(doc);
+	}
+});
 
-		try {
-			if (doc.refreshToken && doc.refreshToken.includes(':')) {
-				doc.refreshToken = decrypt(doc.refreshToken);
-			}
-		} catch (error) {
-			console.error(
-				'Failed to decrypt refreshToken for user:',
-				doc._id,
-				'- token may be in old format or corrupted'
-			);
-		}
+// post('find') hook - handles array results from User.find()
+// post('find') receives an array of documents, not individual docs
+userSchema.post('find', function (docs) {
+	if (Array.isArray(docs)) {
+		docs.forEach((doc) => decryptUserTokens(doc));
 	}
 });
 
