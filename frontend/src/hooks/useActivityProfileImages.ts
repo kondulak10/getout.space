@@ -113,8 +113,8 @@ export function useActivityProfileImages(
 						],
 					]);
 
-					// Scale down by 10% (make it 90% of original size)
-					const scaledBbox = turf.transformScale(bbox, 0.9);
+					// Scale down by 20% (make it 80% of original size)
+					const scaledBbox = turf.transformScale(bbox, 0.8);
 
 					// Rotate the polygon by 20 degrees
 					const rotatedBbox = turf.transformRotate(scaledBbox, 20);

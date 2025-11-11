@@ -151,7 +151,7 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 				const { originalUrl, hexagonUrl } = await processAndUploadProfileImage(
 					stravaImageUrl,
 					tempUserId,
-					400
+					150
 				);
 				s3ProfileUrl = originalUrl;
 				s3HexagonUrl = hexagonUrl;

@@ -46,7 +46,7 @@ export function useStaticProfileImages(
 						[minLng, maxLat],
 					]]);
 
-					const scaledBbox = turf.transformScale(bbox, 0.9);
+					const scaledBbox = turf.transformScale(bbox, 0.8);
 
 					const rotatedBbox = turf.transformRotate(scaledBbox, 20);
 

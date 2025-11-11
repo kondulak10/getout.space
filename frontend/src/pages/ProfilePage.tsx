@@ -158,7 +158,7 @@ export function ProfilePage() {
 
 			<style>{`
 				.hex-clip {
-					clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+					clip-path: polygon(50% 5%, 95% 27.5%, 95% 72.5%, 50% 95%, 5% 72.5%, 5% 27.5%);
 				}
 			`}</style>
 		</div>
