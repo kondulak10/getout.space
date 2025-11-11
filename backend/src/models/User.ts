@@ -120,7 +120,7 @@ userSchema.post('init', function (doc) {
 	}
 });
 
-userSchema.post('findOne', function (doc) {
+userSchema.post(['findOne', 'findById'], function (doc) {
 	if (doc) {
 		try {
 			if (doc.accessToken && doc.accessToken.includes(':')) {
