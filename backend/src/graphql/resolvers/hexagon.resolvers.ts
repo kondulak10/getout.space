@@ -4,6 +4,16 @@ import { User } from '../../models/User';
 import { Activity } from '../../models/Activity';
 import { Hexagon, IHexagon, ICaptureHistoryEntry } from '../../models/Hexagon';
 import { GraphQLContext, requireAuth, requireAdmin } from './auth.helpers';
+import {
+	PaginationArgs,
+	UserIdWithPaginationArgs,
+	BboxCoordinatesArgs,
+	ParentHexagonIdsArg,
+	HexagonIdArg,
+	LimitArg,
+	ParentHexagonIdsWithLimitArgs,
+	CaptureHexagonsArgs,
+} from './resolver.types';
 
 export const hexagonResolvers = {
 	Hexagon: {
@@ -59,8 +69,8 @@ export const hexagonResolvers = {
 
 	Query: {
 		myHexagons: async (
-			_: any,
-			{ limit = 1000, offset = 0 }: { limit?: number; offset?: number },
+			_: unknown,
+			{ limit = 1000, offset = 0 }: PaginationArgs,
 			context: GraphQLContext
 		) => {
 			const user = requireAuth(context);
@@ -79,8 +89,8 @@ export const hexagonResolvers = {
 		},
 
 		myHexagonsInBbox: async (
-			_: any,
-			{ south, west, north, east }: { south: number; west: number; north: number; east: number },
+			_: unknown,
+			{ south, west, north, east }: BboxCoordinatesArgs,
 			context: GraphQLContext
 		) => {
 			const user = requireAuth(context);
@@ -113,8 +123,8 @@ export const hexagonResolvers = {
 		},
 
 		hexagonsInBbox: async (
-			_: any,
-			{ south, west, north, east }: { south: number; west: number; north: number; east: number },
+			_: unknown,
+			{ south, west, north, east }: BboxCoordinatesArgs,
 			context: GraphQLContext
 		) => {
 			requireAuth(context);
@@ -147,8 +157,8 @@ export const hexagonResolvers = {
 		},
 
 		hexagonsByParents: async (
-			_: any,
-			{ parentHexagonIds }: { parentHexagonIds: string[] },
+			_: unknown,
+			{ parentHexagonIds }: ParentHexagonIdsArg,
 			context: GraphQLContext
 		) => {
 			requireAuth(context);
@@ -170,7 +180,7 @@ export const hexagonResolvers = {
 			}
 		},
 
-		hexagonsCount: async (_: any, __: any, context: GraphQLContext) => {
+		hexagonsCount: async (_: unknown, __: Record<string, never>, context: GraphQLContext) => {
 			requireAdmin(context);
 
 			try {
@@ -183,8 +193,8 @@ export const hexagonResolvers = {
 		},
 
 		userHexagons: async (
-			_: any,
-			{ userId, limit = 1000, offset = 0 }: { userId: string; limit?: number; offset?: number },
+			_: unknown,
+			{ userId, limit = 1000, offset = 0 }: UserIdWithPaginationArgs,
 			context: GraphQLContext
 		) => {
 			requireAuth(context);
@@ -202,7 +212,7 @@ export const hexagonResolvers = {
 			}
 		},
 
-		hexagon: async (_: any, { hexagonId }: { hexagonId: string }, context: GraphQLContext) => {
+		hexagon: async (_: unknown, { hexagonId }: HexagonIdArg, context: GraphQLContext) => {
 			requireAuth(context);
 
 			try {
@@ -214,11 +224,7 @@ export const hexagonResolvers = {
 			}
 		},
 
-		contestedHexagons: async (
-			_: any,
-			{ limit = 100 }: { limit?: number },
-			context: GraphQLContext
-		) => {
+		contestedHexagons: async (_: unknown, { limit = 100 }: LimitArg, context: GraphQLContext) => {
 			requireAuth(context);
 
 			try {
@@ -234,8 +240,8 @@ export const hexagonResolvers = {
 		},
 
 		hexagons: async (
-			_: any,
-			{ limit = 1000, offset = 0 }: { limit?: number; offset?: number },
+			_: unknown,
+			{ limit = 1000, offset = 0 }: PaginationArgs,
 			context: GraphQLContext
 		) => {
 			requireAdmin(context);
@@ -254,8 +260,8 @@ export const hexagonResolvers = {
 		},
 
 		regionalActiveLeaders: async (
-			_: any,
-			{ parentHexagonIds, limit = 10 }: { parentHexagonIds: string[]; limit?: number },
+			_: unknown,
+			{ parentHexagonIds, limit = 10 }: ParentHexagonIdsWithLimitArgs,
 			context: GraphQLContext
 		) => {
 			requireAuth(context);
@@ -308,8 +314,8 @@ export const hexagonResolvers = {
 		},
 
 		regionalOGDiscoverers: async (
-			_: any,
-			{ parentHexagonIds, limit = 10 }: { parentHexagonIds: string[]; limit?: number },
+			_: unknown,
+			{ parentHexagonIds, limit = 10 }: ParentHexagonIdsWithLimitArgs,
 			context: GraphQLContext
 		) => {
 			requireAuth(context);
@@ -364,12 +370,8 @@ export const hexagonResolvers = {
 
 	Mutation: {
 		captureHexagons: async (
-			_: any,
-			{
-				activityId,
-				hexagonIds,
-				routeType,
-			}: { activityId: string; hexagonIds: string[]; routeType?: string },
+			_: unknown,
+			{ activityId, hexagonIds, routeType }: CaptureHexagonsArgs,
 			context: GraphQLContext
 		) => {
 			const currentUser = requireAuth(context);
@@ -464,11 +466,7 @@ export const hexagonResolvers = {
 			}
 		},
 
-		deleteHexagon: async (
-			_: any,
-			{ hexagonId }: { hexagonId: string },
-			context: GraphQLContext
-		) => {
+		deleteHexagon: async (_: unknown, { hexagonId }: HexagonIdArg, context: GraphQLContext) => {
 			requireAdmin(context);
 
 			try {

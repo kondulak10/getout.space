@@ -37,16 +37,19 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 
 		// Validate scope - Strava returns this in the authorization redirect
 		if (!scope) {
-			return res.status(400).json({ error: 'Scope is required - not provided by authorization redirect' });
+			return res
+				.status(400)
+				.json({ error: 'Scope is required - not provided by authorization redirect' });
 		}
 
 		if (!scope.includes('activity:read_all')) {
 			return res.status(403).json({
 				error: 'Insufficient Permissions',
-				details: `GetOut needs access to all your activities (including private ones) to work properly. ` +
+				details:
+					`GetOut needs access to all your activities (including private ones) to work properly. ` +
 					`You declined the 'View data about your private activities' permission. ` +
 					`Please try registering again and accept all permissions. ` +
-					`(Granted: '${scope}', Required: 'read,activity:read_all')`
+					`(Granted: '${scope}', Required: 'read,activity:read_all')`,
 			});
 		}
 

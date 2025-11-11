@@ -1,17 +1,17 @@
+import { HEXAGON_COLORS } from "@/constants/hexagonColors";
 import { useAuth } from "@/contexts/useAuth";
-import { useLazyQuery, useQuery } from "@apollo/client/react";
 import {
-	GetUsersDocument,
-	GetAllHexagonsDocument,
-	GetAllActivitiesDocument,
-	GetUsersCountDocument,
-	GetHexagonsCountDocument,
-	GetActivitiesCountDocument,
 	AllNotificationsDocument,
+	GetActivitiesCountDocument,
+	GetAllActivitiesDocument,
+	GetAllHexagonsDocument,
+	GetHexagonsCountDocument,
+	GetUsersCountDocument,
+	GetUsersDocument,
 	NotificationsCountDocument,
 } from "@/gql/graphql";
+import { useLazyQuery, useQuery } from "@apollo/client/react";
 import { useState } from "react";
-import { HEXAGON_COLORS } from "@/constants/hexagonColors";
 
 export default function AdminPage() {
 	const { user: currentUser } = useAuth();
@@ -24,95 +24,96 @@ export default function AdminPage() {
 	const { data: notificationsCountData } = useQuery(NotificationsCountDocument);
 
 	const [fetchUsers] = useLazyQuery(GetUsersDocument, {
-		fetchPolicy: 'network-only',
+		fetchPolicy: "network-only",
 	});
 
 	const [fetchHexagons] = useLazyQuery(GetAllHexagonsDocument, {
-		fetchPolicy: 'network-only',
+		fetchPolicy: "network-only",
 	});
 
 	const [fetchActivities] = useLazyQuery(GetAllActivitiesDocument, {
-		fetchPolicy: 'network-only',
+		fetchPolicy: "network-only",
 	});
 
 	const [fetchNotifications] = useLazyQuery(AllNotificationsDocument, {
-		fetchPolicy: 'network-only',
+		fetchPolicy: "network-only",
 	});
 
 	const handleFetchUsers = async () => {
-		setLoadingEntity('users');
+		setLoadingEntity("users");
 		try {
 			const result = await fetchUsers();
 			if (result.data) {
-				console.log('=== USERS ===');
-				const usersWithStravaLinks = result.data.users.map(user => ({
+				console.log("=== USERS ===");
+				const usersWithStravaLinks = result.data.users.map((user) => ({
 					...user,
-					stravaUrl: `https://www.strava.com/athletes/${user.stravaId}`
+					stravaUrl: `https://www.strava.com/athletes/${user.stravaId}`,
 				}));
 				console.log(usersWithStravaLinks);
 			}
 		} catch (error) {
-			console.error('Error fetching users:', error);
+			console.error("Error fetching users:", error);
 		} finally {
 			setLoadingEntity(null);
 		}
 	};
 
 	const handleFetchHexagons = async () => {
-		setLoadingEntity('hexagons');
+		setLoadingEntity("hexagons");
 		try {
 			const result = await fetchHexagons({ variables: { limit: 1000 } });
 			if (result.data) {
-				console.log('=== HEXAGONS ===');
+				console.log("=== HEXAGONS ===");
 				console.log(result.data.hexagons);
 			}
 		} catch (error) {
-			console.error('Error fetching hexagons:', error);
+			console.error("Error fetching hexagons:", error);
 		} finally {
 			setLoadingEntity(null);
 		}
 	};
 
 	const handleFetchActivities = async () => {
-		setLoadingEntity('activities');
+		setLoadingEntity("activities");
 		try {
 			const result = await fetchActivities({ variables: { limit: 1000 } });
 			if (result.data) {
-				console.log('=== ACTIVITIES ===');
-				const activitiesWithStravaLinks = result.data.activities.map(activity => ({
+				console.log("=== ACTIVITIES ===");
+				const activitiesWithStravaLinks = result.data.activities.map((activity) => ({
 					...activity,
-					stravaUrl: `https://www.strava.com/activities/${activity.stravaActivityId}`
+					stravaUrl: `https://www.strava.com/activities/${activity.stravaActivityId}`,
 				}));
 				console.log(activitiesWithStravaLinks);
 			}
 		} catch (error) {
-			console.error('Error fetching activities:', error);
+			console.error("Error fetching activities:", error);
 		} finally {
 			setLoadingEntity(null);
 		}
 	};
 
 	const handleFetchNotifications = async () => {
-		setLoadingEntity('notifications');
+		setLoadingEntity("notifications");
 		try {
 			const result = await fetchNotifications({ variables: { limit: 1000 } });
 			if (result.data) {
-				console.log('=== NOTIFICATIONS ===');
+				console.log("=== NOTIFICATIONS ===");
 				console.log(result.data.notifications);
 			}
 		} catch (error) {
-			console.error('Error fetching notifications:', error);
+			console.error("Error fetching notifications:", error);
 		} finally {
 			setLoadingEntity(null);
 		}
 	};
 
 	const handleExportAuth = async () => {
-		const TOKEN_KEY = 'getout_auth_token';
+		const TOKEN_KEY = "getout_auth_token";
 		const token = localStorage.getItem(TOKEN_KEY);
 		if (token) {
-			await navigator.clipboard.writeText(token);
-			console.log('Token copied to clipboard');
+			const t = `localStorage.setItem("getout_auth_token", "${token}")`;
+			await navigator.clipboard.writeText(t);
+			console.log("Token copied to clipboard");
 		}
 	};
 
@@ -129,9 +130,7 @@ export default function AdminPage() {
 								</span>
 							)}
 						</div>
-						<p className="text-gray-600">
-							View MongoDB entities in the browser console
-						</p>
+						<p className="text-gray-600">View MongoDB entities in the browser console</p>
 					</div>
 					<a
 						href="/"
@@ -156,22 +155,21 @@ export default function AdminPage() {
 							className={`
 								flex flex-col items-center justify-center
 								p-6 rounded-lg border-2 transition-all
-								${loadingEntity === 'users'
-									? 'border-blue-500 bg-blue-50'
-									: loadingEntity !== null
-										? 'border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed'
-										: 'border-gray-300 bg-white hover:border-blue-500 hover:bg-blue-50 cursor-pointer'
+								${
+									loadingEntity === "users"
+										? "border-blue-500 bg-blue-50"
+										: loadingEntity !== null
+											? "border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed"
+											: "border-gray-300 bg-white hover:border-blue-500 hover:bg-blue-50 cursor-pointer"
 								}
 							`}
 						>
-							<div className="text-4xl mb-3">
-								{loadingEntity === 'users' ? '⏳' : '👥'}
-							</div>
+							<div className="text-4xl mb-3">{loadingEntity === "users" ? "⏳" : "👥"}</div>
 							<h3 className="text-lg font-semibold mb-1">
 								Users {usersCountData?.usersCount !== undefined && `(${usersCountData.usersCount})`}
 							</h3>
 							<p className="text-sm text-gray-500 text-center">
-								{loadingEntity === 'users' ? 'Loading...' : 'View all users in console'}
+								{loadingEntity === "users" ? "Loading..." : "View all users in console"}
 							</p>
 						</button>
 
@@ -181,22 +179,23 @@ export default function AdminPage() {
 							className={`
 								flex flex-col items-center justify-center
 								p-6 rounded-lg border-2 transition-all
-								${loadingEntity === 'hexagons'
-									? 'border-green-500 bg-green-50'
-									: loadingEntity !== null
-										? 'border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed'
-										: 'border-gray-300 bg-white hover:border-green-500 hover:bg-green-50 cursor-pointer'
+								${
+									loadingEntity === "hexagons"
+										? "border-green-500 bg-green-50"
+										: loadingEntity !== null
+											? "border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed"
+											: "border-gray-300 bg-white hover:border-green-500 hover:bg-green-50 cursor-pointer"
 								}
 							`}
 						>
-							<div className="text-4xl mb-3">
-								{loadingEntity === 'hexagons' ? '⏳' : '⬡'}
-							</div>
+							<div className="text-4xl mb-3">{loadingEntity === "hexagons" ? "⏳" : "⬡"}</div>
 							<h3 className="text-lg font-semibold mb-1">
-								Hexagons {hexagonsCountData?.hexagonsCount !== undefined && `(${hexagonsCountData.hexagonsCount})`}
+								Hexagons{" "}
+								{hexagonsCountData?.hexagonsCount !== undefined &&
+									`(${hexagonsCountData.hexagonsCount})`}
 							</h3>
 							<p className="text-sm text-gray-500 text-center">
-								{loadingEntity === 'hexagons' ? 'Loading...' : 'View all hexagons in console'}
+								{loadingEntity === "hexagons" ? "Loading..." : "View all hexagons in console"}
 							</p>
 						</button>
 
@@ -206,22 +205,23 @@ export default function AdminPage() {
 							className={`
 								flex flex-col items-center justify-center
 								p-6 rounded-lg border-2 transition-all
-								${loadingEntity === 'activities'
-									? 'border-purple-500 bg-purple-50'
-									: loadingEntity !== null
-										? 'border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed'
-										: 'border-gray-300 bg-white hover:border-purple-500 hover:bg-purple-50 cursor-pointer'
+								${
+									loadingEntity === "activities"
+										? "border-purple-500 bg-purple-50"
+										: loadingEntity !== null
+											? "border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed"
+											: "border-gray-300 bg-white hover:border-purple-500 hover:bg-purple-50 cursor-pointer"
 								}
 							`}
 						>
-							<div className="text-4xl mb-3">
-								{loadingEntity === 'activities' ? '⏳' : '🏃'}
-							</div>
+							<div className="text-4xl mb-3">{loadingEntity === "activities" ? "⏳" : "🏃"}</div>
 							<h3 className="text-lg font-semibold mb-1">
-								Activities {activitiesCountData?.activitiesCount !== undefined && `(${activitiesCountData.activitiesCount})`}
+								Activities{" "}
+								{activitiesCountData?.activitiesCount !== undefined &&
+									`(${activitiesCountData.activitiesCount})`}
 							</h3>
 							<p className="text-sm text-gray-500 text-center">
-								{loadingEntity === 'activities' ? 'Loading...' : 'View all activities in console'}
+								{loadingEntity === "activities" ? "Loading..." : "View all activities in console"}
 							</p>
 						</button>
 
@@ -231,22 +231,25 @@ export default function AdminPage() {
 							className={`
 								flex flex-col items-center justify-center
 								p-6 rounded-lg border-2 transition-all
-								${loadingEntity === 'notifications'
-									? 'border-yellow-500 bg-yellow-50'
-									: loadingEntity !== null
-										? 'border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed'
-										: 'border-gray-300 bg-white hover:border-yellow-500 hover:bg-yellow-50 cursor-pointer'
+								${
+									loadingEntity === "notifications"
+										? "border-yellow-500 bg-yellow-50"
+										: loadingEntity !== null
+											? "border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed"
+											: "border-gray-300 bg-white hover:border-yellow-500 hover:bg-yellow-50 cursor-pointer"
 								}
 							`}
 						>
-							<div className="text-4xl mb-3">
-								{loadingEntity === 'notifications' ? '⏳' : '🔔'}
-							</div>
+							<div className="text-4xl mb-3">{loadingEntity === "notifications" ? "⏳" : "🔔"}</div>
 							<h3 className="text-lg font-semibold mb-1">
-								Notifications {notificationsCountData?.notificationsCount !== undefined && `(${notificationsCountData.notificationsCount})`}
+								Notifications{" "}
+								{notificationsCountData?.notificationsCount !== undefined &&
+									`(${notificationsCountData.notificationsCount})`}
 							</h3>
 							<p className="text-sm text-gray-500 text-center">
-								{loadingEntity === 'notifications' ? 'Loading...' : 'View all notifications in console'}
+								{loadingEntity === "notifications"
+									? "Loading..."
+									: "View all notifications in console"}
 							</p>
 						</button>
 
@@ -256,17 +259,16 @@ export default function AdminPage() {
 							className={`
 								flex flex-col items-center justify-center
 								p-6 rounded-lg border-2 transition-all
-								${loadingEntity !== null
-									? 'border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed'
-									: 'border-gray-300 bg-white hover:border-orange-500 hover:bg-orange-50 cursor-pointer'
+								${
+									loadingEntity !== null
+										? "border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed"
+										: "border-gray-300 bg-white hover:border-orange-500 hover:bg-orange-50 cursor-pointer"
 								}
 							`}
 						>
 							<div className="text-4xl mb-3">🔑</div>
 							<h3 className="text-lg font-semibold mb-1">Export Auth</h3>
-							<p className="text-sm text-gray-500 text-center">
-								Export JWT token to console
-							</p>
+							<p className="text-sm text-gray-500 text-center">Export JWT token to console</p>
 						</button>
 					</div>
 
@@ -280,13 +282,11 @@ export default function AdminPage() {
 				<div className="bg-white rounded-lg shadow-lg p-8 mt-6">
 					<h2 className="text-xl font-semibold mb-4">Player Colors Preview</h2>
 					<p className="text-sm text-gray-600 mb-6">
-						These are the colors used for different players on the map, shown with the same opacity (50%) as on the map.
+						These are the colors used for different players on the map, shown with the same opacity
+						(50%) as on the map.
 					</p>
 
-					<div
-						className="p-6 rounded-lg"
-						style={{ backgroundColor: '#0a0a0a' }}
-					>
+					<div className="p-6 rounded-lg" style={{ backgroundColor: "#0a0a0a" }}>
 						<div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-8 gap-4">
 							{HEXAGON_COLORS.map((color, index) => (
 								<div key={color} className="flex flex-col items-center gap-2">
@@ -303,12 +303,8 @@ export default function AdminPage() {
 											backgroundColor: color,
 										}}
 									/>
-									<span className="text-xs text-gray-400 font-mono text-center">
-										{index + 1}
-									</span>
-									<span className="text-xs text-gray-500 font-mono text-center">
-										{color}
-									</span>
+									<span className="text-xs text-gray-400 font-mono text-center">{index + 1}</span>
+									<span className="text-xs text-gray-500 font-mono text-center">{color}</span>
 								</div>
 							))}
 						</div>

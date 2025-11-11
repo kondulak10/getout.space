@@ -68,16 +68,14 @@ export const notificationService = {
 	) {
 		const { limit = 20, offset = 0, unreadOnly = false } = options;
 
-		const query: any = { ownerId: userId };
+		const query: { ownerId: string | mongoose.Types.ObjectId; read?: boolean } = {
+			ownerId: userId,
+		};
 		if (unreadOnly) {
 			query.read = false;
 		}
 
-		return await Notification.find(query)
-			.sort({ createdAt: -1 })
-			.limit(limit)
-			.skip(offset)
-			.lean(); // Use lean() for better performance - no Mongoose document overhead
+		return await Notification.find(query).sort({ createdAt: -1 }).limit(limit).skip(offset).lean(); // Use lean() for better performance - no Mongoose document overhead
 	},
 
 	/**
@@ -86,11 +84,7 @@ export const notificationService = {
 	async getAllNotifications(options: { limit?: number; offset?: number } = {}) {
 		const { limit = 20, offset = 0 } = options;
 
-		return await Notification.find()
-			.sort({ createdAt: -1 })
-			.limit(limit)
-			.skip(offset)
-			.lean(); // Use lean() for better performance - no Mongoose document overhead
+		return await Notification.find().sort({ createdAt: -1 }).limit(limit).skip(offset).lean(); // Use lean() for better performance - no Mongoose document overhead
 	},
 
 	/**

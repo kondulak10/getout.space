@@ -1,4 +1,4 @@
-import { createContext, useContext, ReactNode } from 'react';
+import { ReactNode } from 'react';
 import { useQuery, useMutation } from '@apollo/client/react';
 import {
 	MyUnreadNotificationCountDocument,
@@ -8,27 +8,7 @@ import {
 	DeleteNotificationDocument,
 } from '@/gql/graphql';
 import { useAuth } from '@/contexts/useAuth';
-
-interface Notification {
-	id: string;
-	type: 'positive' | 'negative' | 'neutral';
-	message: string;
-	read: boolean;
-	relatedActivityId: string | null;
-	createdAt: unknown;
-}
-
-interface NotificationContextType {
-	unreadCount: number;
-	notifications: Notification[];
-	loading: boolean;
-	refetch: () => void;
-	markAsRead: (id: string) => Promise<void>;
-	markAllAsRead: () => Promise<void>;
-	deleteNotification: (id: string) => Promise<void>;
-}
-
-const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
+import { NotificationContext } from './NotificationContext';
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
 	const { isAuthenticated } = useAuth();
@@ -96,12 +76,4 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 			{children}
 		</NotificationContext.Provider>
 	);
-}
-
-export function useNotifications() {
-	const context = useContext(NotificationContext);
-	if (!context) {
-		throw new Error('useNotifications must be used within NotificationProvider');
-	}
-	return context;
 }

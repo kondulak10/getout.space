@@ -3,6 +3,7 @@ import { User } from '../../models/User';
 import { Activity, IActivity } from '../../models/Activity';
 import { Hexagon } from '../../models/Hexagon';
 import { GraphQLContext, requireAuth, requireAdmin } from './auth.helpers';
+import { PaginationArgs, IdArg, UserIdWithPaginationArgs } from './resolver.types';
 import mongoose from 'mongoose';
 
 export const activityResolvers = {
@@ -20,8 +21,8 @@ export const activityResolvers = {
 
 	Query: {
 		myActivities: async (
-			_: any,
-			{ limit = 50, offset = 0 }: { limit?: number; offset?: number },
+			_: unknown,
+			{ limit = 50, offset = 0 }: PaginationArgs,
 			context: GraphQLContext
 		) => {
 			const user = requireAuth(context);
@@ -39,8 +40,8 @@ export const activityResolvers = {
 		},
 
 		userActivities: async (
-			_: any,
-			{ userId, limit = 50, offset = 0 }: { userId: string; limit?: number; offset?: number },
+			_: unknown,
+			{ userId, limit = 50, offset = 0 }: UserIdWithPaginationArgs,
 			context: GraphQLContext
 		) => {
 			const currentUser = requireAuth(context);
@@ -63,7 +64,7 @@ export const activityResolvers = {
 			}
 		},
 
-		activity: async (_: any, { id }: { id: string }, context: GraphQLContext) => {
+		activity: async (_: unknown, { id }: IdArg, context: GraphQLContext) => {
 			const currentUser = requireAuth(context);
 
 			try {
@@ -91,8 +92,8 @@ export const activityResolvers = {
 		},
 
 		activities: async (
-			_: any,
-			{ limit = 50, offset = 0 }: { limit?: number; offset?: number },
+			_: unknown,
+			{ limit = 50, offset = 0 }: PaginationArgs,
 			context: GraphQLContext
 		) => {
 			requireAdmin(context);
@@ -106,7 +107,7 @@ export const activityResolvers = {
 			}
 		},
 
-		activitiesCount: async (_: any, __: any, context: GraphQLContext) => {
+		activitiesCount: async (_: unknown, __: Record<string, never>, context: GraphQLContext) => {
 			requireAdmin(context);
 
 			try {
@@ -120,7 +121,7 @@ export const activityResolvers = {
 	},
 
 	Mutation: {
-		deleteActivity: async (_: any, { id }: { id: string }, context: GraphQLContext) => {
+		deleteActivity: async (_: unknown, { id }: IdArg, context: GraphQLContext) => {
 			const currentUser = requireAuth(context);
 			const session = await mongoose.startSession();
 			session.startTransaction();
@@ -151,7 +152,7 @@ export const activityResolvers = {
 				console.log(`📦 Found ${hexagons.length} hexagons to process`);
 
 				const hexagonsToDelete: string[] = [];
-				const bulkUpdateOps: any[] = [];
+				const bulkUpdateOps: unknown[] = [];
 				let restored = 0;
 				let deleted = 0;
 
@@ -184,7 +185,8 @@ export const activityResolvers = {
 				}
 
 				if (bulkUpdateOps.length > 0) {
-					await Hexagon.bulkWrite(bulkUpdateOps, { session });
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					await Hexagon.bulkWrite(bulkUpdateOps as any, { session });
 					console.log(`✅ Restored ${restored} hexagons to previous owners`);
 				}
 

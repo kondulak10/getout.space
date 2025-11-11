@@ -1,7 +1,7 @@
 import { useAuth } from "@/contexts/useAuth";
 import * as turf from "@turf/turf";
 import { cellToBoundary } from "h3-js";
-import type { Map as MapboxMap } from "mapbox-gl";
+import type { Map as MapboxMap, ErrorEvent } from "mapbox-gl";
 import { useEffect, useRef } from "react";
 
 interface ActivityHexagons {
@@ -10,6 +10,18 @@ interface ActivityHexagons {
 
 interface SelectedHexagons {
 	[activityId: string]: string; // activityId -> selected hexagonId
+}
+
+interface HexagonData {
+	hexagonId: string;
+	currentOwnerId: string;
+	currentOwnerStravaId: number;
+	currentOwnerIsPremium: boolean | null;
+	currentOwnerImghex: string | null;
+	currentStravaActivityId: number;
+	activityType: string;
+	captureCount: number;
+	lastCapturedAt: unknown;
 }
 
 const STORAGE_KEY = "activity_profile_image_positions";
@@ -21,7 +33,7 @@ const STORAGE_KEY = "activity_profile_image_positions";
  */
 export function useActivityProfileImages(
 	mapRef: React.RefObject<MapboxMap | null>,
-	hexagonsData: any[] | null
+	hexagonsData: HexagonData[] | null
 ) {
 	const { user } = useAuth();
 	const layersAddedRef = useRef<Set<string>>(new Set());
@@ -130,8 +142,8 @@ export function useActivityProfileImages(
 						});
 
 						// Listen for source errors and clean up failed loads
-						const errorHandler = (e: any) => {
-							if (e.sourceId === sourceId || e.source?.id === sourceId) {
+						const errorHandler = (e: ErrorEvent & { sourceId?: string }) => {
+							if (e.sourceId === sourceId) {
 								// Image loading failed, removing from map
 								try {
 									if (map.getLayer(layerId)) {
@@ -176,10 +188,10 @@ export function useActivityProfileImages(
 
 			// Group hexagons by user (using denormalized fields from backend)
 			const userHexagons: {
-				[userId: string]: { isPremium: boolean; imghex?: string; hexagons: any[] };
+				[userId: string]: { isPremium: boolean; imghex?: string; hexagons: HexagonData[] };
 			} = {};
 
-			hexagonsData.forEach((hex: any) => {
+			hexagonsData.forEach((hex: HexagonData) => {
 				const userId = hex.currentOwnerId;
 				const imghex = hex.currentOwnerImghex;
 				const isPremium = hex.currentOwnerIsPremium || false;
@@ -210,7 +222,7 @@ export function useActivityProfileImages(
 
 				// Group hexagons by activity for BOTH premium and non-premium users
 				const activityHexagons: ActivityHexagons = {};
-				userHexes.forEach((hex: any) => {
+				userHexes.forEach((hex: HexagonData) => {
 					if (hex.currentStravaActivityId) {
 						const activityId = hex.currentStravaActivityId.toString();
 						if (!activityHexagons[activityId]) {

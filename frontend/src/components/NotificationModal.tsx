@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark, faBell, faSpinner } from '@fortawesome/pro-solid-svg-icons';
 import { NotificationItem } from './NotificationItem';
-import { useNotifications } from '@/contexts/NotificationProvider';
+import { useNotifications } from '@/contexts/useNotifications';
 
 interface NotificationModalProps {
 	onClose: () => void;

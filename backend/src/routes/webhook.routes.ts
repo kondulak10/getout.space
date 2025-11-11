@@ -7,6 +7,16 @@ const router = Router();
 
 const sseClients: Response[] = [];
 
+interface StravaWebhookEvent {
+	object_type: string;
+	object_id: number;
+	aspect_type: string;
+	owner_id: number;
+	subscription_id: number;
+	event_time: number;
+	updates?: Record<string, unknown>;
+}
+
 router.get('/api/strava/webhook', (req: Request, res: Response) => {
 	const mode = req.query['hub.mode'];
 	const token = req.query['hub.verify_token'];
@@ -68,7 +78,7 @@ router.get('/api/strava/events', (req: Request, res: Response) => {
 	});
 });
 
-function broadcastToClients(event: any) {
+function broadcastToClients(event: StravaWebhookEvent) {
 	const message = `data: ${JSON.stringify(event)}\n\n`;
 
 	console.log(`📡 Broadcasting to ${sseClients.length} connected clients`);

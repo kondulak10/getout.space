@@ -4,6 +4,7 @@ import { Activity } from '../../models/Activity';
 import { Hexagon } from '../../models/Hexagon';
 import { refreshStravaToken } from '../../utils/strava';
 import { GraphQLContext, requireAuth, requireAdmin } from './auth.helpers';
+import { IdArg } from './resolver.types';
 
 export const userResolvers = {
 	User: {
@@ -14,12 +15,12 @@ export const userResolvers = {
 	},
 
 	Query: {
-		me: async (_: any, __: any, context: GraphQLContext) => {
+		me: async (_: unknown, __: Record<string, never>, context: GraphQLContext) => {
 			const user = requireAuth(context);
 			return user;
 		},
 
-		users: async (_: any, __: any, context: GraphQLContext) => {
+		users: async (_: unknown, __: Record<string, never>, context: GraphQLContext) => {
 			requireAdmin(context);
 
 			try {
@@ -31,7 +32,7 @@ export const userResolvers = {
 			}
 		},
 
-		usersCount: async (_: any, __: any, context: GraphQLContext) => {
+		usersCount: async (_: unknown, __: Record<string, never>, context: GraphQLContext) => {
 			requireAdmin(context);
 
 			try {
@@ -43,7 +44,7 @@ export const userResolvers = {
 			}
 		},
 
-		user: async (_: any, { id }: { id: string }, context: GraphQLContext) => {
+		user: async (_: unknown, { id }: IdArg, context: GraphQLContext) => {
 			const currentUser = requireAuth(context);
 
 			if (!currentUser.isAdmin && String(currentUser._id) !== id) {
@@ -68,7 +69,7 @@ export const userResolvers = {
 	},
 
 	Mutation: {
-		deleteUser: async (_: any, { id }: { id: string }, context: GraphQLContext) => {
+		deleteUser: async (_: unknown, { id }: IdArg, context: GraphQLContext) => {
 			requireAdmin(context);
 
 			try {
@@ -80,7 +81,7 @@ export const userResolvers = {
 			}
 		},
 
-		deleteMyAccount: async (_: any, __: any, context: GraphQLContext) => {
+		deleteMyAccount: async (_: unknown, __: Record<string, never>, context: GraphQLContext) => {
 			const currentUser = requireAuth(context);
 
 			try {
@@ -102,7 +103,7 @@ export const userResolvers = {
 			}
 		},
 
-		refreshUserToken: async (_: any, { id }: { id: string }, context: GraphQLContext) => {
+		refreshUserToken: async (_: unknown, { id }: IdArg, context: GraphQLContext) => {
 			requireAdmin(context);
 
 			try {

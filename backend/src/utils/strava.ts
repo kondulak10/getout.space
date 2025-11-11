@@ -23,7 +23,7 @@ export async function refreshStravaToken(user: IUser): Promise<{
 
 	if (!response.ok) {
 		let errorBody = '';
-		let errorData: any = {};
+		let errorData: unknown = {};
 
 		try {
 			errorBody = await response.text();

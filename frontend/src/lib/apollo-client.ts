@@ -4,6 +4,14 @@ import { onError } from '@apollo/client/link/error';
 import { GraphQLError } from 'graphql';
 import { OperationDefinitionNode } from 'graphql';
 
+interface ErrorContext {
+	graphQLErrors?: ReadonlyArray<GraphQLError>;
+	networkError?: Error | null;
+	operation?: {
+		operationName?: string;
+	};
+}
+
 const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000';
 
 const httpLink = new HttpLink({
@@ -60,7 +68,7 @@ const loggingLink = new ApolloLink((operation, forward) => {
   });
 });
 
-const errorLink = onError((errorContext: any) => {
+const errorLink = onError((errorContext: ErrorContext) => {
   const timestamp = new Date().toLocaleTimeString();
 
   if (errorContext.graphQLErrors) {

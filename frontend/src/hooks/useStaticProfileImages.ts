@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import type { Map as MapboxMap } from 'mapbox-gl';
+import type { Map as MapboxMap, ErrorEvent } from 'mapbox-gl';
 import { cellToBoundary } from 'h3-js';
 import * as turf from '@turf/turf';
 import type { MockData } from '@/utils/mockHexData';
@@ -65,8 +65,8 @@ export function useStaticProfileImages(
 							coordinates: imageBounds,
 						});
 
-						const errorHandler = (e: any) => {
-							if (e.sourceId === sourceId || e.source?.id === sourceId) {
+						const errorHandler = (e: ErrorEvent & { sourceId?: string }) => {
+							if (e.sourceId === sourceId) {
 								try {
 									if (map.getLayer(layerId)) {
 										map.removeLayer(layerId);
