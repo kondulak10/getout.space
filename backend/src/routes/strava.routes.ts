@@ -15,6 +15,7 @@ import { Activity } from '../models/Activity';
 import { processAndUploadProfileImage } from '../utils/imageProcessing';
 import { geocodeToHex } from '../utils/geocoding';
 import { getValidAccessToken } from '../services/strava.service';
+import { sendSlackNotification } from '../services/slack.service';
 
 const router = Router();
 
@@ -197,6 +198,28 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 				await user.save();
 				console.log('✅ Set initial lastHex from location');
 			}
+		}
+
+		// Send Slack notification for new user signup
+		if (isNewUser) {
+			const locationParts = [
+				user.stravaProfile.city,
+				user.stravaProfile.state,
+				user.stravaProfile.country,
+			].filter(Boolean);
+			const location = locationParts.length > 0 ? locationParts.join(', ') : 'Unknown';
+			const stravaProfileUrl = `https://www.strava.com/athletes/${user.stravaId}`;
+			const adminBadge = user.isAdmin ? ' 👑 (ADMIN)' : '';
+
+			const message = `🎉 *New User Signup!*${adminBadge}
+
+*Name:* ${user.stravaProfile.firstname} ${user.stravaProfile.lastname}
+*Username:* ${user.stravaProfile.username || 'N/A'}
+*Strava Profile:* ${stravaProfileUrl}
+*Location:* ${location}
+*Initial Hex:* ${user.lastHex || 'Not set'}`;
+
+			await sendSlackNotification(message);
 		}
 
 		const token = generateToken(user);
@@ -527,13 +550,19 @@ router.post(
 			const now = Math.floor(Date.now() / 1000);
 			const timeUntilExpiry = user.tokenExpiresAt - now;
 
+			// Strava tokens expire after 6 hours (21600 seconds)
+			// We refresh when less than 2 hours remain for consistency with webhook processing
+			const TOKEN_REFRESH_THRESHOLD = 7200; // 2 hours
+
 			console.log(`🔄 Token refresh requested for user: ${user.stravaProfile.firstname}`);
 			console.log(
 				`⏰ Token expires in ${timeUntilExpiry}s (${Math.floor(timeUntilExpiry / 60)} minutes)`
 			);
 
-			if (timeUntilExpiry < 3600) {
-				console.log(`🔄 Refreshing token (expires in ${timeUntilExpiry}s)...`);
+			if (timeUntilExpiry < TOKEN_REFRESH_THRESHOLD) {
+				console.log(
+					`🔄 Refreshing token (expires in ${Math.floor(timeUntilExpiry / 60)} minutes)...`
+				);
 
 				const response = await fetch('https://www.strava.com/oauth/token', {
 					method: 'POST',
@@ -578,7 +607,9 @@ router.post(
 					`✅ Token refreshed successfully (new expiry: ${new Date(tokenData.expires_at * 1000).toISOString()})`
 				);
 			} else {
-				console.log(`✅ Token still valid (expires in ${timeUntilExpiry}s), no refresh needed`);
+				console.log(
+					`✅ Token still valid (expires in ${Math.floor(timeUntilExpiry / 60)} minutes), no refresh needed`
+				);
 			}
 
 			res.json({

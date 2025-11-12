@@ -1,5 +1,10 @@
 import { User } from '../models/User';
 import { refreshStravaToken } from '../utils/strava';
+import { sendSlackNotification } from './slack.service';
+
+// Strava tokens expire after 6 hours (21600 seconds)
+// We refresh when less than 2 hours remain for a safe buffer
+const TOKEN_REFRESH_THRESHOLD = 7200; // 2 hours in seconds
 
 export async function getValidAccessToken(userId: string): Promise<string> {
 	const user = await User.findById(userId);
@@ -11,24 +16,54 @@ export async function getValidAccessToken(userId: string): Promise<string> {
 	const now = Math.floor(Date.now() / 1000);
 	const timeUntilExpiry = user.tokenExpiresAt - now;
 
-	if (timeUntilExpiry < 3600) {
+	if (timeUntilExpiry < TOKEN_REFRESH_THRESHOLD) {
 		console.log(
-			`🔄 Webhook: Refreshing token for user ${user.stravaProfile.firstname} (expires in ${timeUntilExpiry}s)...`
+			`🔄 Webhook: Refreshing token for user ${user.stravaProfile.firstname} (expires in ${Math.floor(timeUntilExpiry / 60)} minutes)...`
 		);
 
-		const tokenData = await refreshStravaToken(user);
+		try {
+			const tokenData = await refreshStravaToken(user);
 
-		user.accessToken = tokenData.access_token;
-		user.refreshToken = tokenData.refresh_token;
-		user.tokenExpiresAt = tokenData.expires_at;
-		await user.save();
+			user.accessToken = tokenData.access_token;
+			user.refreshToken = tokenData.refresh_token;
+			user.tokenExpiresAt = tokenData.expires_at;
+			await user.save();
 
-		console.log(
-			`✅ Webhook: Token refreshed successfully (new expiry: ${new Date(tokenData.expires_at * 1000).toISOString()})`
-		);
-		return user.accessToken;
+			console.log(
+				`✅ Webhook: Token refreshed successfully (new expiry: ${new Date(tokenData.expires_at * 1000).toISOString()})`
+			);
+
+			// With getters, user.accessToken is automatically decrypted when accessed
+			return user.accessToken;
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+			// Check if this is a reauth-required error (401)
+			if (errorMessage.includes('401') || errorMessage.includes('revoked access')) {
+				console.error(
+					`❌ Token refresh failed for user ${user.stravaProfile.firstname} - needs reauth`
+				);
+
+				// Send Slack notification about reauth requirement
+				await sendSlackNotification(
+					`🔑 *Token Refresh Failed - Reauth Required*\n` +
+						`👤 User: ${user.stravaProfile.firstname} ${user.stravaProfile.lastname}\n` +
+						`🆔 User ID: ${user._id}\n` +
+						`🔗 Strava Profile: <https://www.strava.com/athletes/${user.stravaId}|${user.stravaId}>\n` +
+						`❌ Error: ${errorMessage}\n` +
+						`⚠️ User needs to log in again at ${process.env.FRONTEND_URL || 'https://getout.space'}`
+				);
+
+				throw new Error(`Token refresh failed - user needs to re-authenticate (${errorMessage})`);
+			}
+
+			// For other errors, log and re-throw
+			console.error(`❌ Token refresh failed for user ${user.stravaProfile.firstname}:`, error);
+			throw error;
+		}
 	}
 
+	// Token is still valid, return it (getter automatically decrypts)
 	return user.accessToken;
 }
 

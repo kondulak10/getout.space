@@ -52,7 +52,11 @@
       "Bash(aws iam get-role-policy:*)",
       "Bash(npm uninstall:*)",
       "Bash(aws ecs list-services:*)",
-      "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\pages\\Test2Page.tsx\")"
+      "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\pages\\Test2Page.tsx\")",
+      "Bash(tree:*)",
+      "Bash(dir /B /A)",
+      "Bash(node test-token-encryption.js:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []

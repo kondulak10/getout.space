@@ -1,6 +1,13 @@
 const { MongoClient } = require('mongodb');
+require('dotenv').config({ path: './backend/.env' });
 
-const uri = "mongodb+srv://server:4u6adtCvbH9PngF@getoutcluster.6rnoter.mongodb.net/?appName=GetOutCluster";
+const uri = process.env.MONGODB_URI;
+
+if (!uri) {
+  console.error('❌ MONGODB_URI environment variable is not set');
+  console.error('   Make sure backend/.env file exists and contains MONGODB_URI');
+  process.exit(1);
+}
 
 async function checkImghex() {
   const client = new MongoClient(uri);

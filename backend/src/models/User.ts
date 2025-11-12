@@ -53,10 +53,48 @@ const userSchema = new Schema<IUser>(
 		accessToken: {
 			type: String,
 			required: true,
+			set: (value: string) => {
+				// Only encrypt if not already encrypted (encrypted tokens contain ':')
+				if (value && !value.includes(':')) {
+					return encrypt(value);
+				}
+				return value;
+			},
+			get: (value: string) => {
+				// Only decrypt if encrypted (encrypted tokens contain ':')
+				if (value && value.includes(':')) {
+					try {
+						return decrypt(value);
+					} catch (error) {
+						console.error('Failed to decrypt accessToken - token may be corrupted');
+						return value;
+					}
+				}
+				return value;
+			},
 		},
 		refreshToken: {
 			type: String,
 			required: true,
+			set: (value: string) => {
+				// Only encrypt if not already encrypted
+				if (value && !value.includes(':')) {
+					return encrypt(value);
+				}
+				return value;
+			},
+			get: (value: string) => {
+				// Only decrypt if encrypted
+				if (value && value.includes(':')) {
+					try {
+						return decrypt(value);
+					} catch (error) {
+						console.error('Failed to decrypt refreshToken - token may be corrupted');
+						return value;
+					}
+				}
+				return value;
+			},
 		},
 		tokenExpiresAt: {
 			type: Number,
@@ -81,67 +119,15 @@ const userSchema = new Schema<IUser>(
 	},
 	{
 		timestamps: true,
+		toJSON: { getters: false }, // Don't expose tokens in JSON
+		toObject: { getters: true }, // Enable getters when accessing as object
 	}
 );
 
-userSchema.pre('save', function (next) {
-	if (this.isModified('accessToken')) {
-		this.accessToken = encrypt(this.accessToken);
-	}
-	if (this.isModified('refreshToken')) {
-		this.refreshToken = encrypt(this.refreshToken);
-	}
-	next();
-});
-
-// Helper function to decrypt tokens on a single user document
-function decryptUserTokens(doc: IUser) {
-	try {
-		if (doc.accessToken && doc.accessToken.includes(':')) {
-			doc.accessToken = decrypt(doc.accessToken);
-		}
-	} catch (error) {
-		console.error(
-			'Failed to decrypt accessToken for user:',
-			doc._id,
-			'- token may be in old format or corrupted'
-		);
-	}
-
-	try {
-		if (doc.refreshToken && doc.refreshToken.includes(':')) {
-			doc.refreshToken = decrypt(doc.refreshToken);
-		}
-	} catch (error) {
-		console.error(
-			'Failed to decrypt refreshToken for user:',
-			doc._id,
-			'- token may be in old format or corrupted'
-		);
-	}
-}
-
-// post('init') hook - fires when each document is loaded from DB
-// Should cover all queries, but can be unreliable in practice
-userSchema.post('init', function (doc) {
-	decryptUserTokens(doc);
-});
-
-// post('findOne') hook - explicit coverage for single-doc queries
-// Ensures decryption happens even if post('init') doesn't fire
-// Note: This also covers User.findById() since it's a wrapper around findOne()
-userSchema.post('findOne', function (doc) {
-	if (doc) {
-		decryptUserTokens(doc);
-	}
-});
-
-// post('find') hook - handles array results from User.find()
-// post('find') receives an array of documents, not individual docs
-userSchema.post('find', function (docs) {
-	if (Array.isArray(docs)) {
-		docs.forEach((doc) => decryptUserTokens(doc));
-	}
-});
+// Note: Token encryption/decryption is now handled by getters and setters
+// Setters encrypt on assignment (before save)
+// Getters decrypt on access (after load)
+// This is more reliable than hooks and prevents the bug where tokens
+// remain encrypted in memory after save()
 
 export const User = mongoose.model<IUser>('User', userSchema);
