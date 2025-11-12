@@ -32,17 +32,14 @@ import {
 	faShareNodes,
 	faSyncAlt,
 } from '@fortawesome/pro-solid-svg-icons';
-
 import {
 	faUser as faUserRegular,
 	faHeart as faHeartRegular,
 	faStar as faStarRegular,
 } from '@fortawesome/pro-regular-svg-icons';
-
 import {
 	faUser as faUserLight,
 } from '@fortawesome/pro-light-svg-icons';
-
 library.add(
 	faUser,
 	faMap,

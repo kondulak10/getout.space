@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react';
 import type { Map as MapboxMap, ErrorEvent } from 'mapbox-gl';
 import { cellToBoundary } from 'h3-js';
-import * as turf from '@turf/turf';
+import { polygon } from '@turf/helpers';
+import transformScale from '@turf/transform-scale';
+import transformRotate from '@turf/transform-rotate';
 import type { MockData } from '@/utils/mockHexData';
 
 export function useStaticProfileImages(
@@ -38,7 +40,7 @@ export function useStaticProfileImages(
 						maxLng = Math.max(maxLng, lng);
 					});
 
-					const bbox = turf.polygon([[
+					const bbox = polygon([[
 						[minLng, maxLat],
 						[maxLng, maxLat],
 						[maxLng, minLat],
@@ -46,9 +48,9 @@ export function useStaticProfileImages(
 						[minLng, maxLat],
 					]]);
 
-					const scaledBbox = turf.transformScale(bbox, 0.8);
+					const scaledBbox = transformScale(bbox, 0.8);
 
-					const rotatedBbox = turf.transformRotate(scaledBbox, 20);
+					const rotatedBbox = transformRotate(scaledBbox, 20);
 
 					const rotatedCoords = rotatedBbox.geometry.coordinates[0];
 					const imageBounds: [[number, number], [number, number], [number, number], [number, number]] = [
@@ -76,9 +78,9 @@ export function useStaticProfileImages(
 									}
 									layersAddedRef.current.delete(layerId);
 									map.off('error', errorHandler);
-								// eslint-disable-next-line @typescript-eslint/no-unused-vars
-								} catch (_cleanupError) {
-									// Ignore error
+
+								} catch {
+									// Cleanup may fail if already removed
 								}
 							}
 						};
@@ -100,9 +102,9 @@ export function useStaticProfileImages(
 					} else {
 						map.moveLayer(layerId);
 					}
-				// eslint-disable-next-line @typescript-eslint/no-unused-vars
-				} catch (_error) {
-					// Ignore error
+
+				} catch {
+					// Failed to add profile image layer
 				}
 			};
 
@@ -120,9 +122,8 @@ export function useStaticProfileImages(
 
 			const maxImagesPerUser = 30;
 			const interval = 5;
-			// eslint-disable-next-line @typescript-eslint/no-unused-vars
-			let _totalImages = 0;
-
+			
+	
 			const imageDetails: Array<{ userId: string; imageUrl: string; count: number; totalHexagons: number }> = [];
 
 			hexagonsByUser.forEach((userHexes) => {
@@ -134,7 +135,6 @@ export function useStaticProfileImages(
 					const uniqueId = `${hex.currentOwnerId}-${hex.hexagonId}`;
 					const imageUrlWithCacheBust = `${hex.currentOwnerImghex}?t=${cacheBustTimestamp}`;
 					addProfileImage(hex.hexagonId, imageUrlWithCacheBust, uniqueId);
-					_totalImages++;
 				});
 
 				imageDetails.push({
@@ -166,9 +166,9 @@ export function useStaticProfileImages(
 						if (currentMap.getSource(sourceId)) {
 							currentMap.removeSource(sourceId);
 						}
-					// eslint-disable-next-line @typescript-eslint/no-unused-vars
-					} catch (_error) {
-						// Ignore error
+
+					} catch {
+						// Cleanup may fail if already removed
 					}
 				});
 			}

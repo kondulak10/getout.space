@@ -68,19 +68,14 @@ export async function processActivity(
 			throw new Error('Activity has no GPS data (summary_polyline missing)');
 		}
 
-		console.log(`📍 Activity: ${stravaActivity.name} - ${stravaActivity.type}`);
-
 		const coordinates = polyline.decode(stravaActivity.map.summary_polyline) as [number, number][];
-		console.log(`📍 Decoded ${coordinates.length} GPS points`);
 
 		const { hexagons, type: routeType } = analyzeRouteAndConvertToHexagons(coordinates);
-		console.log(`🔷 Generated ${hexagons.length} hexagons (type: ${routeType})`);
 
 		let activity = await Activity.findOne({ stravaActivityId }).session(session);
 		let wasActivityCreated = false;
 
 		if (activity) {
-			console.log(`📝 Updating existing activity ${activity._id}`);
 			activity.userId = user._id;
 			activity.source = 'api';
 			activity.name = stravaActivity.name;
@@ -112,7 +107,6 @@ export async function processActivity(
 			activity.isPrivate = stravaActivity.private;
 			await activity.save({ session });
 		} else {
-			console.log(`✨ Creating new activity`);
 			activity = new Activity({
 				stravaActivityId,
 				userId: user._id,
@@ -149,51 +143,34 @@ export async function processActivity(
 			wasActivityCreated = true;
 		}
 
-		console.log(`✅ Activity saved: ${activity._id}`);
-
 		const hexagonStats = await processHexagons(hexagons, activity, user, routeType, session);
 
 		if (hexagons.length > 0) {
 			const firstHexParent = h3.cellToParent(hexagons[0], 6);
 
-			// Update both user and activity with lastHex
 			await user.updateOne({ lastHex: firstHexParent }, { session });
 			activity.lastHex = firstHexParent;
 			await activity.save({ session });
-
-			console.log(`📍 Updated user and activity lastHex to: ${firstHexParent}`);
 		}
 
 		await session.commitTransaction();
-
-		console.log(`✅ Transaction committed`);
-		console.log(
-			`📊 Hexagons: ${hexagonStats.created} created, ${hexagonStats.updated} updated, ${hexagonStats.skipped} skipped`
-		);
-
-		// Create notifications after successful transaction
 		const newHexCount = hexagonStats.created;
 		const stolenCount =
 			hexagonStats.affectedUsers.size > 0
 				? Array.from(hexagonStats.affectedUsers.values()).reduce((sum, count) => sum + count, 0)
 				: 0;
 
-		// Create notification for the activity owner
 		if (newHexCount > 0 || stolenCount > 0) {
 			try {
 				await notificationService.createActivityNotification(userId, activity._id, {
 					newHexCount,
 					stolenCount,
 				});
-				console.log(
-					`📬 Created notification for activity owner: ${newHexCount} new, ${stolenCount} stolen`
-				);
 			} catch (error) {
 				console.error('❌ Error creating activity notification:', error);
 			}
 		}
 
-		// Create notifications for affected users (those who lost hexes)
 		if (hexagonStats.affectedUsers.size > 0) {
 			const thiefName = user.stravaProfile?.firstname || user.stravaProfile?.username || 'Someone';
 
@@ -206,7 +183,6 @@ export async function processActivity(
 						count,
 						activity._id
 					);
-					console.log(`📬 Created stolen notification for user ${affectedUserId}: ${count} hexes`);
 				} catch (error) {
 					console.error(`❌ Error creating stolen notification for user ${affectedUserId}:`, error);
 				}
@@ -284,8 +260,7 @@ async function processHexagons(
 	const updatedIds: string[] = [];
 	const skippedIds: string[] = [];
 
-	// Track notification data
-	const affectedUsers = new Map<string, number>(); // userId -> count of hexes stolen from them
+	const affectedUsers = new Map<string, number>();
 
 	const activityDate = activity.startDate.getTime();
 
@@ -346,7 +321,6 @@ async function processHexagons(
 					};
 					updateDoc.$inc = { captureCount: 1 };
 
-					// Track affected user for notifications
 					const previousOwnerId = existingHex.currentOwnerId.toString();
 					affectedUsers.set(previousOwnerId, (affectedUsers.get(previousOwnerId) || 0) + 1);
 				}
@@ -370,13 +344,11 @@ async function processHexagons(
 	if (hexagonsToCreate.length > 0) {
 		await Hexagon.insertMany(hexagonsToCreate, { session });
 		created = hexagonsToCreate.length;
-		console.log(`✅ Batch created ${created} hexagons`);
 	}
 
 	if (bulkUpdateOps.length > 0) {
 		const result = await Hexagon.bulkWrite(bulkUpdateOps, { session });
 		updated = result.modifiedCount;
-		console.log(`✅ Batch updated ${updated} hexagons`);
 	}
 
 	return {
@@ -386,7 +358,7 @@ async function processHexagons(
 		createdIds,
 		updatedIds,
 		skippedIds,
-		affectedUsers, // Return map of affected users for notifications
+		affectedUsers,
 	};
 }
 
@@ -398,10 +370,6 @@ export async function deleteActivityAndRestoreHexagons(
 	session.startTransaction();
 
 	try {
-		console.log(
-			`🗑️ Deleting activity ${stravaActivityId} for user: ${user.stravaProfile.firstname}`
-		);
-
 		const activity = await Activity.findOne({
 			stravaActivityId: parseInt(String(stravaActivityId)),
 		}).session(session);
@@ -417,8 +385,6 @@ export async function deleteActivityAndRestoreHexagons(
 		const hexagons = await Hexagon.find({
 			currentActivityId: activity._id,
 		}).session(session);
-
-		console.log(`📦 Found ${hexagons.length} hexagons to process`);
 
 		const hexagonsToDelete: string[] = [];
 		const bulkUpdateOps: mongoose.AnyBulkWriteOperation<IHexagon>[] = [];
@@ -455,18 +421,15 @@ export async function deleteActivityAndRestoreHexagons(
 
 		if (bulkUpdateOps.length > 0) {
 			await Hexagon.bulkWrite(bulkUpdateOps, { session });
-			console.log(`✅ Restored ${restored} hexagons to previous owners`);
 		}
 
 		if (hexagonsToDelete.length > 0) {
 			await Hexagon.deleteMany({
 				hexagonId: { $in: hexagonsToDelete },
 			}).session(session);
-			console.log(`✅ Deleted ${deleted} hexagons with no capture history`);
 		}
 
 		await Activity.findByIdAndDelete(activity._id).session(session);
-		console.log(`✅ Activity deleted successfully`);
 
 		await session.commitTransaction();
 

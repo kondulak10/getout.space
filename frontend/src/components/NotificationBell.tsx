@@ -12,8 +12,6 @@ interface NotificationBellProps {
 export function NotificationBell({ className, iconClassName, onClick, showLabel = false }: NotificationBellProps) {
 	const { unreadCount } = useNotifications();
 
-	console.log('🔔 NotificationBell rendering, unreadCount:', unreadCount);
-
 	const defaultClassName = "relative p-2 hover:bg-gray-100 rounded transition-colors text-gray-700 border border-gray-300";
 	const defaultIconClassName = "text-xl";
 

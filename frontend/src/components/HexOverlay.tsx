@@ -13,8 +13,8 @@ import { ErrorBoundary } from "./ErrorBoundary";
 import { useQuery } from '@apollo/client/react';
 import { gql } from '@apollo/client';
 import { toast } from 'sonner';
+import { formatDate as utilFormatDate, formatDistance as utilFormatDistance } from "@/utils/dateFormatter";
 import "./HexOverlay.css";
-
 const MY_HEXAGONS_COUNT_QUERY = gql`
 	query MyHexagonsCountForShare {
 		me {
@@ -29,7 +29,6 @@ const MY_HEXAGONS_COUNT_QUERY = gql`
 		}
 	}
 `;
-
 type MyHexagonsCountData = {
 	me: {
 		id: string;
@@ -42,11 +41,9 @@ type MyHexagonsCountData = {
 		id: string;
 	}>;
 };
-
 interface HexOverlayProps {
 	onActivityChanged?: () => void;
 }
-
 export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 	const { user } = useAuth();
 	const { latestActivity } = useUserActivities();
@@ -66,7 +63,6 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 		handleRemoveActivity,
 	} = useActivitiesManager(onActivityChanged);
 	const navigate = useNavigate();
-
 	if (!user) {
 		return (
 			<div className="absolute top-4 right-4 z-10">
@@ -82,165 +78,154 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 			</div>
 		);
 	}
-
-	const formatDistance = (meters: number) => {
-		return (meters / 1000).toFixed(1) + " km";
-	};
-
-	const formatDate = (dateString: string) => {
-		return new Date(dateString).toLocaleDateString("en-US", {
-			month: "short",
-			day: "numeric",
-		});
-	};
-
 	const MOBILE_WIDTH = 540;
 	const MOBILE_HEIGHT = 960;
-
-	const generateAndDownloadImage = async () => {
+	const generateAndShareImage = async () => {
 		if (!mapRef.current || !shareData) {
 			toast.error('Map or user data not ready');
 			return;
 		}
-
 		setIsGeneratingImage(true);
-
+		toast.loading('Generating image...', { id: 'share-image' });
 		try {
 			await document.fonts.load('bold 56px "Bebas Neue"');
 			await document.fonts.ready;
 			await new Promise((resolve) => setTimeout(resolve, 100));
-
 			const canvas = document.createElement('canvas');
 			canvas.width = MOBILE_WIDTH;
 			canvas.height = MOBILE_HEIGHT;
 			const ctx = canvas.getContext('2d');
-
 			if (!ctx) {
 				toast.error('Could not create canvas');
 				return;
 			}
-
 			const mapCanvas = mapRef.current.getCanvas();
-
 			ctx.fillStyle = '#000000';
 			ctx.fillRect(0, 0, MOBILE_WIDTH, MOBILE_HEIGHT);
-
 			const mapWidth = mapCanvas.width;
 			const mapHeight = mapCanvas.height;
 			const scaleX = MOBILE_WIDTH / mapWidth;
 			const scaleY = MOBILE_HEIGHT / mapHeight;
 			const scale = Math.max(scaleX, scaleY);
-
 			const scaledWidth = mapWidth * scale;
 			const scaledHeight = mapHeight * scale;
 			const x = (MOBILE_WIDTH - scaledWidth) / 2;
 			const y = (MOBILE_HEIGHT - scaledHeight) / 2;
-
 			ctx.drawImage(mapCanvas, x, y, scaledWidth, scaledHeight);
-
 			const topGradient = ctx.createLinearGradient(0, 0, 0, 350);
 			topGradient.addColorStop(0, 'rgba(0, 0, 0, 0.95)');
 			topGradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.7)');
 			topGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
 			ctx.fillStyle = topGradient;
 			ctx.fillRect(0, 0, MOBILE_WIDTH, 350);
-
 			const bottomGradient = ctx.createLinearGradient(0, MOBILE_HEIGHT - 200, 0, MOBILE_HEIGHT);
 			bottomGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
 			bottomGradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.7)');
 			bottomGradient.addColorStop(1, 'rgba(0, 0, 0, 0.95)');
 			ctx.fillStyle = bottomGradient;
 			ctx.fillRect(0, 0, MOBILE_WIDTH, MOBILE_HEIGHT);
-
 			const centerX = MOBILE_WIDTH / 2;
 			const firstName = shareData.me.stravaProfile.firstname;
 			const hexCount = shareData.myHexagons.length;
 			const profileImageUrl = shareData.me.stravaProfile.imghex;
-
-			if (profileImageUrl) {
+			// TEMPORARILY SKIP PROFILE IMAGE TO DEBUG
+			// TODO: Fix S3 CORS configuration for profile images bucket
+			const SKIP_PROFILE_IMAGE = false;
+			if (profileImageUrl && !SKIP_PROFILE_IMAGE) {
 				try {
 					const img = new Image();
+					// MUST set crossOrigin BEFORE src to prevent canvas taint
 					img.crossOrigin = 'anonymous';
 					await new Promise<void>((resolve, reject) => {
-						img.onload = () => resolve();
-						img.onerror = () => reject();
+						const timeout = setTimeout(() => {
+							reject(new Error('Image load timeout'));
+						}, 5000);
+						img.onload = () => {
+							clearTimeout(timeout);
+							resolve();
+						};
+						img.onerror = (e) => {
+							clearTimeout(timeout);
+							reject(e);
+						};
 						img.src = profileImageUrl;
 					});
-
 					const profileSize = 120;
 					const profileX = centerX;
 					const profileY = 100;
 
-					ctx.save();
-					ctx.beginPath();
-					ctx.arc(profileX, profileY, profileSize / 2, 0, Math.PI * 2);
-					ctx.closePath();
-					ctx.clip();
+					// The imghex is already a hexagon PNG, so just draw it directly without clipping
 					ctx.drawImage(img, profileX - profileSize / 2, profileY - profileSize / 2, profileSize, profileSize);
-					ctx.restore();
-
-				} catch (error) {
-					console.error('Failed to load profile image:', error);
+				} catch {
+					// Failed to draw profile image
 				}
 			}
-
 			ctx.textAlign = 'center';
 			ctx.font = 'bold 42px "Bebas Neue", sans-serif';
 			ctx.fillStyle = '#ffffff';
-			ctx.letterSpacing = '0.05em';
 			ctx.fillText(firstName.toUpperCase(), centerX, 210);
-
 			ctx.font = 'bold 56px "Bebas Neue", sans-serif';
 			ctx.fillStyle = '#fb923c';
-			ctx.letterSpacing = '0.05em';
 			ctx.fillText(`${hexCount} HEXES`, centerX, 270);
-
 			const bottomY = MOBILE_HEIGHT - 60;
 			ctx.font = 'bold 48px "Bebas Neue", sans-serif';
 			ctx.fillStyle = '#ffffff';
-			ctx.letterSpacing = '0.05em';
 			ctx.fillText('JOIN', centerX, bottomY - 60);
-
 			ctx.font = 'bold 56px "Bebas Neue", sans-serif';
 			ctx.fillStyle = '#fb923c';
-			ctx.letterSpacing = '0.05em';
 			ctx.fillText('WWW.GETOUT.SPACE', centerX, bottomY);
-
-			canvas.toBlob((blob) => {
-				if (!blob) return;
-				const url = URL.createObjectURL(blob);
-				const link = document.createElement('a');
-				link.href = url;
-				link.download = `getout-${firstName}-${Date.now()}.png`;
-				document.body.appendChild(link);
-				link.click();
-				document.body.removeChild(link);
-				URL.revokeObjectURL(url);
-				toast.success('Image downloaded!');
-			}, 'image/png');
-		} catch (error) {
-			console.error('Error generating image:', error);
+			const blob = await new Promise<Blob>((resolve, reject) => {
+				canvas.toBlob((b) => (b ? resolve(b) : reject()), 'image/png');
+			});
+			const file = new File([blob], `getout-${firstName}-${Date.now()}.png`, { type: 'image/png' });
+			const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+			if (isMobile && navigator.share && navigator.canShare?.({ files: [file] })) {
+				try {
+					toast.dismiss('share-image');
+					await navigator.share({
+						files: [file],
+						title: 'My GetOut.space Progress',
+						text: `I've captured ${hexCount} hexagons on GetOut.space!`,
+					});
+					toast.success('Image shared!');
+					return;
+				} catch (error) {
+					if ((error as Error).name === 'AbortError') {
+						toast.dismiss('share-image');
+						return;
+					}
+				}
+			}
+			toast.dismiss('share-image');
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = `getout-${firstName}-${Date.now()}.png`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(url);
+			toast.success('Image downloaded!');
+		} catch {
+			toast.dismiss('share-image');
 			toast.error('Failed to generate image');
 		} finally {
 			setIsGeneratingImage(false);
 		}
 	};
-
 	const shareLink = () => {
 		const url = 'https://getout.space';
 		navigator.clipboard.writeText(url);
 		toast.success('Link copied to clipboard!');
 	};
-
 	return (
 		<>
-			{/* Share buttons - standalone top-left (Desktop) */}
 			<div className="hidden md:flex absolute top-4 left-4 z-10 gap-2">
 				<button
-					onClick={generateAndDownloadImage}
+					onClick={generateAndShareImage}
 					disabled={isGeneratingImage || !shareData}
 					className="bg-white/95 hover:bg-white border border-black/20 text-black px-4 py-3 rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center gap-2 font-semibold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-					title="Download Share Image"
+					title="Share or Download Image"
 				>
 					<FontAwesomeIcon icon={isGeneratingImage ? "spinner" : "image"} className={`w-5 h-5 ${isGeneratingImage ? 'animate-spin' : ''}`} />
 					<span className="text-sm">Share Image</span>
@@ -254,14 +239,12 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 					<span className="text-sm">Share Link</span>
 				</button>
 			</div>
-
-			{/* Share buttons - standalone top-left (Mobile) */}
 			<div className="md:hidden absolute top-4 left-4 z-10 flex gap-2">
 				<button
-					onClick={generateAndDownloadImage}
+					onClick={generateAndShareImage}
 					disabled={isGeneratingImage || !shareData}
 					className="bg-white/95 hover:bg-white border border-black/20 text-black px-4 py-3 rounded-lg transition-all shadow-lg flex items-center gap-2 font-semibold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-					title="Download Share Image"
+					title="Share or Download Image"
 				>
 					<FontAwesomeIcon icon={isGeneratingImage ? "spinner" : "image"} className={`w-5 h-5 ${isGeneratingImage ? 'animate-spin' : ''}`} />
 					<span className="text-sm">Share Image</span>
@@ -275,14 +258,16 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 					<span className="text-sm">Share Link</span>
 				</button>
 			</div>
-
 			<div className="hidden md:block absolute top-4 right-4 z-10">
 				<div className="bg-[rgba(10,10,10,0.9)] backdrop-blur-md border border-white/10 rounded-xl p-3 shadow-2xl">
-					<div className="flex items-center gap-3 mb-3">
+					<div
+						className="flex items-center gap-3 mb-3 cursor-pointer hover:bg-white/5 rounded-lg p-2 -m-2 transition-all"
+						onClick={() => navigate(`/profile/${user.id}`)}
+					>
 						<img
 							src={user.profile.imghex || user.profile.profile}
 							alt={user.profile.firstname}
-							className="w-12 h-12 object-cover hex-clip"
+							className={`w-12 h-12 object-cover ${user.profile.imghex ? '' : 'hex-clip'}`}
 						/>
 						<div className="flex-1 min-w-0">
 							<div className="font-semibold text-sm text-gray-100 truncate">
@@ -291,7 +276,6 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 							<div className="text-xs text-gray-400">ID: {user.stravaId}</div>
 						</div>
 					</div>
-
 					<div className="grid grid-cols-2 gap-2 mb-3">
 						<button
 							onClick={() => openModal()}
@@ -326,7 +310,7 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 							showLabel={true}
 						/>
 						<button
-							onClick={() => navigate("/profile")}
+							onClick={() => navigate(`/profile/${user.id}`)}
 							className="flex items-center justify-start gap-2 bg-white/5 border border-white/10 text-gray-300 px-3 py-2 rounded-md transition-all cursor-pointer hover:bg-white/10 hover:border-white/20 hover:text-white"
 							title="Profile"
 						>
@@ -334,25 +318,23 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 							<span className="text-xs font-medium">Profile</span>
 						</button>
 					</div>
-
 					{latestActivity && (
 						<div className="pt-2 pb-1 border-t border-white/10">
 							<div className="text-[11px] text-gray-400 mb-1">
-								Latest: {formatDate(latestActivity.startDate)}
+								Latest: {utilFormatDate(latestActivity.startDate, { month: "short", day: "numeric" })}
 							</div>
 							<div className="flex items-center justify-between gap-2">
 								<div className="text-sm font-medium text-gray-200 truncate flex-1">
 									{latestActivity.name}
 								</div>
 								<div className="text-xs text-gray-300 whitespace-nowrap">
-									{formatDistance(latestActivity.distance)}
+									{utilFormatDistance(latestActivity.distance, 1)}
 								</div>
 							</div>
 						</div>
 					)}
 				</div>
 			</div>
-
 			<div className="md:hidden fixed bottom-0 left-0 right-0 z-10 safe-area-bottom">
 				<div className="bg-[rgba(10,10,10,0.95)] backdrop-blur-md border-t border-white/10 p-3">
 					<div className="grid grid-cols-4 gap-2">
@@ -364,7 +346,6 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 							<FontAwesomeIcon icon="running" className="w-5 h-5" />
 							<span className="text-[10px] font-medium">Activities</span>
 						</button>
-
 						<button
 							type="button"
 							onClick={(e) => {
@@ -381,16 +362,14 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 							<FontAwesomeIcon icon="trophy" className="w-5 h-5" />
 							<span className="text-[10px] font-medium">Leaders</span>
 						</button>
-
 						<NotificationDropdown
 							bellClassName="flex flex-col items-center justify-center gap-1 bg-white/5 border border-white/10 text-gray-300 px-3 py-3 rounded-lg transition-all cursor-pointer hover:bg-white/10 hover:border-white/20 hover:text-white"
 							iconClassName="w-5 h-5"
 							onClick={() => setShowNotifications(true)}
 							showLabel={true}
 						/>
-
 						<button
-							onClick={() => navigate("/profile")}
+							onClick={() => navigate(`/profile/${user.id}`)}
 							className="flex flex-col items-center justify-center gap-1 bg-white/5 border border-white/10 text-gray-300 px-3 py-3 rounded-lg transition-all cursor-pointer hover:bg-white/10 hover:border-white/20 hover:text-white"
 						>
 							<FontAwesomeIcon icon="user" className="w-5 h-5" />
@@ -399,7 +378,6 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 					</div>
 				</div>
 			</div>
-
 			<ActivitiesModal
 				isOpen={showModal}
 				onClose={closeModal}
@@ -409,7 +387,6 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 				onProcess={handleSaveActivity}
 				onDeleteStrava={handleRemoveActivity}
 			/>
-
 			{showLeaderboard && (
 				<ErrorBoundary>
 					<LeaderboardModal
@@ -418,7 +395,6 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 					/>
 				</ErrorBoundary>
 			)}
-
 			{showNotifications && (
 				<ErrorBoundary>
 					<NotificationModal onClose={() => setShowNotifications(false)} />

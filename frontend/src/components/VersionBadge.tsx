@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getVersionString } from '@/version';
-
 export function VersionBadge() {
 	const [backendVersion, setBackendVersion] = useState<string | null>(null);
-
 	useEffect(() => {
 		const fetchBackendVersion = async () => {
 			try {
@@ -11,15 +9,12 @@ export function VersionBadge() {
 				const response = await fetch(`${backendUrl}/version`);
 				const data = await response.json();
 				setBackendVersion(data.versionString);
-			// eslint-disable-next-line @typescript-eslint/no-unused-vars
-			} catch (_error) {
+			} catch {
 				setBackendVersion('unknown');
 			}
 		};
-
 		fetchBackendVersion();
 	}, []);
-
 	return (
 		<div className="hidden md:block absolute bottom-2 z-50 pointer-events-none" style={{ left: '100px' }}>
 			<span className="text-xs font-mono font-medium text-gray-700">

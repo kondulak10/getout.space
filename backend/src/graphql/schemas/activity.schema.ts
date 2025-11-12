@@ -42,7 +42,7 @@ export const activitySchema = gql`
 		myActivities(limit: Int, offset: Int): [Activity!]!
 
 		"""
-		Get activities for a specific user (Admin only, or own activities)
+		Get activities for a specific user
 		Requires: Authentication
 		"""
 		userActivities(userId: ID!, limit: Int, offset: Int): [Activity!]!

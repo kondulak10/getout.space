@@ -2,9 +2,6 @@ import Notification from '../models/Notification';
 import mongoose from 'mongoose';
 
 export const notificationService = {
-	/**
-	 * Create notification for activity owner about their new/stolen hexes
-	 */
 	async createActivityNotification(
 		userId: string | mongoose.Types.ObjectId,
 		activityId: string | mongoose.Types.ObjectId,
@@ -12,7 +9,6 @@ export const notificationService = {
 	) {
 		const { newHexCount, stolenCount } = stats;
 
-		// Skip if nothing interesting happened
 		if (newHexCount === 0 && stolenCount === 0) {
 			return null;
 		}
@@ -37,9 +33,6 @@ export const notificationService = {
 		});
 	},
 
-	/**
-	 * Create notification for users who lost hexes to another user
-	 */
 	async createStolenNotification(
 		affectedUserId: string | mongoose.Types.ObjectId,
 		thiefId: string | mongoose.Types.ObjectId,
@@ -59,9 +52,6 @@ export const notificationService = {
 		});
 	},
 
-	/**
-	 * Get notifications for a specific user
-	 */
 	async getNotifications(
 		userId: string | mongoose.Types.ObjectId,
 		options: { limit?: number; offset?: number; unreadOnly?: boolean } = {}
@@ -75,28 +65,19 @@ export const notificationService = {
 			query.read = false;
 		}
 
-		return await Notification.find(query).sort({ createdAt: -1 }).limit(limit).skip(offset).lean(); // Use lean() for better performance - no Mongoose document overhead
+		return await Notification.find(query).sort({ createdAt: -1 }).limit(limit).skip(offset).lean();
 	},
 
-	/**
-	 * Get ALL notifications (admin only)
-	 */
 	async getAllNotifications(options: { limit?: number; offset?: number } = {}) {
 		const { limit = 20, offset = 0 } = options;
 
-		return await Notification.find().sort({ createdAt: -1 }).limit(limit).skip(offset).lean(); // Use lean() for better performance - no Mongoose document overhead
+		return await Notification.find().sort({ createdAt: -1 }).limit(limit).skip(offset).lean();
 	},
 
-	/**
-	 * Get total notification count (admin only)
-	 */
 	async getNotificationsCount() {
 		return await Notification.countDocuments();
 	},
 
-	/**
-	 * Get unread notification count for a user
-	 */
 	async getUnreadCount(userId: string | mongoose.Types.ObjectId) {
 		return await Notification.countDocuments({
 			ownerId: userId,
@@ -104,13 +85,10 @@ export const notificationService = {
 		});
 	},
 
-	/**
-	 * Mark a notification as read (with security check)
-	 */
 	async markAsRead(notificationId: string, userId: string | mongoose.Types.ObjectId) {
 		const notification = await Notification.findOne({
 			_id: notificationId,
-			ownerId: userId, // Security: ensure user owns this notification
+			ownerId: userId,
 		});
 
 		if (!notification) {
@@ -121,9 +99,6 @@ export const notificationService = {
 		return await notification.save();
 	},
 
-	/**
-	 * Mark all notifications as read for a user
-	 */
 	async markAllAsRead(userId: string | mongoose.Types.ObjectId) {
 		const result = await Notification.updateMany(
 			{ ownerId: userId, read: false },
@@ -133,21 +108,15 @@ export const notificationService = {
 		return result.modifiedCount;
 	},
 
-	/**
-	 * Delete a notification (with security check)
-	 */
 	async deleteNotification(notificationId: string, userId: string | mongoose.Types.ObjectId) {
 		const result = await Notification.deleteOne({
 			_id: notificationId,
-			ownerId: userId, // Security: ensure user owns this notification
+			ownerId: userId,
 		});
 
 		return result.deletedCount > 0;
 	},
 
-	/**
-	 * Delete a notification (admin only, no security check)
-	 */
 	async deleteNotificationAdmin(notificationId: string) {
 		const result = await Notification.deleteOne({ _id: notificationId });
 		return result.deletedCount > 0;

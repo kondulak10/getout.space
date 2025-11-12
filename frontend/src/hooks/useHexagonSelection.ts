@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useLazyQuery } from '@apollo/client/react';
 import { HexagonDetailDocument } from '@/gql/graphql';
-
 export interface SelectedHexagonData {
 	hexagonId: string;
 	captureCount: number;
@@ -55,32 +54,22 @@ export interface SelectedHexagonData {
 		activityType: string;
 	}>;
 }
-
 export function useHexagonSelection() {
 	const [selectedHexagon, setSelectedHexagon] = useState<SelectedHexagonData | null>(null);
 	const [fetchHexagonDetail, { loading: hexagonDetailLoading }] = useLazyQuery(HexagonDetailDocument, {
-		fetchPolicy: 'no-cache', // Don't cache hexagon details - fetch fresh every time
+		fetchPolicy: 'no-cache', 
 	});
-
 	const handleHexagonClick = async (hexagonId: string) => {
 		try {
-			console.log('🔍 Fetching hexagon detail for:', hexagonId);
 			const { data, error } = await fetchHexagonDetail({
 				variables: { hexagonId },
 			});
-
 			if (error) {
-				console.error('❌ GraphQL Error fetching hexagon:', error);
 				return;
 			}
-
 			if (!data) {
-				console.warn('⚠️ No data returned for hexagon:', hexagonId);
 				return;
 			}
-
-			console.log('✅ Hexagon data received:', data);
-
 			if (data?.hexagon?.currentActivity) {
 				setSelectedHexagon({
 					hexagonId: data.hexagon.hexagonId,
@@ -123,13 +112,7 @@ export function useHexagonSelection() {
 						movingTime: data.hexagon.currentActivity.movingTime,
 					},
 					captureHistory: (data.hexagon.captureHistory || [])
-						.filter((entry) => {
-							if (!entry) {
-								console.warn('⚠️ Null entry in captureHistory');
-								return false;
-							}
-							return true;
-						})
+						.filter((entry) => entry !== null)
 						.map((entry) => ({
 							userId: entry.userId || 'unknown',
 							user: entry.user
@@ -158,19 +141,14 @@ export function useHexagonSelection() {
 							activityType: entry.activityType || 'Unknown',
 						})),
 				});
-				console.log('✅ Selected hexagon state set successfully');
 			}
-		} catch (error) {
-			console.error('❌ CRITICAL ERROR in handleHexagonClick:', error);
-			console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
-			// Don't silently ignore - this helps debug
+		} catch {
+			// Failed to fetch hexagon details
 		}
 	};
-
 	const clearSelection = () => {
 		setSelectedHexagon(null);
 	};
-
 	return {
 		selectedHexagon,
 		hexagonDetailLoading,

@@ -5,7 +5,6 @@ import { PaginationArgs, IdArg } from './resolver.types';
 
 export const notificationResolvers = {
 	Query: {
-		// User queries
 		myNotifications: async (_: unknown, args: PaginationArgs, context: GraphQLContext) => {
 			requireAuth(context);
 			return await notificationService.getNotifications(context.userId!, args);
@@ -20,7 +19,6 @@ export const notificationResolvers = {
 			return await notificationService.getUnreadCount(context.userId!);
 		},
 
-		// Admin queries
 		notifications: async (_: unknown, args: PaginationArgs, context: GraphQLContext) => {
 			requireAdmin(context);
 			return await notificationService.getAllNotifications(args);

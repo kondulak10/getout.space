@@ -33,18 +33,15 @@ export async function getValidAccessToken(userId: string): Promise<string> {
 				`✅ Webhook: Token refreshed successfully (new expiry: ${new Date(tokenData.expires_at * 1000).toISOString()})`
 			);
 
-			// With getters, user.accessToken is automatically decrypted when accessed
 			return user.accessToken;
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
-			// Check if this is a reauth-required error (401)
 			if (errorMessage.includes('401') || errorMessage.includes('revoked access')) {
 				console.error(
 					`❌ Token refresh failed for user ${user.stravaProfile.firstname} - needs reauth`
 				);
 
-				// Send Slack notification about reauth requirement
 				await sendSlackNotification(
 					`🔑 *Token Refresh Failed - Reauth Required*\n` +
 						`👤 User: ${user.stravaProfile.firstname} ${user.stravaProfile.lastname}\n` +
@@ -57,13 +54,11 @@ export async function getValidAccessToken(userId: string): Promise<string> {
 				throw new Error(`Token refresh failed - user needs to re-authenticate (${errorMessage})`);
 			}
 
-			// For other errors, log and re-throw
 			console.error(`❌ Token refresh failed for user ${user.stravaProfile.firstname}:`, error);
 			throw error;
 		}
 	}
 
-	// Token is still valid, return it (getter automatically decrypts)
 	return user.accessToken;
 }
 
@@ -105,8 +100,8 @@ export async function fetchStravaActivity(
 		let errorBody = '';
 		try {
 			errorBody = await response.text();
-		} catch (_e) {
-			// Ignore error - errorBody will remain empty string
+		} catch {
+			// Ignore text parsing errors
 		}
 
 		console.error(`❌ Strava API error when fetching activity ${activityId}:`, {

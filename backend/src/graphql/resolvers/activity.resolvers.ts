@@ -1,10 +1,9 @@
 import { GraphQLError } from 'graphql';
 import { User } from '../../models/User';
 import { Activity, IActivity } from '../../models/Activity';
-import { Hexagon } from '../../models/Hexagon';
 import { GraphQLContext, requireAuth, requireAdmin } from './auth.helpers';
 import { PaginationArgs, IdArg, UserIdWithPaginationArgs } from './resolver.types';
-import mongoose from 'mongoose';
+import { deleteActivityAndRestoreHexagons } from '../../services/activityProcessing.service';
 
 export const activityResolvers = {
 	Activity: {
@@ -13,7 +12,6 @@ export const activityResolvers = {
 				const user = await User.findById(parent.userId);
 				return user;
 			} catch (error) {
-				console.error('Error fetching user for activity:', error);
 				return null;
 			}
 		},
@@ -34,7 +32,6 @@ export const activityResolvers = {
 					.skip(offset);
 				return activities;
 			} catch (error) {
-				console.error('Error fetching activities:', error);
 				throw new GraphQLError('Failed to fetch activities');
 			}
 		},
@@ -46,7 +43,8 @@ export const activityResolvers = {
 		) => {
 			const currentUser = requireAuth(context);
 
-			if (!currentUser.isAdmin && String(currentUser._id) !== userId) {
+			// Only allow viewing own activities or if admin
+			if (!currentUser.isAdmin && String(currentUser._id) !== String(userId)) {
 				throw new GraphQLError('You can only view your own activities', {
 					extensions: { code: 'FORBIDDEN' },
 				});
@@ -59,7 +57,6 @@ export const activityResolvers = {
 					.skip(offset);
 				return activities;
 			} catch (error) {
-				console.error('Error fetching user activities:', error);
 				throw new GraphQLError('Failed to fetch activities');
 			}
 		},
@@ -83,7 +80,6 @@ export const activityResolvers = {
 
 				return activity;
 			} catch (error) {
-				console.error('Error fetching activity:', error);
 				if (error instanceof GraphQLError) {
 					throw error;
 				}
@@ -102,7 +98,6 @@ export const activityResolvers = {
 				const activities = await Activity.find().sort({ startDate: -1 }).limit(limit).skip(offset);
 				return activities;
 			} catch (error) {
-				console.error('Error fetching all activities:', error);
 				throw new GraphQLError('Failed to fetch activities');
 			}
 		},
@@ -114,7 +109,6 @@ export const activityResolvers = {
 				const count = await Activity.countDocuments();
 				return count;
 			} catch (error) {
-				console.error('Error counting activities:', error);
 				throw new GraphQLError('Failed to count activities');
 			}
 		},
@@ -123,94 +117,32 @@ export const activityResolvers = {
 	Mutation: {
 		deleteActivity: async (_: unknown, { id }: IdArg, context: GraphQLContext) => {
 			const currentUser = requireAuth(context);
-			const session = await mongoose.startSession();
-			session.startTransaction();
 
 			try {
-				const activity = await Activity.findById(id).session(session);
+				const activity = await Activity.findById(id);
 
 				if (!activity) {
-					await session.abortTransaction();
 					throw new GraphQLError('Activity not found', {
 						extensions: { code: 'NOT_FOUND' },
 					});
 				}
 
 				if (!currentUser.isAdmin && String(activity.userId) !== String(currentUser._id)) {
-					await session.abortTransaction();
 					throw new GraphQLError('You can only delete your own activities', {
 						extensions: { code: 'FORBIDDEN' },
 					});
 				}
 
-				console.log(`🗑️ Deleting activity ${id} (Strava ID: ${activity.stravaActivityId})`);
-
-				const hexagons = await Hexagon.find({
-					currentActivityId: activity._id,
-				}).session(session);
-
-				console.log(`📦 Found ${hexagons.length} hexagons to process`);
-
-				const hexagonsToDelete: string[] = [];
-				const bulkUpdateOps: unknown[] = [];
-				let restored = 0;
-				let deleted = 0;
-
-				for (const hexagon of hexagons) {
-					if (hexagon.captureHistory && hexagon.captureHistory.length > 0) {
-						const previousCapture = hexagon.captureHistory[hexagon.captureHistory.length - 1];
-
-						bulkUpdateOps.push({
-							updateOne: {
-								filter: { _id: hexagon._id },
-								update: {
-									$set: {
-										currentOwnerId: previousCapture.userId,
-										currentOwnerStravaId: previousCapture.stravaId,
-										currentActivityId: previousCapture.activityId,
-										currentStravaActivityId: previousCapture.stravaActivityId,
-										lastCapturedAt: previousCapture.capturedAt,
-										activityType: previousCapture.activityType,
-									},
-									$pop: { captureHistory: 1 },
-									$inc: { captureCount: -1 },
-								},
-							},
-						});
-						restored++;
-					} else {
-						hexagonsToDelete.push(hexagon.hexagonId);
-						deleted++;
-					}
-				}
-
-				if (bulkUpdateOps.length > 0) {
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					await Hexagon.bulkWrite(bulkUpdateOps as any, { session });
-					console.log(`✅ Restored ${restored} hexagons to previous owners`);
-				}
-
-				if (hexagonsToDelete.length > 0) {
-					await Hexagon.deleteMany({
-						hexagonId: { $in: hexagonsToDelete },
-					}).session(session);
-					console.log(`✅ Deleted ${deleted} hexagons with no capture history`);
-				}
-
-				await Activity.findByIdAndDelete(id).session(session);
-				console.log(`✅ Activity deleted successfully`);
-
-				await session.commitTransaction();
+				await deleteActivityAndRestoreHexagons(activity.stravaActivityId, currentUser);
 				return true;
 			} catch (error) {
-				await session.abortTransaction();
-				console.error('Error deleting activity:', error);
 				if (error instanceof GraphQLError) {
 					throw error;
 				}
-				return false;
-			} finally {
-				session.endSession();
+				const errorMessage = error instanceof Error ? error.message : 'Failed to delete activity';
+				throw new GraphQLError(errorMessage, {
+					extensions: { code: 'INTERNAL_SERVER_ERROR' },
+				});
 			}
 		},
 	},

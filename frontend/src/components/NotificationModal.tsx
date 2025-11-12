@@ -15,19 +15,18 @@ export function NotificationModal({ onClose }: NotificationModalProps) {
 	const { notifications, loading, unreadCount, markAllAsRead, refetch } = useNotifications();
 	const [currentPage, setCurrentPage] = useState(1);
 
-	// Refetch notifications when modal opens
+	
 	useEffect(() => {
-		console.log('📬 NotificationModal opened - refetching notifications...');
 		refetch();
 	}, [refetch]);
 
-	// Calculate pagination
+	
 	const totalPages = Math.ceil(notifications.length / NOTIFICATIONS_PER_PAGE);
 	const startIndex = (currentPage - 1) * NOTIFICATIONS_PER_PAGE;
 	const endIndex = startIndex + NOTIFICATIONS_PER_PAGE;
 	const paginatedNotifications = notifications.slice(startIndex, endIndex);
 
-	// Reset to page 1 if current page is out of bounds
+	
 	useEffect(() => {
 		if (currentPage > totalPages && totalPages > 0) {
 			setCurrentPage(1);
@@ -35,11 +34,7 @@ export function NotificationModal({ onClose }: NotificationModalProps) {
 	}, [currentPage, totalPages]);
 
 	const handleClose = () => {
-		try {
-			onClose();
-		} catch (error) {
-			console.error('Error closing notification modal:', error);
-		}
+		onClose();
 	};
 
 	return (

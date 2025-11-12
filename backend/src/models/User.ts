@@ -54,14 +54,12 @@ const userSchema = new Schema<IUser>(
 			type: String,
 			required: true,
 			set: (value: string) => {
-				// Only encrypt if not already encrypted (encrypted tokens contain ':')
 				if (value && !value.includes(':')) {
 					return encrypt(value);
 				}
 				return value;
 			},
 			get: (value: string) => {
-				// Only decrypt if encrypted (encrypted tokens contain ':')
 				if (value && value.includes(':')) {
 					try {
 						return decrypt(value);
@@ -77,14 +75,12 @@ const userSchema = new Schema<IUser>(
 			type: String,
 			required: true,
 			set: (value: string) => {
-				// Only encrypt if not already encrypted
 				if (value && !value.includes(':')) {
 					return encrypt(value);
 				}
 				return value;
 			},
 			get: (value: string) => {
-				// Only decrypt if encrypted
 				if (value && value.includes(':')) {
 					try {
 						return decrypt(value);
@@ -119,15 +115,9 @@ const userSchema = new Schema<IUser>(
 	},
 	{
 		timestamps: true,
-		toJSON: { getters: false }, // Don't expose tokens in JSON
-		toObject: { getters: true }, // Enable getters when accessing as object
+		toJSON: { getters: false },
+		toObject: { getters: true },
 	}
 );
-
-// Note: Token encryption/decryption is now handled by getters and setters
-// Setters encrypt on assignment (before save)
-// Getters decrypt on access (after load)
-// This is more reliable than hooks and prevents the bug where tokens
-// remain encrypted in memory after save()
 
 export const User = mongoose.model<IUser>('User', userSchema);

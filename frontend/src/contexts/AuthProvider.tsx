@@ -3,14 +3,11 @@ import { useQuery } from "@apollo/client/react";
 import { MeDocument } from "@/gql/graphql";
 import { AuthContext, AuthContextType, User } from "./auth.types";
 import { refreshToken } from "@/services/stravaApi.service";
-
 const TOKEN_KEY = "getout_auth_token";
-
 export function AuthProvider({ children }: { children: ReactNode }) {
 	const [token, setToken] = useState<string | null>(null);
 	const [user, setUser] = useState<User | null>(null);
 	const [isInitialized, setIsInitialized] = useState(false);
-
 	useEffect(() => {
 		const initializeAuth = async () => {
 			const storedToken = localStorage.getItem(TOKEN_KEY);
@@ -19,14 +16,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			}
 			setIsInitialized(true);
 		};
-
 		initializeAuth();
 	}, []);
-
 	const { data: userData, loading: userLoading, error: userError } = useQuery(MeDocument, {
 		skip: !token || !isInitialized,
 	});
-
 	useEffect(() => {
 		const handleUserData = async () => {
 			if (userData?.me) {
@@ -52,15 +46,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 					updatedAt: String(userData.me.updatedAt),
 				};
 				setUser(newUser);
-
-				// Note: Scope validation now happens during registration in backend.
-				// Users cannot register without 'activity:read_all' permission.
-
+				// Scope validation happens during Strava OAuth registration in backend.
 				const now = Math.floor(Date.now() / 1000);
 				const timeUntilExpiry = userData.me.tokenExpiresAt - now;
-
 				if (timeUntilExpiry < 3600) {
-					console.log(`🔄 Token expires in ${Math.floor(timeUntilExpiry / 60)} minutes, refreshing...`);
 					try {
 						const refreshResponse = await refreshToken();
 						if (refreshResponse.success && refreshResponse.user) {
@@ -68,37 +57,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 								...newUser,
 								tokenExpiresAt: refreshResponse.user.tokenExpiresAt,
 							});
-							console.log('✅ Token refreshed successfully on mount');
 						}
 					} catch (error) {
-						console.error('❌ Failed to refresh token on mount:', error);
 						if (error instanceof Error && error.message.includes('revoked')) {
 							logout();
 						}
 					}
 				}
 			} else if (userError) {
+				console.error('❌ Auth Error - Me query failed:', userError);
+				console.error('Error details:', {
+					message: userError.message,
+					graphQLErrors: 'graphQLErrors' in userError ? userError.graphQLErrors : undefined,
+					networkError: 'networkError' in userError ? userError.networkError : undefined,
+				});
 				setToken(null);
 				setUser(null);
 				localStorage.removeItem(TOKEN_KEY);
 			}
 		};
-
 		handleUserData();
 	}, [userData, userError]);
-
 	const login = (newToken: string, newUser: User) => {
 		setToken(newToken);
 		setUser(newUser);
 		localStorage.setItem(TOKEN_KEY, newToken);
 	};
-
 	const logout = () => {
 		setToken(null);
 		setUser(null);
 		localStorage.removeItem(TOKEN_KEY);
 	};
-
 	const value: AuthContextType = {
 		user,
 		token,
@@ -109,6 +98,5 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		logout,
 		setUser,
 	};
-
 	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

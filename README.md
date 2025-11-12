@@ -162,7 +162,7 @@ Open http://localhost:5173
    - Decode polyline to GPS coordinates
    - Convert each coordinate to H3 hexagon (resolution 10)
    - Detect route type:
-     - **Closed loops** (start/end < 100m): Fill interior with `polygonToCells`
+     - **Closed loops** (start/end < 500m): Fill interior with `polygonToCells`
      - **Linear routes**: Use `gridPathCells` to fill gaps between GPS points
 4. **Hexagon Capture**:
    - New hexagon: User captures it

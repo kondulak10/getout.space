@@ -14,7 +14,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from '@/components/ui/dialog';
 import { formatDate, formatDistance } from '@/utils/dateFormatter';
-
 interface CompactActivitiesModalProps {
 	activities: StravaActivity[];
 	loading: boolean;
@@ -23,7 +22,6 @@ interface CompactActivitiesModalProps {
 	onDelete: (activityId: number) => Promise<void>;
 	onShowOnMap?: (hexId: string) => void;
 }
-
 export function CompactActivitiesModal({
 	activities,
 	loading,
@@ -36,7 +34,6 @@ export function CompactActivitiesModal({
 	const [deletingIds, setDeletingIds] = useState<Set<number>>(new Set());
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 	const [activityToDelete, setActivityToDelete] = useState<number | null>(null);
-
 	const handleProcess = async (activityId: number, e: React.MouseEvent) => {
 		e.stopPropagation();
 		setProcessingIds((prev) => new Set(prev).add(activityId));
@@ -57,16 +54,13 @@ export function CompactActivitiesModal({
 			});
 		}
 	};
-
 	const handleDelete = async (activityId: number, e: React.MouseEvent) => {
 		e.stopPropagation();
 		setActivityToDelete(activityId);
 		setShowDeleteDialog(true);
 	};
-
 	const confirmDelete = async () => {
 		if (activityToDelete === null) return;
-
 		setDeletingIds((prev) => new Set(prev).add(activityToDelete));
 		setShowDeleteDialog(false);
 		try {
@@ -87,8 +81,6 @@ export function CompactActivitiesModal({
 			setActivityToDelete(null);
 		}
 	};
-
-
 	return (
 		<>
 			<Dialog open={true} onOpenChange={(open) => !open && onClose()}>
@@ -96,7 +88,6 @@ export function CompactActivitiesModal({
 					<DialogHeader>
 						<DialogTitle>Your Strava Activities</DialogTitle>
 					</DialogHeader>
-
 				<DialogBody className="p-4">
 					{loading ? (
 						<div className="flex items-center justify-center py-12">
@@ -123,7 +114,6 @@ export function CompactActivitiesModal({
 											<span>{formatDate(activity.start_date_local)}</span>
 										</div>
 									</div>
-
 									<div className="flex items-center gap-2">
 										{activity.isStored ? (
 											<>
@@ -181,7 +171,6 @@ export function CompactActivitiesModal({
 						</div>
 					)}
 				</DialogBody>
-
 				{!loading && activities.length > 0 && (
 					<DialogFooter className="bg-white/5 flex-col space-y-0">
 						<div className="p-4 text-center text-sm text-gray-400 w-full border-b border-white/5">
@@ -196,8 +185,7 @@ export function CompactActivitiesModal({
 				)}
 			</DialogContent>
 		</Dialog>
-
-		{/* Separate AlertDialog for delete confirmation */}
+		{}
 		<AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
 				<AlertDialogContent className="bg-[rgba(10,10,10,0.95)] border border-white/10 text-gray-100">
 					<AlertDialogHeader>

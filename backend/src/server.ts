@@ -31,6 +31,46 @@ app.use(
 );
 app.use(express.json());
 
+// Simple request/response logging middleware
+app.use((req, res, next) => {
+	const startTime = Date.now();
+
+	// Skip logging for GraphQL introspection queries (they're noisy)
+	const isIntrospectionQuery =
+		req.path === '/graphql' && req.body?.operationName === 'IntrospectionQuery';
+
+	if (!isIntrospectionQuery) {
+		const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+		console.log(`\x1b[2m[${timestamp}] ${req.method} ${req.path}\x1b[0m`);
+	}
+
+	// Capture response
+	const originalJson = res.json;
+
+	res.json = function (data) {
+		if (!isIntrospectionQuery) {
+			const duration = Date.now() - startTime;
+			const statusCode = res.statusCode;
+			const isError = statusCode >= 400;
+
+			// Check for GraphQL errors
+			const hasGraphQLErrors = req.path === '/graphql' && data?.errors?.length > 0;
+
+			if (isError || hasGraphQLErrors) {
+				console.log(`\x1b[31m❌ ${statusCode} | ${duration}ms | ${req.method} ${req.path}\x1b[0m`);
+				if (hasGraphQLErrors) {
+					console.log(`\x1b[31m   Errors: ${JSON.stringify(data.errors, null, 2)}\x1b[0m`);
+				}
+			} else {
+				console.log(`\x1b[2m✓ ${statusCode} | ${duration}ms | ${req.method} ${req.path}\x1b[0m`);
+			}
+		}
+		return originalJson.call(this, data);
+	};
+
+	next();
+});
+
 app.get('/', (req, res) => {
 	res.sendFile(path.join(__dirname, 'templates', 'landing.html'));
 });

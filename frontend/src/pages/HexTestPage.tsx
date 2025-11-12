@@ -22,7 +22,7 @@ function HexTestPageContent() {
 		enableCustomStyling: true,
 	});
 
-	// Navigate to Oslo on mount
+	
 	useEffect(() => {
 		if (!mapRef.current) return;
 		const map = mapRef.current;
@@ -70,8 +70,8 @@ function HexTestPageContent() {
 						setLoadingStage('complete');
 					}, 100);
 				}, 100);
-			// eslint-disable-next-line @typescript-eslint/no-unused-vars
-			} catch (_error) {
+
+			} catch {
 				toast.error('Failed to load test data', {
 					id: toastId,
 					description: 'Check console for details',

@@ -4,6 +4,7 @@ import { useQuery } from '@apollo/client/react';
 import { RegionalActiveLeadersDocument, RegionalOgDiscoverersDocument } from '@/gql/graphql';
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from '@/components/ui/dialog';
+import { useNavigate } from 'react-router-dom';
 
 interface LeaderboardModalProps {
 	parentHexagonIds: string[];
@@ -14,6 +15,7 @@ type TabType = 'active' | 'og';
 
 export function LeaderboardModal({ parentHexagonIds, onClose }: LeaderboardModalProps) {
 	const [activeTab, setActiveTab] = useState<TabType>('active');
+	const navigate = useNavigate();
 
 	const safeParentHexagonIds = Array.isArray(parentHexagonIds) ? parentHexagonIds.filter(Boolean) : [];
 	const shouldSkip = safeParentHexagonIds.length === 0;
@@ -42,6 +44,7 @@ export function LeaderboardModal({ parentHexagonIds, onClose }: LeaderboardModal
 
 	const renderUserAvatar = (
 		user?: {
+			id?: string;
 			stravaProfile?: { firstname?: string | null; lastname?: string | null; profile?: string | null; imghex?: string | null };
 			stravaId?: number;
 		} | null,
@@ -66,8 +69,18 @@ export function LeaderboardModal({ parentHexagonIds, onClose }: LeaderboardModal
 		const sizeClasses = size === 'md' ? 'w-12 h-12' : 'w-10 h-10';
 		const iconSize = size === 'md' ? 'w-6 h-6' : 'w-5 h-5';
 
+		const handleClick = (e: React.MouseEvent) => {
+			if (user.id) {
+				e.stopPropagation();
+				navigate(`/profile/${user.id}`);
+			}
+		};
+
 		return (
-			<div className="flex items-center gap-3">
+			<div
+				className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+				onClick={handleClick}
+			>
 				{imageUrl ? (
 					<img
 						src={imageUrl}
@@ -100,9 +113,9 @@ export function LeaderboardModal({ parentHexagonIds, onClose }: LeaderboardModal
 	};
 
 	const getMedalColor = (rank: number) => {
-		if (rank === 0) return 'text-yellow-400'; // Gold
-		if (rank === 1) return 'text-gray-300'; // Silver
-		if (rank === 2) return 'text-amber-600'; // Bronze
+		if (rank === 0) return 'text-yellow-400'; 
+		if (rank === 1) return 'text-gray-300'; 
+		if (rank === 2) return 'text-amber-600'; 
 		return 'text-gray-500';
 	};
 
@@ -175,11 +188,7 @@ export function LeaderboardModal({ parentHexagonIds, onClose }: LeaderboardModal
 	};
 
 	const handleClose = () => {
-		try {
-			onClose();
-		} catch (error) {
-			console.error('Error closing leaderboard modal:', error);
-		}
+		onClose();
 	};
 
 	return (
@@ -193,7 +202,7 @@ export function LeaderboardModal({ parentHexagonIds, onClose }: LeaderboardModal
 				</DialogHeader>
 
 				<DialogBody className="space-y-5 p-5">
-					{/* Tabs */}
+					{}
 					<div className="flex gap-2">
 					<button
 						type="button"
@@ -227,7 +236,7 @@ export function LeaderboardModal({ parentHexagonIds, onClose }: LeaderboardModal
 					</button>
 					</div>
 
-					{/* Content */}
+					{}
 					{renderLeaderboard()}
 				</DialogBody>
 			</DialogContent>

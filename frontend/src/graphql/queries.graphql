@@ -155,6 +155,35 @@ query MyActivities($limit: Int, $offset: Int) {
 	}
 }
 
+query MyHexagonsForStats {
+	myHexagons {
+		id
+		hexagonId
+		captureCount
+		firstCapturedAt
+		lastCapturedAt
+		firstCapturedBy {
+			id
+		}
+		currentOwnerId
+		captureHistory {
+			userId
+			stravaId
+			capturedAt
+		}
+	}
+}
+
+query MyActivitiesForStats {
+	myActivities {
+		id
+		distance
+		movingTime
+		startDateLocal
+		createdAt
+	}
+}
+
 query GetAllHexagons($limit: Int, $offset: Int) {
 	hexagons(limit: $limit, offset: $offset) {
 		id
@@ -251,5 +280,110 @@ query RegionalOGDiscoverers($parentHexagonIds: [String!]!, $limit: Int) {
 			}
 		}
 		hexCount
+	}
+}
+
+query User($id: ID!) {
+	user(id: $id) {
+		id
+		stravaId
+		isAdmin
+		isPremium
+		stravaProfile {
+			firstname
+			lastname
+			profile
+			imghex
+			city
+			state
+			country
+			sex
+			username
+		}
+		tokenExpiresAt
+		tokenIsExpired
+		lastHex
+		createdAt
+		updatedAt
+	}
+}
+
+query UserHexagonsForStats($userId: ID!) {
+	userHexagons(userId: $userId) {
+		id
+		hexagonId
+		captureCount
+		firstCapturedAt
+		lastCapturedAt
+		firstCapturedBy {
+			id
+		}
+		currentOwnerId
+		captureHistory {
+			userId
+			stravaId
+			capturedAt
+		}
+	}
+}
+
+query HexagonsStolenFromUser($userId: ID!) {
+	hexagonsStolenFromUser(userId: $userId) {
+		id
+		hexagonId
+		currentOwnerId
+		currentOwnerStravaId
+		captureHistory {
+			userId
+			stravaId
+			capturedAt
+		}
+	}
+}
+
+query UserActivitiesForStats($userId: ID!) {
+	userActivities(userId: $userId) {
+		id
+		distance
+		movingTime
+		startDateLocal
+		createdAt
+	}
+}
+
+query UserPublicStats($userId: ID!) {
+	userPublicStats(userId: $userId) {
+		id
+		stravaId
+		stravaProfile {
+			firstname
+			lastname
+			profile
+			imghex
+			city
+			state
+			country
+			sex
+			username
+		}
+		totalActivities
+		totalDistance
+		totalMovingTime
+		latestActivityDate
+		totalHexagons
+		createdAt
+	}
+}
+
+query UsersByIds($ids: [ID!]!) {
+	usersByIds(ids: $ids) {
+		id
+		stravaId
+		stravaProfile {
+			firstname
+			lastname
+			profile
+			imghex
+		}
 	}
 }

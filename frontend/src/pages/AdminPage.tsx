@@ -12,33 +12,25 @@ import {
 } from "@/gql/graphql";
 import { useLazyQuery, useQuery } from "@apollo/client/react";
 import { useState } from "react";
-
 export default function AdminPage() {
 	const { user: currentUser } = useAuth();
 	const [loadingEntity, setLoadingEntity] = useState<string | null>(null);
-
-	// Fetch counts on mount
 	const { data: usersCountData } = useQuery(GetUsersCountDocument);
 	const { data: hexagonsCountData } = useQuery(GetHexagonsCountDocument);
 	const { data: activitiesCountData } = useQuery(GetActivitiesCountDocument);
 	const { data: notificationsCountData } = useQuery(NotificationsCountDocument);
-
 	const [fetchUsers] = useLazyQuery(GetUsersDocument, {
 		fetchPolicy: "network-only",
 	});
-
 	const [fetchHexagons] = useLazyQuery(GetAllHexagonsDocument, {
 		fetchPolicy: "network-only",
 	});
-
 	const [fetchActivities] = useLazyQuery(GetAllActivitiesDocument, {
 		fetchPolicy: "network-only",
 	});
-
 	const [fetchNotifications] = useLazyQuery(AllNotificationsDocument, {
 		fetchPolicy: "network-only",
 	});
-
 	const handleFetchUsers = async () => {
 		setLoadingEntity("users");
 		try {
@@ -51,13 +43,10 @@ export default function AdminPage() {
 				}));
 				console.log(usersWithStravaLinks);
 			}
-		} catch (error) {
-			console.error("Error fetching users:", error);
 		} finally {
 			setLoadingEntity(null);
 		}
 	};
-
 	const handleFetchHexagons = async () => {
 		setLoadingEntity("hexagons");
 		try {
@@ -66,13 +55,10 @@ export default function AdminPage() {
 				console.log("=== HEXAGONS ===");
 				console.log(result.data.hexagons);
 			}
-		} catch (error) {
-			console.error("Error fetching hexagons:", error);
 		} finally {
 			setLoadingEntity(null);
 		}
 	};
-
 	const handleFetchActivities = async () => {
 		setLoadingEntity("activities");
 		try {
@@ -85,13 +71,10 @@ export default function AdminPage() {
 				}));
 				console.log(activitiesWithStravaLinks);
 			}
-		} catch (error) {
-			console.error("Error fetching activities:", error);
 		} finally {
 			setLoadingEntity(null);
 		}
 	};
-
 	const handleFetchNotifications = async () => {
 		setLoadingEntity("notifications");
 		try {
@@ -100,13 +83,10 @@ export default function AdminPage() {
 				console.log("=== NOTIFICATIONS ===");
 				console.log(result.data.notifications);
 			}
-		} catch (error) {
-			console.error("Error fetching notifications:", error);
 		} finally {
 			setLoadingEntity(null);
 		}
 	};
-
 	const handleExportAuth = async () => {
 		const TOKEN_KEY = "getout_auth_token";
 		const token = localStorage.getItem(TOKEN_KEY);
@@ -116,7 +96,6 @@ export default function AdminPage() {
 			console.log("Token copied to clipboard");
 		}
 	};
-
 	return (
 		<div className="min-h-screen bg-gray-50 p-8">
 			<div className="max-w-4xl mx-auto">
@@ -139,7 +118,6 @@ export default function AdminPage() {
 						Back to Home
 					</a>
 				</div>
-
 				<div className="bg-white rounded-lg shadow-lg p-8">
 					<h2 className="text-xl font-semibold mb-4">Database Entities</h2>
 					<p className="text-sm text-gray-600 mb-6">
@@ -147,7 +125,6 @@ export default function AdminPage() {
 						<br />
 						Open your browser's Developer Tools (F12) to view the console output.
 					</p>
-
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 						<button
 							onClick={handleFetchUsers}
@@ -172,7 +149,6 @@ export default function AdminPage() {
 								{loadingEntity === "users" ? "Loading..." : "View all users in console"}
 							</p>
 						</button>
-
 						<button
 							onClick={handleFetchHexagons}
 							disabled={loadingEntity !== null}
@@ -198,7 +174,6 @@ export default function AdminPage() {
 								{loadingEntity === "hexagons" ? "Loading..." : "View all hexagons in console"}
 							</p>
 						</button>
-
 						<button
 							onClick={handleFetchActivities}
 							disabled={loadingEntity !== null}
@@ -224,7 +199,6 @@ export default function AdminPage() {
 								{loadingEntity === "activities" ? "Loading..." : "View all activities in console"}
 							</p>
 						</button>
-
 						<button
 							onClick={handleFetchNotifications}
 							disabled={loadingEntity !== null}
@@ -252,7 +226,6 @@ export default function AdminPage() {
 									: "View all alerts in console"}
 							</p>
 						</button>
-
 						<button
 							onClick={handleExportAuth}
 							disabled={loadingEntity !== null}
@@ -271,21 +244,18 @@ export default function AdminPage() {
 							<p className="text-sm text-gray-500 text-center">Export JWT token to console</p>
 						</button>
 					</div>
-
 					<div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
 						<p className="text-sm text-blue-800">
 							<strong>Note:</strong> Data will be logged to the browser console with all properties.
 						</p>
 					</div>
 				</div>
-
 				<div className="bg-white rounded-lg shadow-lg p-8 mt-6">
 					<h2 className="text-xl font-semibold mb-4">Player Colors Preview</h2>
 					<p className="text-sm text-gray-600 mb-6">
 						These are the colors used for different players on the map, shown with the same opacity
 						(50%) as on the map.
 					</p>
-
 					<div className="p-6 rounded-lg" style={{ backgroundColor: "#0a0a0a" }}>
 						<div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-8 gap-4">
 							{HEXAGON_COLORS.map((color, index) => (

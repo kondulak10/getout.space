@@ -122,9 +122,9 @@ export function configureMapStyle(map: MapboxMap) {
 							map.setPaintProperty(layer.id, 'text-halo-width', 2);
 						}
 					}
-				// eslint-disable-next-line @typescript-eslint/no-unused-vars
-				} catch (_error) {
-					// Ignore error
+
+				} catch {
+					// Failed to set paint property
 				}
 			});
 		}

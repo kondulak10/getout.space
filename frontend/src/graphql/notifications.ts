@@ -47,7 +47,7 @@ export const DELETE_NOTIFICATION = gql`
 	}
 `;
 
-// Admin queries
+
 export const ALL_NOTIFICATIONS = gql`
 	${NOTIFICATION_FRAGMENT}
 	query AllNotifications($limit: Int, $offset: Int) {

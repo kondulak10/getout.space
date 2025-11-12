@@ -27,8 +27,8 @@ export function MapView({ user }: MapViewProps) {
 					initialCenter: [lng, lat] as [number, number],
 					initialZoom: 13,
 				};
-			} catch (error) {
-				console.error("❌ Invalid hex ID:", hexToUse, error);
+			} catch {
+				// Invalid hex ID, fall through to default
 			}
 		}
 
@@ -44,32 +44,21 @@ export function MapView({ user }: MapViewProps) {
 	});
 
 	useEffect(() => {
-		console.log("🔵 MapView: isLoaded =", isLoaded, "mapRef.current =", !!mapRef.current);
-
 		if (!isLoaded || !mapRef.current) return;
 
 		const map = mapRef.current;
 		let pollInterval: number | null = null;
 
 		const createSources = () => {
-			console.log("🎬 MapView: createSources called at", new Date().toISOString());
 			const hexSource = map.getSource("hexagons");
 			const parentSource = map.getSource("parent-hexagons");
-			console.log(
-				"🔍 MapView: Checking sources - hexagons:",
-				!!hexSource,
-				"parent-hexagons:",
-				!!parentSource
-			);
 
 			if (hexSource && parentSource) {
-				console.log("✅ MapView: Sources already exist, setting ready=true");
 				setSourcesReady(true);
 				return;
 			}
 
 			if (!hexSource) {
-				console.log("➕ MapView: Creating hexagons source and layers at", new Date().toISOString());
 				try {
 					map.addSource("hexagons", {
 						type: "geojson",
@@ -78,7 +67,6 @@ export function MapView({ user }: MapViewProps) {
 							features: [],
 						},
 					});
-					console.log("✓ Hexagons source added");
 
 					map.addLayer({
 						id: "hexagon-fills",
@@ -89,7 +77,6 @@ export function MapView({ user }: MapViewProps) {
 							"fill-opacity": 0.5,
 						},
 					});
-					console.log("✓ Hexagon-fills layer added");
 
 					map.addLayer({
 						id: "hexagon-outlines",
@@ -101,14 +88,12 @@ export function MapView({ user }: MapViewProps) {
 							"line-opacity": 0.7,
 						},
 					});
-					console.log("✓ Hexagon-outlines layer added");
-				} catch (error) {
-					console.error("❌ MapView: Error creating hexagons source:", error);
+				} catch {
+					// Layer may already exist, ignore error
 				}
 			}
 
 			if (!parentSource) {
-				console.log("➕ MapView: Creating parent-hexagons source and layer");
 				try {
 					map.addSource("parent-hexagons", {
 						type: "geojson",
@@ -117,7 +102,6 @@ export function MapView({ user }: MapViewProps) {
 							features: [],
 						},
 					});
-					console.log("✓ Parent-hexagons source added");
 
 					map.addLayer({
 						id: "parent-hexagon-borders",
@@ -129,36 +113,24 @@ export function MapView({ user }: MapViewProps) {
 							"line-opacity": 0.6,
 						},
 					});
-					console.log("✓ Parent-hexagon-borders layer added");
-				} catch (error) {
-					console.error("❌ MapView: Error creating parent source:", error);
+				} catch {
+					// Layer may already exist, ignore error
 				}
 			}
 
-			console.log(
-				"✅ MapView: All sources/layers created, setting ready=true at",
-				new Date().toISOString()
-			);
 			setSourcesReady(true);
 		};
 
 		const setupSources = () => {
-			console.log("🟡 MapView: setupSources called, isStyleLoaded =", map.isStyleLoaded());
-
 			if (!map.isStyleLoaded()) {
-				console.log("⏳ MapView: Style not loaded, setting up polling + event listener");
-
 				pollInterval = setInterval(() => {
-					console.log("🔄 MapView: Polling... isStyleLoaded =", map.isStyleLoaded());
 					if (map.isStyleLoaded()) {
-						console.log("✅ MapView: Style loaded via polling!");
 						if (pollInterval) clearInterval(pollInterval);
 						createSources();
 					}
 				}, 100);
 
 				map.once("styledata", () => {
-					console.log("✅ MapView: Style loaded via styledata event!");
 					if (pollInterval) clearInterval(pollInterval);
 					createSources();
 				});
@@ -195,15 +167,6 @@ export function MapView({ user }: MapViewProps) {
 	return (
 		<>
 			<div ref={mapContainerRef} className="w-full h-[calc(100dvh-90px)] md:h-full" />
-
-			{console.log(
-				"🎯 MapView render: isLoaded =",
-				isLoaded,
-				"sourcesReady =",
-				sourcesReady,
-				"will render MapContent =",
-				isLoaded && sourcesReady
-			)}
 			{isLoaded && sourcesReady && <MapContent />}
 		</>
 	);

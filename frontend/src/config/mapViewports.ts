@@ -1,9 +1,8 @@
 export interface MapViewport {
 	name: string;
-	center: [number, number]; // [longitude, latitude]
+	center: [number, number]; 
 	zoom: number;
 }
-
 export const MAP_VIEWPORTS = {
 	ostrava: {
 		name: 'Ostrava',
@@ -16,7 +15,5 @@ export const MAP_VIEWPORTS = {
 		zoom: 12,
 	},
 } as const;
-
 export type ViewportKey = keyof typeof MAP_VIEWPORTS;
-
 export const DEFAULT_VIEWPORT: ViewportKey = 'ostrava';

@@ -26,6 +26,18 @@ export const userSchema = gql`
 		updatedAt: Date!
 	}
 
+	type UserPublicStats {
+		id: ID!
+		stravaId: Int!
+		stravaProfile: StravaProfile!
+		totalActivities: Int!
+		totalDistance: Float!
+		totalMovingTime: Float!
+		latestActivityDate: Date
+		totalHexagons: Int!
+		createdAt: Date!
+	}
+
 	extend type Query {
 		"""
 		Get current authenticated user
@@ -46,10 +58,23 @@ export const userSchema = gql`
 		usersCount: Int!
 
 		"""
-		Get user by ID (Admin only, or own profile)
+		Get user by ID
 		Requires: Authentication
 		"""
 		user(id: ID!): User
+
+		"""
+		Get multiple users by their IDs
+		Requires: Authentication
+		"""
+		usersByIds(ids: [ID!]!): [User!]!
+
+		"""
+		Get public stats for a user (aggregated data only)
+		Returns activity count, distance, and hexagon count
+		Requires: Authentication
+		"""
+		userPublicStats(userId: ID!): UserPublicStats
 	}
 
 	extend type Mutation {

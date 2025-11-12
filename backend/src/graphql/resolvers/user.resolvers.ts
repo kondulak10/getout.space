@@ -4,13 +4,19 @@ import { Activity } from '../../models/Activity';
 import { Hexagon } from '../../models/Hexagon';
 import { refreshStravaToken } from '../../utils/strava';
 import { GraphQLContext, requireAuth, requireAdmin } from './auth.helpers';
-import { IdArg } from './resolver.types';
+import { IdArg, UserIdArg } from './resolver.types';
 
 export const userResolvers = {
 	User: {
 		tokenIsExpired: (parent: IUser) => {
+			// Always return the value - these fields are only accessed via 'me' query (own data) or by admins
 			const now = Math.floor(Date.now() / 1000);
 			return parent.tokenExpiresAt < now;
+		},
+
+		tokenExpiresAt: (parent: IUser) => {
+			// Always return the value - these fields are only accessed via 'me' query (own data) or by admins
+			return parent.tokenExpiresAt;
 		},
 	},
 
@@ -27,7 +33,6 @@ export const userResolvers = {
 				const users = await User.find().sort({ createdAt: -1 });
 				return users;
 			} catch (error) {
-				console.error('Error fetching users:', error);
 				throw new GraphQLError('Failed to fetch users');
 			}
 		},
@@ -39,19 +44,12 @@ export const userResolvers = {
 				const count = await User.countDocuments();
 				return count;
 			} catch (error) {
-				console.error('Error counting users:', error);
 				throw new GraphQLError('Failed to count users');
 			}
 		},
 
 		user: async (_: unknown, { id }: IdArg, context: GraphQLContext) => {
-			const currentUser = requireAuth(context);
-
-			if (!currentUser.isAdmin && String(currentUser._id) !== id) {
-				throw new GraphQLError('You can only view your own profile', {
-					extensions: { code: 'FORBIDDEN' },
-				});
-			}
+			requireAuth(context);
 
 			try {
 				const user = await User.findById(id);
@@ -62,8 +60,61 @@ export const userResolvers = {
 				}
 				return user;
 			} catch (error) {
-				console.error('Error fetching user:', error);
 				throw new GraphQLError('Failed to fetch user');
+			}
+		},
+
+		usersByIds: async (_: unknown, { ids }: { ids: string[] }, context: GraphQLContext) => {
+			requireAuth(context);
+
+			try {
+				const users = await User.find({ _id: { $in: ids } });
+				return users;
+			} catch (error) {
+				throw new GraphQLError('Failed to fetch users');
+			}
+		},
+
+		userPublicStats: async (_: unknown, { userId }: UserIdArg, context: GraphQLContext) => {
+			requireAuth(context);
+
+			try {
+				const user = await User.findById(userId);
+				if (!user) {
+					throw new GraphQLError('User not found', {
+						extensions: { code: 'NOT_FOUND' },
+					});
+				}
+
+				// Count activities and sum distance, moving time
+				const activities = await Activity.find({ userId }).sort({ startDate: -1 });
+				const totalActivities = activities.length;
+				const totalDistance = activities.reduce(
+					(sum, activity) => sum + (activity.distance || 0),
+					0
+				);
+				const totalMovingTime = activities.reduce(
+					(sum, activity) => sum + (activity.movingTime || 0),
+					0
+				);
+				const latestActivityDate = activities.length > 0 ? activities[0].startDate : null;
+
+				// Count hexagons owned by this user
+				const totalHexagons = await Hexagon.countDocuments({ currentOwnerId: userId });
+
+				return {
+					id: user._id,
+					stravaId: user.stravaId,
+					stravaProfile: user.stravaProfile,
+					totalActivities,
+					totalDistance,
+					totalMovingTime,
+					latestActivityDate,
+					totalHexagons,
+					createdAt: user.createdAt,
+				};
+			} catch (error) {
+				throw new GraphQLError('Failed to fetch user public stats');
 			}
 		},
 	},
@@ -76,7 +127,6 @@ export const userResolvers = {
 				const result = await User.findByIdAndDelete(id);
 				return result !== null;
 			} catch (error) {
-				console.error('Error deleting user:', error);
 				return false;
 			}
 		},
@@ -85,20 +135,12 @@ export const userResolvers = {
 			const currentUser = requireAuth(context);
 
 			try {
-				console.log(`🗑️ User ${currentUser.stravaProfile.firstname} is deleting their account...`);
-
-				const deletedActivities = await Activity.deleteMany({ userId: currentUser._id });
-				console.log(`   ✓ Deleted ${deletedActivities.deletedCount} activities`);
-
-				const deletedHexagons = await Hexagon.deleteMany({ currentOwnerId: currentUser._id });
-				console.log(`   ✓ Deleted ${deletedHexagons.deletedCount} hexagons`);
-
+				await Activity.deleteMany({ userId: currentUser._id });
+				await Hexagon.deleteMany({ currentOwnerId: currentUser._id });
 				await User.findByIdAndDelete(currentUser._id);
-				console.log(`   ✓ User account deleted`);
 
 				return true;
 			} catch (error) {
-				console.error('❌ Error deleting user account:', error);
 				throw new GraphQLError('Failed to delete account');
 			}
 		},
@@ -115,8 +157,6 @@ export const userResolvers = {
 					});
 				}
 
-				console.log(`🔄 Admin-initiated token refresh for user: ${user.stravaProfile.firstname}`);
-
 				const tokenData = await refreshStravaToken(user);
 
 				user.accessToken = tokenData.access_token;
@@ -126,7 +166,6 @@ export const userResolvers = {
 
 				return user;
 			} catch (error) {
-				console.error('Error refreshing user token:', error);
 				if (error instanceof GraphQLError) {
 					throw error;
 				}

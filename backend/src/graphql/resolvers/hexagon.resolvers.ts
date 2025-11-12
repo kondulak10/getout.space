@@ -22,7 +22,6 @@ export const hexagonResolvers = {
 				const user = await User.findById(parent.currentOwnerId);
 				return user;
 			} catch (error) {
-				console.error('Error fetching current owner for hexagon:', error);
 				return null;
 			}
 		},
@@ -31,7 +30,6 @@ export const hexagonResolvers = {
 				const activity = await Activity.findById(parent.currentActivityId);
 				return activity;
 			} catch (error) {
-				console.error('Error fetching current activity for hexagon:', error);
 				return null;
 			}
 		},
@@ -40,7 +38,6 @@ export const hexagonResolvers = {
 				const user = await User.findById(parent.firstCapturedBy);
 				return user;
 			} catch (error) {
-				console.error('Error fetching first capturer for hexagon:', error);
 				return null;
 			}
 		},
@@ -52,7 +49,6 @@ export const hexagonResolvers = {
 				const user = await User.findById(parent.userId);
 				return user;
 			} catch (error) {
-				console.error('Error fetching user for capture history entry:', error);
 				return null;
 			}
 		},
@@ -61,7 +57,6 @@ export const hexagonResolvers = {
 				const activity = await Activity.findById(parent.activityId);
 				return activity;
 			} catch (error) {
-				console.error('Error fetching activity for capture history entry:', error);
 				return null;
 			}
 		},
@@ -77,13 +72,11 @@ export const hexagonResolvers = {
 
 			try {
 				const hexagons = await Hexagon.find({ currentOwnerId: user._id })
-					.select('-captureHistory')
 					.sort({ lastCapturedAt: -1 })
 					.limit(limit)
 					.skip(offset);
 				return hexagons;
 			} catch (error) {
-				console.error('Error fetching user hexagons:', error);
 				throw new GraphQLError('Failed to fetch hexagons');
 			}
 		},
@@ -109,15 +102,8 @@ export const hexagonResolvers = {
 					return lat >= south && lat <= north && lng >= west && lng <= east;
 				});
 
-				if (hexagons.length === MAX_HEXAGONS) {
-					console.warn(
-						`⚠️  User ${user._id} has more than ${MAX_HEXAGONS} hexagons. Consider implementing geospatial indexing.`
-					);
-				}
-
 				return hexagonsInBbox;
 			} catch (error) {
-				console.error('Error fetching user hexagons in bbox:', error);
 				throw new GraphQLError('Failed to fetch hexagons in bounding box');
 			}
 		},
@@ -143,15 +129,8 @@ export const hexagonResolvers = {
 					return lat >= south && lat <= north && lng >= west && lng <= east;
 				});
 
-				if (hexagons.length === MAX_HEXAGONS) {
-					console.warn(
-						`⚠️  Database has more than ${MAX_HEXAGONS} hexagons in this area. Consider implementing geospatial indexing.`
-					);
-				}
-
 				return hexagonsInBbox;
 			} catch (error) {
-				console.error('Error fetching all hexagons in bbox:', error);
 				throw new GraphQLError('Failed to fetch hexagons in bounding box');
 			}
 		},
@@ -164,18 +143,12 @@ export const hexagonResolvers = {
 			requireAuth(context);
 
 			try {
-				console.log(`📡 Fetching all hexagons under ${parentHexagonIds.length} parent hexagons`);
-
 				const hexagons = await Hexagon.find({
 					parentHexagonId: { $in: parentHexagonIds },
 				}).select('-captureHistory');
 
-				console.log(
-					`✅ Fetched ${hexagons.length} hexagons from ${parentHexagonIds.length} parents`
-				);
 				return hexagons;
 			} catch (error) {
-				console.error('Error fetching hexagons by parents:', error);
 				throw new GraphQLError('Failed to fetch hexagons by parent IDs');
 			}
 		},
@@ -187,7 +160,6 @@ export const hexagonResolvers = {
 				const count = await Hexagon.countDocuments();
 				return count;
 			} catch (error) {
-				console.error('Error counting all hexagons:', error);
 				throw new GraphQLError('Failed to count hexagons');
 			}
 		},
@@ -199,16 +171,35 @@ export const hexagonResolvers = {
 		) => {
 			requireAuth(context);
 
+			// Hexagons are public data (visible on map), no ownership check needed
 			try {
 				const hexagons = await Hexagon.find({ currentOwnerId: userId })
-					.select('-captureHistory')
 					.sort({ lastCapturedAt: -1 })
 					.limit(limit)
 					.skip(offset);
 				return hexagons;
 			} catch (error) {
-				console.error('Error fetching user hexagons:', error);
 				throw new GraphQLError('Failed to fetch hexagons');
+			}
+		},
+
+		hexagonsStolenFromUser: async (
+			_: unknown,
+			{ userId }: { userId: string },
+			context: GraphQLContext
+		) => {
+			requireAuth(context);
+
+			try {
+				// Find hexagons where the user appears in captureHistory but is NOT the current owner
+				const hexagons = await Hexagon.find({
+					currentOwnerId: { $ne: userId },
+					'captureHistory.userId': userId,
+				}).sort({ lastCapturedAt: -1 });
+
+				return hexagons;
+			} catch (error) {
+				throw new GraphQLError('Failed to fetch stolen hexagons');
 			}
 		},
 
@@ -219,7 +210,6 @@ export const hexagonResolvers = {
 				const hexagon = await Hexagon.findOne({ hexagonId });
 				return hexagon;
 			} catch (error) {
-				console.error('Error fetching hexagon:', error);
 				throw new GraphQLError('Failed to fetch hexagon');
 			}
 		},
@@ -234,7 +224,6 @@ export const hexagonResolvers = {
 					.limit(limit);
 				return hexagons;
 			} catch (error) {
-				console.error('Error fetching contested hexagons:', error);
 				throw new GraphQLError('Failed to fetch contested hexagons');
 			}
 		},
@@ -254,7 +243,6 @@ export const hexagonResolvers = {
 					.skip(offset);
 				return hexagons;
 			} catch (error) {
-				console.error('Error fetching all hexagons:', error);
 				throw new GraphQLError('Failed to fetch hexagons');
 			}
 		},
@@ -267,10 +255,6 @@ export const hexagonResolvers = {
 			requireAuth(context);
 
 			try {
-				console.log(
-					`🏆 Fetching regional active leaders for ${parentHexagonIds.length} parent hexagons`
-				);
-
 				const leaderboard = await Hexagon.aggregate([
 					{
 						$match: {
@@ -301,14 +285,8 @@ export const hexagonResolvers = {
 					})
 				);
 
-				console.log(
-					`✅ Found ${results.length} active leaders in region with hexagons:`,
-					results.map((r) => r.hexCount)
-				);
-
 				return results;
 			} catch (error) {
-				console.error('Error fetching regional active leaders:', error);
 				throw new GraphQLError('Failed to fetch regional active leaders');
 			}
 		},
@@ -321,10 +299,6 @@ export const hexagonResolvers = {
 			requireAuth(context);
 
 			try {
-				console.log(
-					`🎖️ Fetching regional OG discoverers for ${parentHexagonIds.length} parent hexagons`
-				);
-
 				const leaderboard = await Hexagon.aggregate([
 					{
 						$match: {
@@ -355,14 +329,8 @@ export const hexagonResolvers = {
 					})
 				);
 
-				console.log(
-					`✅ Found ${results.length} OG discoverers in region with hexagons:`,
-					results.map((r) => r.hexCount)
-				);
-
 				return results;
 			} catch (error) {
-				console.error('Error fetching regional OG discoverers:', error);
 				throw new GraphQLError('Failed to fetch regional OG discoverers');
 			}
 		},
@@ -391,12 +359,10 @@ export const hexagonResolvers = {
 					});
 				}
 
-				console.log(`🎯 Capturing ${hexagonIds.length} hexagons for activity ${activity.name}`);
-
 				const capturedHexagons: IHexagon[] = [];
-				let newCaptures = 0;
-				let recaptures = 0;
-				let ownHexagons = 0;
+				let _newCaptures = 0;
+				let _recaptures = 0;
+				let _ownHexagons = 0;
 
 				for (const hexagonId of hexagonIds) {
 					const existingHex = await Hexagon.findOne({ hexagonId });
@@ -422,7 +388,7 @@ export const hexagonResolvers = {
 
 						await newHex.save();
 						capturedHexagons.push(newHex);
-						newCaptures++;
+						_newCaptures++;
 					} else if (String(existingHex.currentOwnerId) !== String(currentUser._id)) {
 						const historyEntry: ICaptureHistoryEntry = {
 							userId: existingHex.currentOwnerId,
@@ -445,20 +411,15 @@ export const hexagonResolvers = {
 
 						await existingHex.save();
 						capturedHexagons.push(existingHex);
-						recaptures++;
+						_recaptures++;
 					} else {
 						capturedHexagons.push(existingHex);
-						ownHexagons++;
+						_ownHexagons++;
 					}
 				}
 
-				console.log(
-					`✅ Capture complete: ${newCaptures} new, ${recaptures} recaptured, ${ownHexagons} already owned`
-				);
-
 				return capturedHexagons;
 			} catch (error) {
-				console.error('Error capturing hexagons:', error);
 				if (error instanceof GraphQLError) {
 					throw error;
 				}
@@ -473,7 +434,6 @@ export const hexagonResolvers = {
 				const result = await Hexagon.findOneAndDelete({ hexagonId });
 				return result !== null;
 			} catch (error) {
-				console.error('Error deleting hexagon:', error);
 				return false;
 			}
 		},

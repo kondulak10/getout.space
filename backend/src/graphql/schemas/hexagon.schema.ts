@@ -77,6 +77,12 @@ export const hexagonSchema = gql`
 		userHexagons(userId: ID!, limit: Int, offset: Int): [Hexagon!]!
 
 		"""
+		Get hexagons stolen from a user (where user is in captureHistory but not current owner)
+		Requires: Authentication
+		"""
+		hexagonsStolenFromUser(userId: ID!): [Hexagon!]!
+
+		"""
 		Get a specific hexagon by its H3 hexagon ID
 		Requires: Authentication
 		"""

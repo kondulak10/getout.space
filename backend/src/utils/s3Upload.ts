@@ -21,8 +21,6 @@ export async function uploadImageToS3(
 			Body: buffer,
 			ContentType: contentType,
 			CacheControl: 'public, max-age=31536000',
-			// Note: ACL removed - bucket uses BucketOwnerEnforced ownership (ACLs disabled)
-			// Public access is handled by bucket policy instead
 		});
 
 		await s3Client.send(command);

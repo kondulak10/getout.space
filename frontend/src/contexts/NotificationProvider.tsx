@@ -13,13 +13,13 @@ import { NotificationContext } from './NotificationContext';
 export function NotificationProvider({ children }: { children: ReactNode }) {
 	const { isAuthenticated } = useAuth();
 
-	// Query for unread count on page load only
+	
 	const { data: countData, refetch: refetchCount } = useQuery(MyUnreadNotificationCountDocument, {
 		skip: !isAuthenticated,
-		fetchPolicy: 'network-only', // Always fetch fresh data
+		fetchPolicy: 'network-only', 
 	});
 
-	// Query for recent notifications (for dropdown)
+	
 	const {
 		data: notificationsData,
 		loading,
@@ -27,10 +27,10 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 	} = useQuery(MyNotificationsDocument, {
 		variables: { limit: 20 },
 		skip: !isAuthenticated,
-		fetchPolicy: 'network-only', // Always fetch fresh data, no cache
+		fetchPolicy: 'network-only', 
 	});
 
-	// Mutations
+	
 	const [markAsReadMutation] = useMutation(MarkNotificationAsReadDocument, {
 		refetchQueries: [MyUnreadNotificationCountDocument, MyNotificationsDocument],
 	});

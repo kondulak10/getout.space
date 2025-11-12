@@ -166,9 +166,9 @@ export function useStaticHexagons({ mapRef, mockData }: UseStaticHexagonsOptions
 			if (map.getSource('parent-hexagons')) {
 				map.removeSource('parent-hexagons');
 			}
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		} catch (_error) {
-			// Ignore error
+
+		} catch {
+			// Cleanup may fail if layers already removed
 		}
 
 		layersSetupRef.current = false;

@@ -20,8 +20,8 @@ export function MapProvider({ children }: { children: ReactNode }) {
 				zoom,
 				duration: 1500,
 			});
-		} catch (error) {
-			console.error("Invalid hex ID:", hexId, error);
+		} catch {
+			// Invalid hex ID, silently fail
 		}
 	}, []);
 

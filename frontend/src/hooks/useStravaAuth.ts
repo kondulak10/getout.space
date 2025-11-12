@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import confetti from 'canvas-confetti';
 import { useAuth } from '@/contexts/useAuth';
 import { getStravaAuthUrl, exchangeCodeForToken, fetchActivities, processActivity } from '@/services/stravaApi.service';
 
@@ -23,7 +22,6 @@ export function useStravaAuth(options?: UseStravaAuthOptions) {
 
 		if (code && scope && !isAuthenticated) {
 			if (globalCodeExchanged === code || globalCodeExchangeInProgress) {
-				console.log('⏭️ OAuth code already exchanged or in progress, skipping...');
 				return;
 			}
 
@@ -41,7 +39,6 @@ export function useStravaAuth(options?: UseStravaAuthOptions) {
 
 	const autoProcessLatestRuns = async () => {
 		try {
-			console.log('🎉 New user detected! Auto-processing 3 latest runs...');
 			toast.info('Processing your recent activities...', {
 				description: 'This may take a moment.',
 			});
@@ -49,7 +46,6 @@ export function useStravaAuth(options?: UseStravaAuthOptions) {
 			const activitiesData = await fetchActivities(1, 30);
 
 			if (!activitiesData.success || !activitiesData.activities.length) {
-				console.log('ℹ️ No activities found to process');
 				toast.info('No activities found', {
 					description: 'Try adding some activities from Strava!',
 				});
@@ -59,8 +55,6 @@ export function useStravaAuth(options?: UseStravaAuthOptions) {
 			const latestRuns = activitiesData.activities
 				.filter(activity => !activity.isStored)
 				.slice(0, 3);
-
-			console.log(`📊 Found ${latestRuns.length} runs to process`);
 
 			if (latestRuns.length === 0) {
 				toast.info('Activities already processed', {
@@ -74,17 +68,12 @@ export function useStravaAuth(options?: UseStravaAuthOptions) {
 
 			for (const run of latestRuns) {
 				try {
-					console.log(`🏃 Processing run: ${run.name}`);
 					await processActivity(run.id);
-					console.log(`✅ Successfully processed: ${run.name}`);
 					processedCount++;
-				} catch (error) {
-					console.error(`❌ Failed to process run: ${run.name}`, error);
+				} catch {
 					failedCount++;
 				}
 			}
-
-			console.log('🎊 Finished auto-processing runs!');
 
 			if (processedCount > 0) {
 				toast.success(`${processedCount} ${processedCount === 1 ? 'activity' : 'activities'} processed!`, {
@@ -101,8 +90,7 @@ export function useStravaAuth(options?: UseStravaAuthOptions) {
 					description: 'Some activities could not be processed.',
 				});
 			}
-		} catch (error) {
-			console.error('❌ Error during auto-processing:', error);
+		} catch {
 			toast.error('Failed to process activities', {
 				description: 'An error occurred during auto-processing.',
 			});
@@ -126,57 +114,56 @@ export function useStravaAuth(options?: UseStravaAuthOptions) {
 				login(data.token, user);
 
 				if (data.isNewUser) {
-					const duration = 3000;
-					const animationEnd = Date.now() + duration;
+					import('canvas-confetti').then((confettiModule) => {
+						const confetti = confettiModule.default;
+						const duration = 3000;
+						const animationEnd = Date.now() + duration;
 
-					const interval = setInterval(() => {
-						const timeLeft = animationEnd - Date.now();
+						const interval = setInterval(() => {
+							const timeLeft = animationEnd - Date.now();
 
-						if (timeLeft <= 0) {
-							clearInterval(interval);
-							return;
-						}
+							if (timeLeft <= 0) {
+								clearInterval(interval);
+								return;
+							}
 
-						const particleCount = 50 * (timeLeft / duration);
+							const particleCount = 50 * (timeLeft / duration);
 
-						confetti({
-							particleCount,
-							angle: 60,
-							spread: 55,
-							origin: { x: 0 },
-							colors: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8']
-						});
-						confetti({
-							particleCount,
-							angle: 120,
-							spread: 55,
-							origin: { x: 1 },
-							colors: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8']
-						});
-					}, 250);
+							confetti({
+								particleCount,
+								angle: 60,
+								spread: 55,
+								origin: { x: 0 },
+								colors: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8']
+							});
+							confetti({
+								particleCount,
+								angle: 120,
+								spread: 55,
+								origin: { x: 1 },
+								colors: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8']
+							});
+						}, 250);
+					}).catch(() => {});
 
 					toast.success('🎉 Welcome to GetOut!', {
 						description: 'Start running to conquer the territory',
 						duration: 5000,
 					});
 
-					autoProcessLatestRuns().catch(err => {
-						console.error('Failed to auto-process activities:', err);
-					});
+					autoProcessLatestRuns().catch(() => {});
 				}
 
 				window.history.replaceState({}, document.title, '/');
 			} else {
 				const errorMessage = data.details || data.error || 'Unknown error';
 				const statusCode = data.statusCode ? ` (${data.statusCode})` : '';
-				console.error('Authentication failed:', errorMessage, statusCode);
 				toast.error(`Authentication failed${statusCode}`, {
 					description: errorMessage,
 					duration: 6000,
 				});
 			}
 		} catch (error) {
-			console.error('OAuth callback error:', error);
 			const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred during authentication';
 			toast.error('Authentication failed', {
 				description: errorMessage,

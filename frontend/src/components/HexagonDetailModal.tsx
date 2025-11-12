@@ -11,21 +11,19 @@ import {
 import { SelectedHexagonData } from '@/hooks/useHexagonSelection';
 import { ErrorBoundary } from './ErrorBoundary';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from '@/components/ui/dialog';
-
+import { useNavigate } from 'react-router-dom';
 interface HexagonDetailModalProps {
 	hexagonData?: SelectedHexagonData;
 	loading?: boolean;
 	onClose: () => void;
 }
-
 export function HexagonDetailModal({ hexagonData, loading = false, onClose }: HexagonDetailModalProps) {
-	console.log('🎨 HexagonDetailModal rendering with:', { hexagonData, loading });
+	const navigate = useNavigate();
 
 	const formatDistance = (meters?: number) => {
 		if (!meters || isNaN(meters)) return 'N/A';
 		return (meters / 1000).toFixed(2) + ' km';
 	};
-
 	const formatSpeed = (metersPerSecond?: number) => {
 		if (!metersPerSecond || isNaN(metersPerSecond) || metersPerSecond === 0) return 'N/A';
 		const minutesPerKm = 1000 / (metersPerSecond * 60);
@@ -34,7 +32,6 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 		const seconds = Math.round((minutesPerKm - minutes) * 60);
 		return `${minutes}:${seconds.toString().padStart(2, '0')} min/km`;
 	};
-
 	const formatDate = (dateString?: string | null) => {
 		if (!dateString) {
 			return 'Unknown date';
@@ -49,14 +46,13 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 				day: 'numeric',
 				year: 'numeric',
 			});
-		} catch (err) {
-			console.error('Error formatting date:', dateString, err);
+		} catch {
 			return 'Invalid date';
 		}
 	};
-
 	const renderUserAvatar = (
 		user?: {
+			id?: string;
 			stravaProfile?: { firstname?: string; profile?: string; imghex?: string };
 			stravaId?: number;
 		},
@@ -77,7 +73,6 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 				</div>
 			);
 		}
-
 		const displayName =
 			user.stravaProfile?.firstname || (user.stravaId ? `User ${user.stravaId}` : 'Unknown');
 		const imghexUrl = user.stravaProfile?.imghex;
@@ -86,8 +81,18 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 		const sizeClasses = size === 'lg' ? 'w-16 h-16' : size === 'md' ? 'w-12 h-12' : 'w-10 h-10';
 		const iconSize = size === 'lg' ? 'w-8 h-8' : size === 'md' ? 'w-6 h-6' : 'w-5 h-5';
 
+		const handleClick = (e: React.MouseEvent) => {
+			if (user.id) {
+				e.stopPropagation();
+				navigate(`/profile/${user.id}`);
+			}
+		};
+
 		return (
-			<div className="flex items-center gap-3">
+			<div
+				className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+				onClick={handleClick}
+			>
 				{imageUrl ? (
 					<img
 						src={imageUrl}
@@ -118,11 +123,8 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 			</div>
 		);
 	};
-
 	const activity = hexagonData?.activity;
 	const stravaUrl = activity ? `https://www.strava.com/activities/${activity.stravaActivityId}` : '';
-
-	// Count captures per user for leaderboard
 	const captureCountByUser = hexagonData?.captureHistory?.reduce(
 		(acc, entry) => {
 			const userId = entry.userId;
@@ -131,8 +133,6 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 		},
 		{} as Record<string, number>
 	);
-
-	// Get unique fighters sorted by capture count
 	const fighters = hexagonData?.captureHistory
 		? Array.from(
 				new Map(
@@ -143,14 +143,12 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 				).values()
 		  ).sort((a, b) => b.count - a.count)
 		: [];
-
 	const getMedalColor = (rank: number) => {
-		if (rank === 0) return 'text-yellow-400'; // Gold
-		if (rank === 1) return 'text-gray-300'; // Silver
-		if (rank === 2) return 'text-amber-600'; // Bronze
+		if (rank === 0) return 'text-yellow-400'; 
+		if (rank === 1) return 'text-gray-300'; 
+		if (rank === 2) return 'text-amber-600'; 
 		return 'text-gray-500';
 	};
-
 	return (
 		<Dialog open={true} onOpenChange={(open) => !open && onClose()}>
 			<DialogContent>
@@ -160,7 +158,6 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 						Battle Arena
 					</DialogTitle>
 				</DialogHeader>
-
 				<DialogBody className="space-y-5">
 					<ErrorBoundary
 						fallback={
@@ -176,21 +173,18 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 							</div>
 						) : hexagonData && activity ? (
 							<>
-								{/* Current Champion Card */}
+								{}
 								<div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-orange-500/20 via-orange-600/10 to-transparent border-2 border-orange-500/40 p-5 shadow-xl">
 									<div className="absolute top-2 right-2">
 										<FontAwesomeIcon icon={faCrown} className="w-8 h-8 text-yellow-400 drop-shadow-lg animate-pulse" />
 									</div>
-
 									<div className="flex items-center gap-2 mb-4">
 										<FontAwesomeIcon icon={faTrophy} className="w-5 h-5 text-orange-400" />
 										<h3 className="text-sm font-bold text-orange-400 uppercase tracking-wide">
 											Current Champion
 										</h3>
 									</div>
-
 									<div className="mb-4">{renderUserAvatar(hexagonData.currentOwner, 'lg')}</div>
-
 									<div className="grid grid-cols-3 gap-3 mb-4">
 										<div className="bg-black/30 rounded-lg p-3 text-center">
 											<div className="text-xs text-gray-400 mb-1">Distance</div>
@@ -211,7 +205,6 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 											</div>
 										</div>
 									</div>
-
 									<a
 										href={stravaUrl}
 										target="_blank"
@@ -222,8 +215,7 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 										View Activity
 									</a>
 								</div>
-
-								{/* OG Discoverer Badge */}
+								{}
 								<div className="rounded-xl bg-gradient-to-br from-blue-500/20 via-blue-600/10 to-transparent border-2 border-blue-500/30 p-4 shadow-lg">
 									<div className="flex items-center gap-2 mb-3">
 										<FontAwesomeIcon icon={faSparkles} className="w-5 h-5 text-blue-400" />
@@ -231,7 +223,6 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 											OG Discoverer
 										</h3>
 									</div>
-
 									<div className="flex items-center justify-between">
 										{renderUserAvatar(hexagonData.firstCapturedBy, 'md')}
 										<div className="text-right">
@@ -242,8 +233,7 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 										</div>
 									</div>
 								</div>
-
-								{/* Battle Stats */}
+								{}
 								<div className="rounded-xl bg-white/5 border border-white/10 p-4">
 									<div className="flex items-center gap-2 mb-3">
 										<FontAwesomeIcon icon={faFire} className="w-5 h-5 text-red-400" />
@@ -258,8 +248,7 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 										</span>
 									</div>
 								</div>
-
-								{/* Fighters Leaderboard */}
+								{}
 								{fighters.length > 0 && (
 									<div className="space-y-3">
 										<div className="flex items-center gap-2">
@@ -268,7 +257,6 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 												Top Fighters
 											</h3>
 										</div>
-
 										<div className="space-y-2">
 											{fighters.slice(0, 5).map((fighter, index) => (
 												<div
@@ -308,8 +296,7 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 										</div>
 									</div>
 								)}
-
-								{/* Hexagon ID */}
+								{}
 								<div className="pt-3 border-t border-white/10">
 									<div className="text-xs text-gray-500 mb-2">Hexagon ID</div>
 									<div className="text-xs font-mono text-gray-400 bg-black/30 border border-white/10 p-2 rounded break-all">

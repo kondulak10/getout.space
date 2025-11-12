@@ -9,9 +9,7 @@ import { apolloClient } from '@/lib/apollo-client'
 import { AuthProvider } from '@/contexts/AuthProvider'
 import { NotificationProvider } from '@/contexts/NotificationProvider'
 import '@/lib/fontawesome'
-
 logVersion();
-
 createRoot(document.getElementById('root')!).render(
   <ApolloProvider client={apolloClient}>
     <AuthProvider>

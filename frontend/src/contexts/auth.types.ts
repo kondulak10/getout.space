@@ -1,5 +1,4 @@
 import { createContext } from 'react';
-
 interface StravaProfile {
   firstname: string;
   lastname: string;
@@ -11,7 +10,6 @@ interface StravaProfile {
   sex?: string;
   username?: string;
 }
-
 interface User {
   id: string;
   stravaId: number;
@@ -21,9 +19,8 @@ interface User {
   tokenIsExpired: boolean;
   createdAt: string;
   updatedAt: string;
-  lastHex?: string; // Resolution 6 parent hex from most recent activity
+  lastHex?: string; 
 }
-
 interface AuthContextType {
   user: User | null;
   token: string | null;
@@ -34,7 +31,5 @@ interface AuthContextType {
   logout: () => void;
   setUser: (user: User | null) => void;
 }
-
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
 export type { User, StravaProfile, AuthContextType };

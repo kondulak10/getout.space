@@ -56,7 +56,13 @@
       "Bash(tree:*)",
       "Bash(dir /B /A)",
       "Bash(node test-token-encryption.js:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\components\\ShareModal.tsx\")",
+      "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\components\\ui\\card.tsx\")",
+      "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\components\\ui\\table.tsx\")",
+      "Bash(npx eslint:*)",
+      "Bash(dir /B /S \"C:\\Users\\janko\\Desktop\\getout.space\\backend\\src\\graphql\")",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []

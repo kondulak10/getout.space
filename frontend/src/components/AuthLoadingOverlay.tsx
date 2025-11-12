@@ -1,11 +1,9 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-
 export function AuthLoadingOverlay() {
 	return (
 		<div className="absolute inset-0 z-30 bg-black flex items-center justify-center">
 			<div className="absolute inset-0">
 				<div className="absolute inset-0 opacity-10 bg-noise"></div>
-
 				<div
 					className="absolute inset-0"
 					style={{
@@ -13,10 +11,8 @@ export function AuthLoadingOverlay() {
 							"radial-gradient(circle at 50% 50%, rgba(234, 88, 12, 0.15), rgba(0, 0, 0, 1) 70%)",
 					}}
 				></div>
-
 				<div className="hex-pattern-auth"></div>
 			</div>
-
 			<div className="text-center relative z-10">
 				<div className="mb-8">
 					<div className="relative inline-block">
@@ -41,12 +37,10 @@ export function AuthLoadingOverlay() {
 				</h2>
 				<p className="text-gray-400 text-lg">Authenticating...</p>
 			</div>
-
 			<style>{`
 				.bg-noise {
-					background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+					background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http:
 				}
-
 				.hex-pattern-auth {
 					position: absolute;
 					inset: 0;
@@ -58,7 +52,6 @@ export function AuthLoadingOverlay() {
 					background-position: 0 0, 0 0, 50px 86.5px;
 					animation: pulse-glow 4s ease-in-out infinite;
 				}
-
 				@keyframes pulse-glow {
 					0%, 100% { opacity: 0.3; }
 					50% { opacity: 0.6; }

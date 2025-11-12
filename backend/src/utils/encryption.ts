@@ -19,7 +19,6 @@ if (process.env.ENCRYPTION_KEY.length !== 64) {
 }
 
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY as string;
-
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 16;
 
@@ -65,8 +64,4 @@ export function decrypt(encryptedText: string): string {
 		console.error('❌ Decryption failed:', error);
 		throw new Error('Failed to decrypt sensitive data');
 	}
-}
-
-export function hash(text: string): string {
-	return crypto.createHash('sha256').update(text).digest('hex');
 }

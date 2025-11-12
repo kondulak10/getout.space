@@ -6,7 +6,7 @@ export async function refreshStravaToken(user: IUser): Promise<{
 	expires_at: number;
 	expires_in: number;
 }> {
-	console.log(`🔄 Refreshing Strava token for user!!: ${user.stravaProfile.firstname}`);
+	console.log(`🔄 Refreshing Strava token for user: ${user.stravaProfile.firstname}`);
 
 	const response = await fetch('https://www.strava.com/oauth/token', {
 		method: 'POST',

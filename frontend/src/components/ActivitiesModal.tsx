@@ -46,14 +46,14 @@ export function ActivitiesModal({
 	const activitiesPerPage = 5;
 	const navigate = useNavigate();
 
-	// Stored activities (auto-loaded)
+	
 	const {
 		activities: storedActivities,
 		loading: loadingStored,
 		removeActivity: deleteStoredActivity,
 	} = useStoredActivities();
 
-	// Reset hasSynced when modal opens
+	
 	useEffect(() => {
 		if (isOpen) {
 			setHasSynced(false);
@@ -138,7 +138,7 @@ export function ActivitiesModal({
 		})),
 	];
 
-	// Remove duplicates (keep stored version)
+	
 	const uniqueActivities = Array.from(
 		new Map(allActivities.map((a) => [a.id, a])).values()
 	).sort((a, b) => new Date(b.start_date_local).getTime() - new Date(a.start_date_local).getTime());
@@ -146,13 +146,13 @@ export function ActivitiesModal({
 	const processedCount = uniqueActivities.filter((a) => a.isStored).length;
 	const pendingCount = uniqueActivities.filter((a) => !a.isStored).length;
 
-	// Pagination
+	
 	const totalPages = Math.ceil(uniqueActivities.length / activitiesPerPage);
 	const startIndex = (currentPage - 1) * activitiesPerPage;
 	const endIndex = startIndex + activitiesPerPage;
 	const currentActivities = uniqueActivities.slice(startIndex, endIndex);
 
-	// Reset to page 1 when modal opens
+	
 	if (isOpen && currentPage > totalPages && totalPages > 0) {
 		setCurrentPage(1);
 	}
@@ -169,7 +169,7 @@ export function ActivitiesModal({
 					</DialogHeader>
 
 					<DialogBody className="p-5 space-y-4">
-						{/* Sync Button Section - Only show if not synced yet */}
+						{}
 						{!hasSynced && (
 							<div className="rounded-xl bg-gradient-to-br from-orange-500/20 via-orange-600/10 to-transparent border-2 border-orange-500/40 p-4 shadow-xl">
 								<button
@@ -196,7 +196,7 @@ export function ActivitiesModal({
 							</div>
 						)}
 
-						{/* Activities List */}
+						{}
 						{loadingStrava || loadingStored ? (
 							<div className="flex items-center justify-center py-12">
 								<FontAwesomeIcon icon="spinner" className="w-8 h-8 animate-spin text-gray-400" />
@@ -209,7 +209,7 @@ export function ActivitiesModal({
 							</div>
 						) : (
 							<div className="space-y-3">
-								{/* Section Header */}
+								{}
 								<div className="flex items-center justify-between">
 									<div className="flex items-center gap-2">
 										<FontAwesomeIcon icon="list" className="w-4 h-4 text-gray-400" />
@@ -224,7 +224,7 @@ export function ActivitiesModal({
 									)}
 								</div>
 
-								{/* Activities */}
+								{}
 								<div className="space-y-2">
 									{currentActivities.map((activity) => (
 										<div
@@ -235,7 +235,7 @@ export function ActivitiesModal({
 													: 'bg-gradient-to-r from-amber-500/20 to-transparent border border-amber-500/30'
 											}`}
 										>
-											{/* Activity Info */}
+											{}
 											<div className="flex items-start justify-between gap-4 mb-2">
 												<div className="flex-1 min-w-0">
 													<div className="font-medium text-sm text-gray-100 mb-1">{activity.name}</div>
@@ -253,7 +253,7 @@ export function ActivitiesModal({
 												)}
 											</div>
 
-											{/* Actions */}
+											{}
 											<div className="flex items-center gap-2 justify-end">
 												{activity.isStored ? (
 													<>
@@ -320,7 +320,7 @@ export function ActivitiesModal({
 									))}
 								</div>
 
-								{/* Pagination Controls */}
+								{}
 								{totalPages > 1 && (
 									<div className="flex items-center justify-center gap-2 pt-2">
 										<button
@@ -346,7 +346,7 @@ export function ActivitiesModal({
 						)}
 					</DialogBody>
 
-					{/* Footer Stats */}
+					{}
 					{!loadingStrava && !loadingStored && uniqueActivities.length > 0 && (
 						<DialogFooter className="bg-white/5 border-t border-white/10">
 							<div className="p-4 w-full flex items-center justify-center gap-4 text-sm text-gray-400">
@@ -377,7 +377,7 @@ export function ActivitiesModal({
 				</DialogContent>
 			</Dialog>
 
-			{/* Delete confirmation dialog */}
+			{}
 			<AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
 				<AlertDialogContent className="bg-[rgba(10,10,10,0.95)] border border-white/10 text-gray-100">
 					<AlertDialogHeader>

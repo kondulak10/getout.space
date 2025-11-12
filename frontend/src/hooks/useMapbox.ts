@@ -10,7 +10,6 @@ interface UseMapboxOptions {
 	initialZoom?: number;
 }
 
-// Default map center: Prague, Czech Republic
 const DEFAULT_CENTER: [number, number] = [14.4378, 50.0755];
 const DEFAULT_ZOOM = 8;
 
@@ -50,7 +49,6 @@ export const useMapbox = (options: UseMapboxOptions = {}) => {
 			configureMapStyle(map);
 		}
 
-		// Wait for map to fully load
 		map.on("load", () => {
 			setIsLoaded(true);
 		});
@@ -62,9 +60,7 @@ export const useMapbox = (options: UseMapboxOptions = {}) => {
 			map.remove();
 			mapRef.current = null;
 		};
-		// Only recreate map if token or style changes (NOT center/zoom!)
-		// initialCenter/initialZoom are only used once during creation
-		// eslint-disable-next-line react-hooks/exhaustive-deps
+		
 	}, [mapboxToken, style, enableCustomStyling, mapRef]);
 
 	return {

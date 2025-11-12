@@ -1,8 +1,6 @@
 export const H3_RESOLUTION = 10;
-
 export const SAMPLE_IMAGE_URL =
-	"https://fastly.picsum.photos/id/305/536/354.jpg?hmac=u9Mw37522_zEQ1FdKoVv_QXkWMkBOZFzRSXn2MCW0IY";
-
+	"https://getout-profile-images.s3.eu-north-1.amazonaws.com/sample.jpg";
 export const HEX_COLORS = [
 	"#FF6B6B",
 	"#4ECDC4",
@@ -15,9 +13,7 @@ export const HEX_COLORS = [
 	"#FD79A8",
 	"#FDCB6E",
 ] as const;
-
 export const IMAGE_PROBABILITY = 0.1;
-
 export const getRingSizeForZoom = (zoom: number): number => {
 	if (zoom < 2) return 5;
 	if (zoom < 4) return 10;

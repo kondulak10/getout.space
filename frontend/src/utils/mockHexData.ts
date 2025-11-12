@@ -30,7 +30,7 @@ const OSLO_LNG = 10.7522;
 
 const ACTIVITY_TYPES = ['Run', 'Ride', 'Walk', 'Hike', 'TrailRun'];
 
-const PREMIUM_PHOTO = 'https://cdn.getout.space/permanent-test-images/premium-user/hexagon.png';
+const PREMIUM_PHOTO = 'https://getout-profile-images.s3.eu-north-1.amazonaws.com/premium.jpg';
 
 function generateMockUsers(): MockUser[] {
 	return Array.from({ length: 12 }, (_, i) => ({
