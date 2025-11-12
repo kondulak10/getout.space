@@ -127,9 +127,10 @@ userSchema.post('init', function (doc) {
 	decryptUserTokens(doc);
 });
 
-// post('findOne', 'findById') hook - explicit coverage for single-doc queries
+// post('findOne') hook - explicit coverage for single-doc queries
 // Ensures decryption happens even if post('init') doesn't fire
-userSchema.post(['findOne', 'findById'], function (doc) {
+// Note: This also covers User.findById() since it's a wrapper around findOne()
+userSchema.post('findOne', function (doc) {
 	if (doc) {
 		decryptUserTokens(doc);
 	}
