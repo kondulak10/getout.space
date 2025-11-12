@@ -167,7 +167,7 @@ export function useStravaAuth(options?: UseStravaAuthOptions) {
 
 				window.history.replaceState({}, document.title, '/');
 			} else {
-				const errorMessage = data.error || data.details || 'Unknown error';
+				const errorMessage = data.details || data.error || 'Unknown error';
 				const statusCode = data.statusCode ? ` (${data.statusCode})` : '';
 				console.error('Authentication failed:', errorMessage, statusCode);
 				toast.error(`Authentication failed${statusCode}`, {
