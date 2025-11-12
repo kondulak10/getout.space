@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import { IndexPage } from '@/pages/IndexPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { HexTestPage } from '@/pages/HexTestPage';
+import { TestPage } from '@/pages/TestPage';
 import AdminPage from '@/pages/AdminPage';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 
@@ -31,6 +32,7 @@ function App() {
 				}
 			/>
 			<Route path="/hex-test" element={<HexTestPage />} />
+			<Route path="/test" element={<TestPage />} />
 		</Routes>
 	);
 }

@@ -10,7 +10,38 @@ import { NotificationDropdown } from "./NotificationDropdown";
 import { NotificationModal } from "./NotificationModal";
 import { useMap } from "@/contexts/useMap";
 import { ErrorBoundary } from "./ErrorBoundary";
+import { useQuery } from '@apollo/client/react';
+import { gql } from '@apollo/client';
+import { toast } from 'sonner';
 import "./HexOverlay.css";
+
+const MY_HEXAGONS_COUNT_QUERY = gql`
+	query MyHexagonsCountForShare {
+		me {
+			id
+			stravaProfile {
+				firstname
+				imghex
+			}
+		}
+		myHexagons {
+			id
+		}
+	}
+`;
+
+type MyHexagonsCountData = {
+	me: {
+		id: string;
+		stravaProfile: {
+			firstname: string;
+			imghex: string | null;
+		};
+	};
+	myHexagons: Array<{
+		id: string;
+	}>;
+};
 
 interface HexOverlayProps {
 	onActivityChanged?: () => void;
@@ -21,7 +52,9 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 	const { latestActivity } = useUserActivities();
 	const [showLeaderboard, setShowLeaderboard] = useState(false);
 	const [showNotifications, setShowNotifications] = useState(false);
-	const { currentParentHexagonIds } = useMap();
+	const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+	const { currentParentHexagonIds, mapRef } = useMap();
+	const { data: shareData } = useQuery<MyHexagonsCountData>(MY_HEXAGONS_COUNT_QUERY);
 	const {
 		showModal,
 		activities,
@@ -61,8 +94,188 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 		});
 	};
 
+	const MOBILE_WIDTH = 540;
+	const MOBILE_HEIGHT = 960;
+
+	const generateAndDownloadImage = async () => {
+		if (!mapRef.current || !shareData) {
+			toast.error('Map or user data not ready');
+			return;
+		}
+
+		setIsGeneratingImage(true);
+
+		try {
+			await document.fonts.load('bold 56px "Bebas Neue"');
+			await document.fonts.ready;
+			await new Promise((resolve) => setTimeout(resolve, 100));
+
+			const canvas = document.createElement('canvas');
+			canvas.width = MOBILE_WIDTH;
+			canvas.height = MOBILE_HEIGHT;
+			const ctx = canvas.getContext('2d');
+
+			if (!ctx) {
+				toast.error('Could not create canvas');
+				return;
+			}
+
+			const mapCanvas = mapRef.current.getCanvas();
+
+			ctx.fillStyle = '#000000';
+			ctx.fillRect(0, 0, MOBILE_WIDTH, MOBILE_HEIGHT);
+
+			const mapWidth = mapCanvas.width;
+			const mapHeight = mapCanvas.height;
+			const scaleX = MOBILE_WIDTH / mapWidth;
+			const scaleY = MOBILE_HEIGHT / mapHeight;
+			const scale = Math.max(scaleX, scaleY);
+
+			const scaledWidth = mapWidth * scale;
+			const scaledHeight = mapHeight * scale;
+			const x = (MOBILE_WIDTH - scaledWidth) / 2;
+			const y = (MOBILE_HEIGHT - scaledHeight) / 2;
+
+			ctx.drawImage(mapCanvas, x, y, scaledWidth, scaledHeight);
+
+			const topGradient = ctx.createLinearGradient(0, 0, 0, 350);
+			topGradient.addColorStop(0, 'rgba(0, 0, 0, 0.95)');
+			topGradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.7)');
+			topGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+			ctx.fillStyle = topGradient;
+			ctx.fillRect(0, 0, MOBILE_WIDTH, 350);
+
+			const bottomGradient = ctx.createLinearGradient(0, MOBILE_HEIGHT - 200, 0, MOBILE_HEIGHT);
+			bottomGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+			bottomGradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.7)');
+			bottomGradient.addColorStop(1, 'rgba(0, 0, 0, 0.95)');
+			ctx.fillStyle = bottomGradient;
+			ctx.fillRect(0, 0, MOBILE_WIDTH, MOBILE_HEIGHT);
+
+			const centerX = MOBILE_WIDTH / 2;
+			const firstName = shareData.me.stravaProfile.firstname;
+			const hexCount = shareData.myHexagons.length;
+			const profileImageUrl = shareData.me.stravaProfile.imghex;
+
+			if (profileImageUrl) {
+				try {
+					const img = new Image();
+					img.crossOrigin = 'anonymous';
+					await new Promise<void>((resolve, reject) => {
+						img.onload = () => resolve();
+						img.onerror = () => reject();
+						img.src = profileImageUrl;
+					});
+
+					const profileSize = 120;
+					const profileX = centerX;
+					const profileY = 100;
+
+					ctx.save();
+					ctx.beginPath();
+					ctx.arc(profileX, profileY, profileSize / 2, 0, Math.PI * 2);
+					ctx.closePath();
+					ctx.clip();
+					ctx.drawImage(img, profileX - profileSize / 2, profileY - profileSize / 2, profileSize, profileSize);
+					ctx.restore();
+
+				} catch (error) {
+					console.error('Failed to load profile image:', error);
+				}
+			}
+
+			ctx.textAlign = 'center';
+			ctx.font = 'bold 42px "Bebas Neue", sans-serif';
+			ctx.fillStyle = '#ffffff';
+			ctx.letterSpacing = '0.05em';
+			ctx.fillText(firstName.toUpperCase(), centerX, 210);
+
+			ctx.font = 'bold 56px "Bebas Neue", sans-serif';
+			ctx.fillStyle = '#fb923c';
+			ctx.letterSpacing = '0.05em';
+			ctx.fillText(`${hexCount} HEXES`, centerX, 270);
+
+			const bottomY = MOBILE_HEIGHT - 60;
+			ctx.font = 'bold 48px "Bebas Neue", sans-serif';
+			ctx.fillStyle = '#ffffff';
+			ctx.letterSpacing = '0.05em';
+			ctx.fillText('JOIN', centerX, bottomY - 60);
+
+			ctx.font = 'bold 56px "Bebas Neue", sans-serif';
+			ctx.fillStyle = '#fb923c';
+			ctx.letterSpacing = '0.05em';
+			ctx.fillText('WWW.GETOUT.SPACE', centerX, bottomY);
+
+			canvas.toBlob((blob) => {
+				if (!blob) return;
+				const url = URL.createObjectURL(blob);
+				const link = document.createElement('a');
+				link.href = url;
+				link.download = `getout-${firstName}-${Date.now()}.png`;
+				document.body.appendChild(link);
+				link.click();
+				document.body.removeChild(link);
+				URL.revokeObjectURL(url);
+				toast.success('Image downloaded!');
+			}, 'image/png');
+		} catch (error) {
+			console.error('Error generating image:', error);
+			toast.error('Failed to generate image');
+		} finally {
+			setIsGeneratingImage(false);
+		}
+	};
+
+	const shareLink = () => {
+		const url = 'https://getout.space';
+		navigator.clipboard.writeText(url);
+		toast.success('Link copied to clipboard!');
+	};
+
 	return (
 		<>
+			{/* Share buttons - standalone top-left (Desktop) */}
+			<div className="hidden md:flex absolute top-4 left-4 z-10 gap-2">
+				<button
+					onClick={generateAndDownloadImage}
+					disabled={isGeneratingImage || !shareData}
+					className="bg-white/95 hover:bg-white border border-black/20 text-black px-4 py-3 rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center gap-2 font-semibold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+					title="Download Share Image"
+				>
+					<FontAwesomeIcon icon={isGeneratingImage ? "spinner" : "image"} className={`w-5 h-5 ${isGeneratingImage ? 'animate-spin' : ''}`} />
+					<span className="text-sm">Share Image</span>
+				</button>
+				<button
+					onClick={shareLink}
+					className="bg-white/95 hover:bg-white border border-black/20 text-black px-4 py-3 rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center gap-2 font-semibold cursor-pointer"
+					title="Copy Link to Clipboard"
+				>
+					<FontAwesomeIcon icon="share-nodes" className="w-5 h-5" />
+					<span className="text-sm">Share Link</span>
+				</button>
+			</div>
+
+			{/* Share buttons - standalone top-left (Mobile) */}
+			<div className="md:hidden absolute top-4 left-4 z-10 flex gap-2">
+				<button
+					onClick={generateAndDownloadImage}
+					disabled={isGeneratingImage || !shareData}
+					className="bg-white/95 hover:bg-white border border-black/20 text-black px-4 py-3 rounded-lg transition-all shadow-lg flex items-center gap-2 font-semibold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+					title="Download Share Image"
+				>
+					<FontAwesomeIcon icon={isGeneratingImage ? "spinner" : "image"} className={`w-5 h-5 ${isGeneratingImage ? 'animate-spin' : ''}`} />
+					<span className="text-sm">Share Image</span>
+				</button>
+				<button
+					onClick={shareLink}
+					className="bg-white/95 hover:bg-white border border-black/20 text-black px-4 py-3 rounded-lg transition-all shadow-lg flex items-center gap-2 font-semibold cursor-pointer"
+					title="Copy Link to Clipboard"
+				>
+					<FontAwesomeIcon icon="share-nodes" className="w-5 h-5" />
+					<span className="text-sm">Share Link</span>
+				</button>
+			</div>
+
 			<div className="hidden md:block absolute top-4 right-4 z-10">
 				<div className="bg-[rgba(10,10,10,0.9)] backdrop-blur-md border border-white/10 rounded-xl p-3 shadow-2xl">
 					<div className="flex items-center gap-3 mb-3">

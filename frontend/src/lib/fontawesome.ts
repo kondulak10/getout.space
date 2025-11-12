@@ -28,6 +28,9 @@ import {
 	faInfoCircle,
 	faTrophy,
 	faRunning,
+	faImage,
+	faShareNodes,
+	faSyncAlt,
 } from '@fortawesome/pro-solid-svg-icons';
 
 import {
@@ -69,6 +72,9 @@ library.add(
 	faInfoCircle,
 	faTrophy,
 	faRunning,
+	faImage,
+	faShareNodes,
+	faSyncAlt,
 	faUserRegular,
 	faHeartRegular,
 	faStarRegular,

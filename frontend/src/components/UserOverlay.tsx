@@ -6,7 +6,9 @@ import { useActivitiesManager } from '@/hooks/useActivitiesManager';
 import { ActivitiesManagerModal } from './ActivitiesManagerModal';
 import { NotificationDropdown } from './NotificationDropdown';
 import { NotificationModal } from './NotificationModal';
+import { ShareModal } from './ShareModal';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useMap } from '@/contexts/useMap';
 
 interface UserOverlayProps {
 	onActivityChanged?: () => void;
@@ -16,9 +18,11 @@ export function UserOverlay({ onActivityChanged }: UserOverlayProps) {
 	const { user } = useAuth();
 	const { latestActivity } = useUserActivities();
 	const [showNotifications, setShowNotifications] = useState(false);
+	const [showShareModal, setShowShareModal] = useState(false);
 	const { showModal, activities, loading, infoMessage, openModal, closeModal, handleSaveActivity, handleRemoveActivity } =
 		useActivitiesManager(onActivityChanged);
 	const navigate = useNavigate();
+	const { mapRef } = useMap();
 
 	const handleShowOnMap = (hexId: string) => {
 		closeModal();
@@ -71,6 +75,13 @@ export function UserOverlay({ onActivityChanged }: UserOverlayProps) {
 					<div className="flex items-center gap-1">
 						<NotificationDropdown onClick={() => setShowNotifications(true)} />
 						<button
+							onClick={() => setShowShareModal(true)}
+							className="bg-orange-500 hover:bg-orange-600 text-white p-2 rounded transition-colors"
+							title="Share"
+						>
+							<FontAwesomeIcon icon="share-nodes" className="w-4 h-4" />
+						</button>
+						<button
 							onClick={() => navigate('/profile')}
 							className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded transition-colors"
 							title="Profile"
@@ -121,6 +132,10 @@ export function UserOverlay({ onActivityChanged }: UserOverlayProps) {
 
 			{showNotifications && (
 				<NotificationModal onClose={() => setShowNotifications(false)} />
+			)}
+
+			{showShareModal && (
+				<ShareModal onClose={() => setShowShareModal(false)} mapRef={mapRef} />
 			)}
 		</div>
 	);

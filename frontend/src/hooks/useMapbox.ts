@@ -43,6 +43,7 @@ export const useMapbox = (options: UseMapboxOptions = {}) => {
 			pitchWithRotate: false,
 			touchPitch: false,
 			projection: "equalEarth",
+			preserveDrawingBuffer: true,
 		});
 
 		if (enableCustomStyling) {

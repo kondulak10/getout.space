@@ -51,7 +51,8 @@
       "Bash(aws s3:*)",
       "Bash(aws iam get-role-policy:*)",
       "Bash(npm uninstall:*)",
-      "Bash(aws ecs list-services:*)"
+      "Bash(aws ecs list-services:*)",
+      "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\pages\\Test2Page.tsx\")"
     ],
     "deny": [],
     "ask": []
