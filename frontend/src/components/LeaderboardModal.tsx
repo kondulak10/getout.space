@@ -1,9 +1,10 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrophy, faSpinner, faUser, faCrown, faSparkles } from '@fortawesome/pro-solid-svg-icons';
+import { faTrophy, faSpinner, faCrown, faSparkles } from '@fortawesome/pro-solid-svg-icons';
 import { useQuery } from '@apollo/client/react';
 import { RegionalActiveLeadersDocument, RegionalOgDiscoverersDocument } from '@/gql/graphql';
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from '@/components/ui/dialog';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import { useNavigate } from 'react-router-dom';
 
 interface LeaderboardModalProps {
@@ -41,76 +42,6 @@ export function LeaderboardModal({ parentHexagonIds, onClose }: LeaderboardModal
 		errorPolicy: 'all',
 		fetchPolicy: 'no-cache',
 	});
-
-	const renderUserAvatar = (
-		user?: {
-			id?: string;
-			stravaProfile?: { firstname?: string | null; lastname?: string | null; profile?: string | null; imghex?: string | null };
-			stravaId?: number;
-		} | null,
-		size: 'sm' | 'md' = 'md'
-	) => {
-		if (!user) {
-			const sizeClasses = size === 'md' ? 'w-12 h-12' : 'w-10 h-10';
-			const iconSize = size === 'md' ? 'w-6 h-6' : 'w-5 h-5';
-			return (
-				<div
-					className={`${sizeClasses} rounded-full bg-gray-500/20 border-2 border-gray-500/40 flex items-center justify-center`}
-				>
-					<FontAwesomeIcon icon={faUser} className={`${iconSize} text-gray-500`} />
-				</div>
-			);
-		}
-
-		const displayName = user.stravaProfile?.firstname || `User ${user.stravaId}`;
-		const imghexUrl = user.stravaProfile?.imghex;
-		const profileUrl = user.stravaProfile?.profile;
-		const imageUrl = imghexUrl || profileUrl;
-		const sizeClasses = size === 'md' ? 'w-12 h-12' : 'w-10 h-10';
-		const iconSize = size === 'md' ? 'w-6 h-6' : 'w-5 h-5';
-
-		const handleClick = (e: React.MouseEvent) => {
-			if (user.id) {
-				e.stopPropagation();
-				navigate(`/profile/${user.id}`);
-			}
-		};
-
-		return (
-			<div
-				className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
-				onClick={handleClick}
-			>
-				{imageUrl ? (
-					<img
-						src={imageUrl}
-						alt={displayName}
-						className={`${sizeClasses} ${imghexUrl ? '' : 'rounded-full'} object-cover shadow-lg`}
-						onError={(e) => {
-							(e.target as HTMLImageElement).style.display = 'none';
-							const fallback = (e.target as HTMLImageElement).nextElementSibling;
-							if (fallback) (fallback as HTMLElement).style.display = 'flex';
-						}}
-					/>
-				) : (
-					<div
-						className={`${sizeClasses} rounded-full bg-gradient-to-br from-orange-500/30 to-orange-600/30 border-2 border-orange-500/40 flex items-center justify-center shadow-lg`}
-					>
-						<FontAwesomeIcon icon={faUser} className={`${iconSize} text-orange-400`} />
-					</div>
-				)}
-				{imageUrl && (
-					<div
-						className={`${sizeClasses} rounded-full bg-gradient-to-br from-orange-500/30 to-orange-600/30 border-2 border-orange-500/40 flex items-center justify-center shadow-lg`}
-						style={{ display: 'none' }}
-					>
-						<FontAwesomeIcon icon={faUser} className={`${iconSize} text-orange-400`} />
-					</div>
-				)}
-				<span className="text-base font-bold text-gray-100">{displayName}</span>
-			</div>
-		);
-	};
 
 	const getMedalColor = (rank: number) => {
 		if (rank === 0) return 'text-yellow-400'; 
@@ -173,7 +104,12 @@ export function LeaderboardModal({ parentHexagonIds, onClose }: LeaderboardModal
 									<span className="text-sm font-bold text-gray-500">#{index + 1}</span>
 								)}
 							</div>
-							{renderUserAvatar(entry.user, 'sm')}
+							<UserAvatar
+								user={entry.user}
+								size="sm"
+								showName={true}
+								onClick={() => entry.user?.id && navigate(`/profile/${entry.user.id}`)}
+							/>
 						</div>
 						<div className="flex items-center gap-2">
 							<span className="text-lg font-bold text-gray-200">{entry.hexCount}</span>

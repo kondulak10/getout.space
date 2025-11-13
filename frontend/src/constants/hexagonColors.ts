@@ -1,16 +1,22 @@
 export const HEXAGON_COLORS = [
-	"#6B5AFF",  
-	"#00E5FF",  
-	"#00FF88",  
-	"#FFEE44",  
-	"#FF5555",  
-	"#FF8844",  
-	"#FF55DD",  
-	"#CC66FF",  
-	"#AAFF44",  
-	"#FFAADD",  
-	"#44FFCC",  
-	"#CC9955",  
+	"#6B5AFF",  // Purple-Blue (original)
+	"#00E5FF",  // Bright Cyan (original)
+	"#00FF88",  // Mint Green (original)
+	"#FFEE44",  // Yellow (original)
+	"#FF5555",  // Red (original)
+	"#FF8844",  // Orange (ADJUSTED - brighter orange)
+	"#FF22BB",  // Hot Magenta (ADJUSTED - more distinct from lavender)
+	"#9966FF",  // Violet (ADJUSTED - more purple, distinct from hot pink)
+	"#AAFF44",  // Lime (original)
+	"#FFAADD",  // Light Pink (original)
+	"#44FFCC",  // Teal (original)
+	"#996633",  // Brown (ADJUSTED - true brown, distinct from orange)
+	"#FF0088",  // Deep Magenta (NEW - distinct from pinks)
+	"#0099FF",  // Sky Blue (NEW - fills blue gap)
+	"#5511DD",  // Indigo (ADJUSTED - more distinct from purple-blue)
+	"#FFBB00",  // Amber/Gold (NEW - between yellow & orange)
+	"#008855",  // Forest Green (ADJUSTED - darker, distinct from mint)
+	"#CC0044",  // Crimson (NEW - darker red)
 ] as const;
 
 export type HexagonColor = typeof HEXAGON_COLORS[number];

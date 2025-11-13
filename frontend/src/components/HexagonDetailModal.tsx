@@ -2,7 +2,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
 	faExternalLink,
 	faSpinner,
-	faUser,
 	faCrown,
 	faTrophy,
 	faFire,
@@ -11,6 +10,7 @@ import {
 import { SelectedHexagonData } from '@/hooks/useHexagonSelection';
 import { ErrorBoundary } from './ErrorBoundary';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from '@/components/ui/dialog';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import { useNavigate } from 'react-router-dom';
 interface HexagonDetailModalProps {
 	hexagonData?: SelectedHexagonData;
@@ -50,79 +50,7 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 			return 'Invalid date';
 		}
 	};
-	const renderUserAvatar = (
-		user?: {
-			id?: string;
-			stravaProfile?: { firstname?: string; profile?: string; imghex?: string };
-			stravaId?: number;
-		},
-		size: 'sm' | 'md' | 'lg' = 'md',
-		showName: boolean = true
-	) => {
-		if (!user) {
-			const sizeClasses = size === 'lg' ? 'w-16 h-16' : size === 'md' ? 'w-12 h-12' : 'w-10 h-10';
-			const iconSize = size === 'lg' ? 'w-8 h-8' : size === 'md' ? 'w-6 h-6' : 'w-5 h-5';
-			return (
-				<div className="flex items-center gap-3">
-					<div
-						className={`${sizeClasses} rounded-full bg-gray-500/20 border-2 border-gray-500/40 flex items-center justify-center`}
-					>
-						<FontAwesomeIcon icon={faUser} className={`${iconSize} text-gray-500`} />
-					</div>
-					{showName && <span className="text-sm font-medium text-gray-400">Unknown</span>}
-				</div>
-			);
-		}
-		const displayName =
-			user.stravaProfile?.firstname || (user.stravaId ? `User ${user.stravaId}` : 'Unknown');
-		const imghexUrl = user.stravaProfile?.imghex;
-		const profileUrl = user.stravaProfile?.profile;
-		const imageUrl = imghexUrl || profileUrl;
-		const sizeClasses = size === 'lg' ? 'w-16 h-16' : size === 'md' ? 'w-12 h-12' : 'w-10 h-10';
-		const iconSize = size === 'lg' ? 'w-8 h-8' : size === 'md' ? 'w-6 h-6' : 'w-5 h-5';
 
-		const handleClick = (e: React.MouseEvent) => {
-			if (user.id) {
-				e.stopPropagation();
-				navigate(`/profile/${user.id}`);
-			}
-		};
-
-		return (
-			<div
-				className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
-				onClick={handleClick}
-			>
-				{imageUrl ? (
-					<img
-						src={imageUrl}
-						alt={displayName}
-						className={`${sizeClasses} ${imghexUrl ? '' : 'rounded-full'} object-cover shadow-lg`}
-						onError={(e) => {
-							(e.target as HTMLImageElement).style.display = 'none';
-							const fallback = (e.target as HTMLImageElement).nextElementSibling;
-							if (fallback) (fallback as HTMLElement).style.display = 'flex';
-						}}
-					/>
-				) : (
-					<div
-						className={`${sizeClasses} rounded-full bg-gradient-to-br from-orange-500/30 to-orange-600/30 border-2 border-orange-500/40 flex items-center justify-center shadow-lg`}
-					>
-						<FontAwesomeIcon icon={faUser} className={`${iconSize} text-orange-400`} />
-					</div>
-				)}
-				{imageUrl && (
-					<div
-						className={`${sizeClasses} rounded-full bg-gradient-to-br from-orange-500/30 to-orange-600/30 border-2 border-orange-500/40 flex items-center justify-center shadow-lg`}
-						style={{ display: 'none' }}
-					>
-						<FontAwesomeIcon icon={faUser} className={`${iconSize} text-orange-400`} />
-					</div>
-				)}
-				{showName && <span className="text-base font-bold text-gray-100">{displayName}</span>}
-			</div>
-		);
-	};
 	const activity = hexagonData?.activity;
 	const stravaUrl = activity ? `https://www.strava.com/activities/${activity.stravaActivityId}` : '';
 	const captureCountByUser = hexagonData?.captureHistory?.reduce(
@@ -187,7 +115,14 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 											Current Champion
 										</h3>
 									</div>
-									<div className="mb-4">{renderUserAvatar(hexagonData.currentOwner, 'lg')}</div>
+									<div className="mb-4">
+										<UserAvatar
+											user={hexagonData.currentOwner}
+											size="lg"
+											showName={true}
+											onClick={() => hexagonData.currentOwner?.id && navigate(`/profile/${hexagonData.currentOwner.id}`)}
+										/>
+									</div>
 									<div className="grid grid-cols-3 gap-3 mb-4">
 										<div className="bg-black/30 rounded-lg p-3 text-center">
 											<div className="text-xs text-gray-400 mb-1">Distance</div>
@@ -227,7 +162,12 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 										</h3>
 									</div>
 									<div className="flex items-center justify-between">
-										{renderUserAvatar(hexagonData.firstCapturedBy, 'md')}
+										<UserAvatar
+											user={hexagonData.firstCapturedBy}
+											size="md"
+											showName={true}
+											onClick={() => hexagonData.firstCapturedBy?.id && navigate(`/profile/${hexagonData.firstCapturedBy.id}`)}
+										/>
 										<div className="text-right">
 											<div className="text-xs text-gray-400">Discovered</div>
 											<div className="text-sm font-bold text-blue-400">
@@ -284,7 +224,12 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 																</span>
 															)}
 														</div>
-														{renderUserAvatar(fighter.user, 'sm', true)}
+														<UserAvatar
+															user={fighter.user}
+															size="sm"
+															showName={true}
+															onClick={() => fighter.user?.id && navigate(`/profile/${fighter.user.id}`)}
+														/>
 													</div>
 													<div className="flex items-center gap-2">
 														<span className="text-lg font-bold text-gray-200">

@@ -21,6 +21,8 @@ export async function uploadImageToS3(
 			Body: buffer,
 			ContentType: contentType,
 			CacheControl: 'public, max-age=31536000',
+			// NOTE: CORS headers must be configured at CloudFront/S3 bucket level
+			// See infrastructure/cloudfront_cors.md for setup instructions
 		});
 
 		await s3Client.send(command);

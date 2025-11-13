@@ -65,7 +65,11 @@
       "Bash(findstr:*)",
       "Bash(dir:*)",
       "Bash(npm run dev:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(git add:*)",
+      "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\pages\\ProfilePage.tsx\")",
+      "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\components\\ui\\LoadingScreen.tsx\")",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []

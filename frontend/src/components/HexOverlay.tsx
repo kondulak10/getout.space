@@ -161,27 +161,47 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 					// Detect if we're on any mobile device
 					const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-					// Add cache-busting for S3 images on mobile to avoid CORS issues
-					const imageUrl = isMobile && profileImageUrl.includes('s3.amazonaws.com')
+					// Add cache-busting for CDN/S3 images on mobile to avoid CORS issues
+					// Check for both S3 and CloudFront URLs
+					const needsCacheBust = isMobile && (
+						profileImageUrl.includes('s3.amazonaws.com') ||
+						profileImageUrl.includes('cdn.getout.space')
+					);
+					const imageUrl = needsCacheBust
 						? `${profileImageUrl}?t=${Date.now()}`
 						: profileImageUrl;
+
+					console.log('🖼️ Loading profile image:', {
+						url: imageUrl,
+						isMobile,
+						needsCacheBust,
+						crossOrigin: img.crossOrigin
+					});
 
 					img.src = imageUrl;
 
 					// Wait for image to load
 					await new Promise<void>((resolve, reject) => {
 						const timeout = setTimeout(() => {
-							reject(new Error('Image load timeout'));
+							const error = new Error('Profile image load timeout after 10s');
+							console.error('⏱️ ' + error.message, { url: imageUrl });
+							reject(error);
 						}, 10000); // 10 second timeout
 
 						img.onload = () => {
 							clearTimeout(timeout);
+							console.log('✅ Profile image loaded successfully');
 							resolve();
 						};
 						img.onerror = (e) => {
 							clearTimeout(timeout);
-							console.error('Failed to load profile image:', e);
-							reject(e);
+							console.error('❌ Failed to load profile image:', {
+								error: e,
+								url: imageUrl,
+								naturalWidth: img.naturalWidth,
+								naturalHeight: img.naturalHeight
+							});
+							reject(new Error('Image load error'));
 						};
 					});
 
@@ -189,6 +209,7 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 					// This ensures the image is fully decoded and ready for canvas rendering
 					// Without this, mobile browsers (especially iOS) may fail to draw the image
 					await img.decode();
+					console.log('✅ Profile image decoded successfully');
 
 					const profileSize = 120;
 					const profileX = centerX;
@@ -196,9 +217,12 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 
 					// The imghex is already a hexagon PNG, so just draw it directly without clipping
 					ctx.drawImage(img, profileX - profileSize / 2, profileY - profileSize / 2, profileSize, profileSize);
+					console.log('✅ Profile image drawn to canvas');
 				} catch (error) {
-					console.warn('Failed to draw profile image:', error);
-					// Continue without profile image
+					const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+					console.warn('⚠️ Skipping profile image due to error:', errorMessage);
+					console.error('Full error details:', error);
+					// Continue without profile image - not a critical failure
 				}
 			}
 			ctx.textAlign = 'center';
