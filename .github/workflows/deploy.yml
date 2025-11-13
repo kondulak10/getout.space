@@ -62,12 +62,15 @@ jobs:
           # Upload other files (images, SVGs) with moderate caching (1 day)
           aws s3 sync dist/ s3://getout-space-web/ --exclude "assets/*" --exclude "index.html" --exclude "profile-images/*" --exclude "test-data/*" --cache-control "public, max-age=86400"
 
-          # Upload index.html with no caching
-          aws s3 cp dist/index.html s3://getout-space-web/index.html --cache-control "public, max-age=0, must-revalidate"
+          # Upload index.html with NO caching at all (aggressive)
+          # no-store prevents any caching, no-cache forces revalidation, must-revalidate ensures stale content isn't used
+          aws s3 cp dist/index.html s3://getout-space-web/index.html --cache-control "no-cache, no-store, must-revalidate" --metadata-directive REPLACE
 
       - name: Invalidate CloudFront cache
         run: |
-          aws cloudfront create-invalidation --distribution-id E32M9JXZK477DJ --paths "/*"
+          # Only invalidate index.html and root - hashed assets don't need invalidation
+          # This is faster and more efficient than invalidating everything
+          aws cloudfront create-invalidation --distribution-id E32M9JXZK477DJ --paths "/index.html" "/"
 
       - name: Deployment complete
         run: |
