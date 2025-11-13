@@ -166,9 +166,7 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 						? `${profileImageUrl}?t=${Date.now()}`
 						: profileImageUrl;
 
-					img.src = imageUrl;
-
-					// Wait for image to load
+					// Wait for image to load - MUST set up handlers BEFORE setting src
 					await new Promise<void>((resolve, reject) => {
 						const timeout = setTimeout(() => {
 							reject(new Error('Image load timeout'));
@@ -183,6 +181,9 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 							console.error('Failed to load profile image:', e);
 							reject(e);
 						};
+
+						// Set src AFTER handlers are attached to avoid race condition
+						img.src = imageUrl;
 					});
 
 					// CRITICAL: Explicitly decode the image before drawing to canvas
