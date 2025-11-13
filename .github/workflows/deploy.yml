@@ -56,7 +56,13 @@ jobs:
       - name: Deploy to S3
         working-directory: ./frontend
         run: |
-          aws s3 sync dist/ s3://getout-space-web --delete --exclude "profile-images/*" --cache-control "public, max-age=31536000, immutable" --exclude "index.html"
+          # Upload hashed assets with long-term caching (1 year)
+          aws s3 sync dist/assets/ s3://getout-space-web/assets/ --delete --cache-control "public, max-age=31536000, immutable"
+
+          # Upload other files (images, SVGs) with moderate caching (1 day)
+          aws s3 sync dist/ s3://getout-space-web/ --exclude "assets/*" --exclude "index.html" --exclude "profile-images/*" --exclude "test-data/*" --cache-control "public, max-age=86400"
+
+          # Upload index.html with no caching
           aws s3 cp dist/index.html s3://getout-space-web/index.html --cache-control "public, max-age=0, must-revalidate"
 
       - name: Invalidate CloudFront cache

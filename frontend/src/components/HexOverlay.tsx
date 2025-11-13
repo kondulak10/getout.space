@@ -88,17 +88,38 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 		setIsGeneratingImage(true);
 		toast.loading('Generating image...', { id: 'share-image' });
 		try {
-			await document.fonts.load('bold 56px "Bebas Neue"');
+			// Load both font weights explicitly
+			await Promise.all([
+				document.fonts.load('400 56px "Bebas Neue"'),
+				document.fonts.load('700 56px "Bebas Neue"'),
+			]);
 			await document.fonts.ready;
-			await new Promise((resolve) => setTimeout(resolve, 100));
+
+			// Mobile Safari needs more time for fonts to be canvas-ready
+			const isMobileSafari = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+			await new Promise((resolve) => setTimeout(resolve, isMobileSafari ? 500 : 100));
+
+			// Account for device pixel ratio for sharper rendering on high-DPI screens
+			const dpr = window.devicePixelRatio || 1;
 			const canvas = document.createElement('canvas');
-			canvas.width = MOBILE_WIDTH;
-			canvas.height = MOBILE_HEIGHT;
-			const ctx = canvas.getContext('2d');
+			canvas.width = MOBILE_WIDTH * dpr;
+			canvas.height = MOBILE_HEIGHT * dpr;
+			canvas.style.width = `${MOBILE_WIDTH}px`;
+			canvas.style.height = `${MOBILE_HEIGHT}px`;
+
+			const ctx = canvas.getContext('2d', { alpha: false });
 			if (!ctx) {
 				toast.error('Could not create canvas');
 				return;
 			}
+
+			// Scale context to account for DPR
+			ctx.scale(dpr, dpr);
+
+			// Improve image rendering quality
+			ctx.imageSmoothingEnabled = true;
+			ctx.imageSmoothingQuality = 'high';
+
 			const mapCanvas = mapRef.current.getCanvas();
 			ctx.fillStyle = '#000000';
 			ctx.fillRect(0, 0, MOBILE_WIDTH, MOBILE_HEIGHT);
@@ -136,42 +157,62 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 					const img = new Image();
 					// MUST set crossOrigin BEFORE src to prevent canvas taint
 					img.crossOrigin = 'anonymous';
+
+					// Try to load image with longer timeout for mobile
 					await new Promise<void>((resolve, reject) => {
 						const timeout = setTimeout(() => {
 							reject(new Error('Image load timeout'));
-						}, 5000);
+						}, 10000); // Increased timeout for mobile
+
 						img.onload = () => {
 							clearTimeout(timeout);
-							resolve();
+							// Wait a bit more on mobile to ensure image is decoded
+							if (isMobileSafari) {
+								setTimeout(() => resolve(), 100);
+							} else {
+								resolve();
+							}
 						};
 						img.onerror = (e) => {
 							clearTimeout(timeout);
+							console.error('Failed to load profile image:', e);
 							reject(e);
 						};
-						img.src = profileImageUrl;
+
+						// Add cache-busting for S3 images on mobile to avoid CORS issues
+						const imageUrl = isMobileSafari && profileImageUrl.includes('s3.amazonaws.com')
+							? `${profileImageUrl}?t=${Date.now()}`
+							: profileImageUrl;
+						img.src = imageUrl;
 					});
+
 					const profileSize = 120;
 					const profileX = centerX;
 					const profileY = 100;
 
 					// The imghex is already a hexagon PNG, so just draw it directly without clipping
 					ctx.drawImage(img, profileX - profileSize / 2, profileY - profileSize / 2, profileSize, profileSize);
-				} catch {
-					// Failed to draw profile image
+				} catch (error) {
+					console.warn('Failed to draw profile image:', error);
+					// Continue without profile image
 				}
 			}
 			ctx.textAlign = 'center';
-			ctx.font = 'bold 42px "Bebas Neue", sans-serif';
+			// Use numeric weight (700) instead of "bold" for better cross-browser compatibility
+			ctx.font = '700 42px "Bebas Neue", sans-serif';
 			ctx.fillStyle = '#ffffff';
 			ctx.fillText(firstName.toUpperCase(), centerX, 210);
-			ctx.font = 'bold 56px "Bebas Neue", sans-serif';
+
+			ctx.font = '700 56px "Bebas Neue", sans-serif';
 			ctx.fillStyle = '#fb923c';
 			ctx.fillText(`${hexCount} HEXES`, centerX, 270);
+
 			const bottomY = MOBILE_HEIGHT - 60;
-			ctx.font = 'bold 48px "Bebas Neue", sans-serif';
+			ctx.font = '700 48px "Bebas Neue", sans-serif';
 			ctx.fillStyle = '#ffffff';
 			ctx.fillText('JOIN', centerX, bottomY - 60);
-			ctx.font = 'bold 56px "Bebas Neue", sans-serif';
+
+			ctx.font = '700 56px "Bebas Neue", sans-serif';
 			ctx.fillStyle = '#fb923c';
 			ctx.fillText('WWW.GETOUT.SPACE', centerX, bottomY);
 			const blob = await new Promise<Blob>((resolve, reject) => {

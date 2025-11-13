@@ -425,7 +425,7 @@ export function ProfilePage() {
 				) : stats ? (
 					<>
 						{/* Main Stats Grid - Hexagonal Numbers */}
-						<div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+						<div className="grid grid-cols-3 gap-4 md:gap-8">
 							{/* Total Hexagons */}
 							<div className="flex flex-col items-center">
 								<div className="relative w-24 h-24 mb-3">
@@ -545,7 +545,7 @@ export function ProfilePage() {
 						</div>
 
 						{/* Battle Stats - Show for everyone! */}
-						<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+						<div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
 							{/* OG Discoveries */}
 							<div className="rounded-lg bg-gradient-to-br from-purple-500/20 via-purple-600/10 to-transparent border border-purple-500/40 p-4 shadow-lg hover:border-purple-400/60 transition-all">
 								<div className="flex items-center gap-2 mb-2">

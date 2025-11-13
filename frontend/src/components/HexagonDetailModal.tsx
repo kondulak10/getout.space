@@ -133,6 +133,7 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 		},
 		{} as Record<string, number>
 	);
+	// Only include fighters who have captured this hex more than once (actual battles)
 	const fighters = hexagonData?.captureHistory
 		? Array.from(
 				new Map(
@@ -141,7 +142,9 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 						{ user: entry.user, count: captureCountByUser?.[entry.userId] || 0 },
 					])
 				).values()
-		  ).sort((a, b) => b.count - a.count)
+		  )
+				.filter((fighter) => fighter.count > 1) // Only show users with multiple captures
+				.sort((a, b) => b.count - a.count)
 		: [];
 	const getMedalColor = (rank: number) => {
 		if (rank === 0) return 'text-yellow-400'; 
@@ -249,14 +252,14 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 									</div>
 								</div>
 								{}
-								{fighters.length > 0 && (
-									<div className="space-y-3">
-										<div className="flex items-center gap-2">
-											<FontAwesomeIcon icon={faTrophy} className="w-5 h-5 text-yellow-400" />
-											<h3 className="text-sm font-bold text-gray-300 uppercase tracking-wide">
-												Top Fighters
-											</h3>
-										</div>
+								<div className="space-y-3">
+									<div className="flex items-center gap-2">
+										<FontAwesomeIcon icon={faTrophy} className="w-5 h-5 text-yellow-400" />
+										<h3 className="text-sm font-bold text-gray-300 uppercase tracking-wide">
+											Top Fighters
+										</h3>
+									</div>
+									{fighters.length > 0 ? (
 										<div className="space-y-2">
 											{fighters.slice(0, 5).map((fighter, index) => (
 												<div
@@ -294,8 +297,16 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 												</div>
 											))}
 										</div>
-									</div>
-								)}
+									) : (
+										<div className="text-center py-6 bg-white/5 border border-white/10 rounded-lg">
+											<FontAwesomeIcon icon={faSparkles} className="w-8 h-8 text-gray-600 mx-auto mb-2" />
+											<p className="text-sm text-gray-400">No epic battles yet</p>
+											<p className="text-xs text-gray-500 mt-1">
+												This hex hasn't changed hands multiple times
+											</p>
+										</div>
+									)}
+								</div>
 								{}
 								<div className="pt-3 border-t border-white/10">
 									<div className="text-xs text-gray-500 mb-2">Hexagon ID</div>

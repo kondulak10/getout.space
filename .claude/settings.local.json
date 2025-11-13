@@ -62,7 +62,10 @@
       "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\components\\ui\\table.tsx\")",
       "Bash(npx eslint:*)",
       "Bash(dir /B /S \"C:\\Users\\janko\\Desktop\\getout.space\\backend\\src\\graphql\")",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(dir:*)",
+      "Bash(npm run dev:*)",
+      "Bash(timeout:*)"
     ],
     "deny": [],
     "ask": []

@@ -9,7 +9,15 @@ import { apolloClient } from '@/lib/apollo-client'
 import { AuthProvider } from '@/contexts/AuthProvider'
 import { NotificationProvider } from '@/contexts/NotificationProvider'
 import '@/lib/fontawesome'
+
 logVersion();
+
+// Remove the loading spinner once React starts rendering
+const loader = document.getElementById('initial-loader');
+if (loader) {
+  loader.style.display = 'none';
+}
+
 createRoot(document.getElementById('root')!).render(
   <ApolloProvider client={apolloClient}>
     <AuthProvider>

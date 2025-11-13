@@ -193,6 +193,29 @@ resource "aws_cloudfront_distribution" "website" {
     compress               = true
   }
 
+  # Cache behavior for versioned static assets (JS, CSS with hashed filenames)
+  ordered_cache_behavior {
+    path_pattern     = "/assets/*"
+    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
+    cached_methods   = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id = "S3-${var.domain_name}"
+
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+      # No need to vary cache by Origin for static assets
+      headers = []
+    }
+
+    viewer_protocol_policy = "redirect-to-https"
+    min_ttl                = 0
+    default_ttl            = 31536000  # Cache hashed assets for 1 year
+    max_ttl                = 31536000
+    compress               = true
+  }
+
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD", "OPTIONS"]
     cached_methods   = ["GET", "HEAD", "OPTIONS"]

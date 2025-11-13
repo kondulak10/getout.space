@@ -15,10 +15,16 @@ export function NotificationModal({ onClose }: NotificationModalProps) {
 	const { notifications, loading, unreadCount, markAllAsRead, refetch } = useNotifications();
 	const [currentPage, setCurrentPage] = useState(1);
 
-	
+	// Refetch notifications when modal opens
 	useEffect(() => {
 		refetch();
 	}, [refetch]);
+
+	// Auto-mark all notifications as read when modal opens
+	useEffect(() => {
+		markAllAsRead();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []); // Only run once on mount
 
 	
 	const totalPages = Math.ceil(notifications.length / NOTIFICATIONS_PER_PAGE);
