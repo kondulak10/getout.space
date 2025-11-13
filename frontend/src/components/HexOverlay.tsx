@@ -158,33 +158,37 @@ export function HexOverlay({ onActivityChanged }: HexOverlayProps) {
 					// MUST set crossOrigin BEFORE src to prevent canvas taint
 					img.crossOrigin = 'anonymous';
 
-					// Try to load image with longer timeout for mobile
+					// Detect if we're on any mobile device
+					const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+					// Add cache-busting for S3 images on mobile to avoid CORS issues
+					const imageUrl = isMobile && profileImageUrl.includes('s3.amazonaws.com')
+						? `${profileImageUrl}?t=${Date.now()}`
+						: profileImageUrl;
+
+					img.src = imageUrl;
+
+					// Wait for image to load
 					await new Promise<void>((resolve, reject) => {
 						const timeout = setTimeout(() => {
 							reject(new Error('Image load timeout'));
-						}, 10000); // Increased timeout for mobile
+						}, 10000); // 10 second timeout
 
 						img.onload = () => {
 							clearTimeout(timeout);
-							// Wait a bit more on mobile to ensure image is decoded
-							if (isMobileSafari) {
-								setTimeout(() => resolve(), 100);
-							} else {
-								resolve();
-							}
+							resolve();
 						};
 						img.onerror = (e) => {
 							clearTimeout(timeout);
 							console.error('Failed to load profile image:', e);
 							reject(e);
 						};
-
-						// Add cache-busting for S3 images on mobile to avoid CORS issues
-						const imageUrl = isMobileSafari && profileImageUrl.includes('s3.amazonaws.com')
-							? `${profileImageUrl}?t=${Date.now()}`
-							: profileImageUrl;
-						img.src = imageUrl;
 					});
+
+					// CRITICAL: Explicitly decode the image before drawing to canvas
+					// This ensures the image is fully decoded and ready for canvas rendering
+					// Without this, mobile browsers (especially iOS) may fail to draw the image
+					await img.decode();
 
 					const profileSize = 120;
 					const profileX = centerX;
