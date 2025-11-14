@@ -71,7 +71,8 @@
       "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\components\\ui\\LoadingScreen.tsx\")",
       "Bash(git checkout:*)",
       "Bash(gh auth:*)",
-      "Bash(git diff:*)"
+      "Bash(git diff:*)",
+      "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\DEPLOYMENT_CHECKLIST.md\" \"C:\\Users\\janko\\Desktop\\getout.space\\CHANGES_SUMMARY.md\" \"C:\\Users\\janko\\Desktop\\getout.space\\READY_TO_DEPLOY.md\" \"C:\\Users\\janko\\Desktop\\getout.space\\SENTRY_SETUP.md\" \"C:\\Users\\janko\\Desktop\\getout.space\\ADD_SENTRY_TO_GITHUB.md\" \"C:\\Users\\janko\\Desktop\\getout.space\\PRE_DEPLOYMENT_SUMMARY.md\" \"C:\\Users\\janko\\Desktop\\getout.space\\POTENTIAL_ISSUES_ANALYSIS.md\" \"C:\\Users\\janko\\Desktop\\getout.space\\REFETCH_FIX_OPTIONS.md\")"
     ],
     "deny": [],
     "ask": []

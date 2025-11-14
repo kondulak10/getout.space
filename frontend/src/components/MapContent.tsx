@@ -1,6 +1,7 @@
 import { HexOverlay } from "@/components/HexOverlay";
 import { HexagonDetailModal } from "@/components/HexagonDetailModal";
 import { HexagonLoadingIndicator } from "@/components/HexagonLoadingIndicator";
+import { ZoomWarning } from "@/components/ZoomWarning";
 import { useMap } from "@/contexts/useMap";
 import { useActivityProfileImages } from "@/hooks/useActivityProfileImages";
 import { useHexagonSelection } from "@/hooks/useHexagonSelection";
@@ -29,7 +30,9 @@ export function MapContent() {
 	useActivityProfileImages(mapRef, hexagonsData ?? null);
 
 	const handleActivityChanged = () => {
-		refetchHexagons();
+		// Activity processing is rare (1-2x per session)
+		// Simple page reload ensures fresh data from all 7 parent hex caches
+		window.location.reload();
 	};
 
 	return (
@@ -38,6 +41,7 @@ export function MapContent() {
 				onActivityChanged={handleActivityChanged}
 			/>
 			<HexagonLoadingIndicator isLoading={loading} />
+			<ZoomWarning />
 
 			{(selectedHexagon || hexagonDetailLoading) && (
 				<HexagonDetailModal

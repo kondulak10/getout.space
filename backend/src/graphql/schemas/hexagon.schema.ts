@@ -71,6 +71,12 @@ export const hexagonSchema = gql`
 		hexagonsByParents(parentHexagonIds: [String!]!): [Hexagon!]!
 
 		"""
+		Get hexagons from all users by a single parent H3 ID (for individual caching)
+		Requires: Authentication
+		"""
+		hexagonsByParent(parentHexagonId: String!): [Hexagon!]!
+
+		"""
 		Get total count of all hexagons (Admin only)
 		Requires: Authentication + Admin
 		"""

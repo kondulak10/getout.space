@@ -73,6 +73,20 @@ query HexagonsByParents($parentHexagonIds: [String!]!) {
 	}
 }
 
+query HexagonsByParent($parentHexagonId: String!) {
+	hexagonsByParent(parentHexagonId: $parentHexagonId) {
+		hexagonId
+		currentOwnerId
+		currentOwnerStravaId
+		currentOwnerIsPremium
+		currentOwnerImghex
+		currentStravaActivityId
+		activityType
+		captureCount
+		lastCapturedAt
+	}
+}
+
 query HexagonDetail($hexagonId: String!) {
 	hexagon(hexagonId: $hexagonId) {
 		hexagonId

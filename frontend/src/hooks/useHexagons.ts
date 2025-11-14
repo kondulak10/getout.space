@@ -1,7 +1,7 @@
 import { getUserColor } from "@/constants/hexagonColors";
-import { HexagonsByParentsDocument } from "@/gql/graphql";
+import { HexagonsByParentDocument, HexagonsByParentQuery } from "@/gql/graphql";
 import { h3ToGeoJSON } from "@/utils/hexagonUtils";
-import { useApolloClient, useLazyQuery } from "@apollo/client/react";
+import { useApolloClient } from "@apollo/client/react";
 import { gridDisk, latLngToCell } from "h3-js";
 import type { Map as MapboxMap } from "mapbox-gl";
 import React, { useCallback, useEffect, useState } from "react";
@@ -13,6 +13,8 @@ interface UseHexagonsOptions {
 export const useHexagons = ({ mapRef, onHexagonClick }: UseHexagonsOptions) => {
 	const [visibleHexCount, setVisibleHexCount] = useState(0);
 	const [userCount, setUserCount] = useState(0);
+	const [loading, setLoading] = useState(false);
+	const [hexagonsData, setHexagonsData] = useState<HexagonsByParentQuery['hexagonsByParent'] | null>(null);
 	const apolloClient = useApolloClient();
 	const { currentParentHexagonIds } = useMap();
 	const debounceTimeoutRef = React.useRef<number | null>(null);
@@ -24,15 +26,12 @@ export const useHexagons = ({ mapRef, onHexagonClick }: UseHexagonsOptions) => {
 	const mouseLeaveHandlerRef = React.useRef<(() => void) | null>(null);
 	const updateHexagonsRef = React.useRef<(() => void) | null>(null);
 	useEffect(() => {
-		apolloClient.cache.evict({ fieldName: "hexagonsByParents" });
+		apolloClient.cache.evict({ fieldName: "hexagonsByParent" });
 		apolloClient.cache.gc();
 	}, [apolloClient]);
 	useEffect(() => {
 		onHexagonClickRef.current = onHexagonClick;
 	}, [onHexagonClick]);
-	const [fetchAllHexagons, { data: allHexagonsData, loading }] =
-		useLazyQuery(HexagonsByParentsDocument);
-	const hexagonsData = allHexagonsData?.hexagonsByParents;
 	const setupParentLayer = useCallback(() => {
 		if (!mapRef.current) return;
 		const map = mapRef.current;
@@ -90,9 +89,20 @@ export const useHexagons = ({ mapRef, onHexagonClick }: UseHexagonsOptions) => {
 		if (debounceTimeoutRef.current) {
 			clearTimeout(debounceTimeoutRef.current);
 		}
-		debounceTimeoutRef.current = setTimeout(() => {
+		debounceTimeoutRef.current = setTimeout(async () => {
 			const bounds = map.getBounds();
 			if (!bounds) return;
+
+			// Don't fetch hexagons if zoom is too low (user can't see them anyway)
+			const zoom = map.getZoom();
+			if (zoom < 9.5) {
+				setHexagonsData([]);
+				setVisibleHexCount(0);
+				setUserCount(0);
+				setLoading(false);
+				return;
+			}
+
 			try {
 				const centerLat = (bounds.getNorth() + bounds.getSouth()) / 2;
 				const centerLng = (bounds.getEast() + bounds.getWest()) / 2;
@@ -103,12 +113,37 @@ export const useHexagons = ({ mapRef, onHexagonClick }: UseHexagonsOptions) => {
 				const parentHexagonIds = gridDisk(centerParentHex, 1);
 				currentParentHexagonIds.current = parentHexagonIds;
 				updateParentVisualization(parentHexagonIds);
-				fetchAllHexagons({ variables: { parentHexagonIds } });
+
+				// Fetch each parent hexagon individually for better caching
+				setLoading(true);
+				const results = await Promise.all(
+					parentHexagonIds.map(parentHexagonId =>
+						apolloClient.query({
+							query: HexagonsByParentDocument,
+							variables: { parentHexagonId },
+						})
+					)
+				);
+
+				// Combine all hexagons from all parent queries
+				const allHexagons = results.flatMap(result => result.data?.hexagonsByParent || []);
+
+				// Calculate counts before setting state (reduces re-renders)
+				const visibleCount = allHexagons.length;
+				const uniqueUsers = new Set(allHexagons.map(hex => hex.currentOwnerId));
+				const usersCount = uniqueUsers.size;
+
+				// Batch all state updates (React 18 batches automatically)
+				setHexagonsData(allHexagons);
+				setVisibleHexCount(visibleCount);
+				setUserCount(usersCount);
+				setLoading(false);
 			} catch {
 				// Failed to calculate parent hexagons
+				setLoading(false);
 			}
 		}, 300);
-	}, [mapRef, fetchAllHexagons, updateParentVisualization]);
+	}, [mapRef, apolloClient, updateParentVisualization]);
 	updateHexagonsRef.current = updateHexagonsImpl;
 	useEffect(() => {
 		updateHexagonsRef.current = updateHexagonsImpl;
@@ -124,8 +159,8 @@ export const useHexagons = ({ mapRef, onHexagonClick }: UseHexagonsOptions) => {
 		if (!source) {
 			return;
 		}
-		const uniqueUsers = new Set(hexagonsData.map((hex) => hex.currentOwnerId));
-		setUserCount(uniqueUsers.size);
+
+		// Build GeoJSON features for map rendering
 		const features = hexagonsData.map((hex) => {
 			const feature = h3ToGeoJSON(hex.hexagonId);
 			const color = getUserColor(hex.currentOwnerId);
@@ -142,12 +177,16 @@ export const useHexagons = ({ mapRef, onHexagonClick }: UseHexagonsOptions) => {
 				},
 			};
 		});
+
 		const geojson: GeoJSON.FeatureCollection = {
 			type: "FeatureCollection",
 			features,
 		};
+
+		// Update map source (no setState calls - avoids extra re-renders)
 		source.setData(geojson);
-		setVisibleHexCount(hexagonsData.length);
+
+		// Update lastCenterHex tracking
 		try {
 			const bounds = map.getBounds();
 			if (bounds) {

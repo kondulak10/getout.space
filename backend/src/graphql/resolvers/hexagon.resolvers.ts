@@ -153,6 +153,24 @@ export const hexagonResolvers = {
 			}
 		},
 
+		hexagonsByParent: async (
+			_: unknown,
+			{ parentHexagonId }: { parentHexagonId: string },
+			context: GraphQLContext
+		) => {
+			requireAuth(context);
+
+			try {
+				const hexagons = await Hexagon.find({
+					parentHexagonId: parentHexagonId,
+				}).select('-captureHistory');
+
+				return hexagons;
+			} catch (error) {
+				throw new GraphQLError('Failed to fetch hexagons by parent ID');
+			}
+		},
+
 		hexagonsCount: async (_: unknown, __: Record<string, never>, context: GraphQLContext) => {
 			requireAdmin(context);
 
