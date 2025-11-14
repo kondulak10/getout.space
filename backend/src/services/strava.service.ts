@@ -119,5 +119,5 @@ export async function fetchStravaActivity(
 export function isRunningActivity(activity: StravaActivityData): boolean {
 	const activityType = activity.type;
 	const sportType = activity.sport_type;
-	return activityType === 'Run' || sportType === 'TrailRun' || sportType === 'VirtualRun';
+	return activityType === 'Run' || sportType === 'TrailRun';
 }

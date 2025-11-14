@@ -25,10 +25,7 @@ export const useHexagons = ({ mapRef, onHexagonClick }: UseHexagonsOptions) => {
 	const mouseEnterHandlerRef = React.useRef<(() => void) | null>(null);
 	const mouseLeaveHandlerRef = React.useRef<(() => void) | null>(null);
 	const updateHexagonsRef = React.useRef<(() => void) | null>(null);
-	useEffect(() => {
-		apolloClient.cache.evict({ fieldName: "hexagonsByParent" });
-		apolloClient.cache.gc();
-	}, [apolloClient]);
+	const isInitialLoadRef = React.useRef(true);
 	useEffect(() => {
 		onHexagonClickRef.current = onHexagonClick;
 	}, [onHexagonClick]);
@@ -203,6 +200,12 @@ export const useHexagons = ({ mapRef, onHexagonClick }: UseHexagonsOptions) => {
 		const map = mapRef.current;
 		if (!map) return;
 		const stableUpdateHandler = () => {
+			// Skip first map event (Mapbox fires moveend after style loads)
+			// This prevents duplicate queries on initial page load
+			if (isInitialLoadRef.current) {
+				isInitialLoadRef.current = false;
+				return;
+			}
 			updateHexagonsRef.current?.();
 		};
 		map.on("moveend", stableUpdateHandler);
@@ -239,7 +242,9 @@ export const useHexagons = ({ mapRef, onHexagonClick }: UseHexagonsOptions) => {
 		map.on("mouseenter", "hexagon-fills", handleMouseEnter);
 		map.on("mouseleave", "hexagon-fills", handleMouseLeave);
 		clearCenterCache();
-		updateHexagonsImpl();
+		// Use ref to avoid re-running effect when callback changes
+		// This prevents duplicate queries on mount
+		updateHexagonsRef.current?.();
 		return () => {
 			isMountedRef.current = false;
 			if (debounceTimeoutRef.current) {
@@ -262,7 +267,7 @@ export const useHexagons = ({ mapRef, onHexagonClick }: UseHexagonsOptions) => {
 				}
 			}
 		};
-	}, [mapRef, clearCenterCache, updateHexagonsImpl]);
+	}, [mapRef, clearCenterCache]);
 	return {
 		visibleHexCount,
 		userCount,

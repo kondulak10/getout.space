@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import type { StravaActivity } from '@/services/stravaApi.service';
+import { useActivitiesManager } from '@/hooks/useActivitiesManager';
 import { useStoredActivities } from '@/hooks/useStoredActivities';
 import {
 	AlertDialog,
@@ -20,23 +20,22 @@ import { formatDate, formatDistance } from '@/utils/dateFormatter';
 interface ActivitiesModalProps {
 	isOpen: boolean;
 	onClose: () => void;
-	// For Fetch from Strava tab
-	onFetchActivities: () => Promise<void>;
-	stravaActivities: StravaActivity[];
-	loadingStrava: boolean;
-	onProcess: (activityId: number) => Promise<void>;
-	onDeleteStrava: (activityId: number) => Promise<void>;
+	onActivityChanged?: () => void;
 }
 
 export function ActivitiesModal({
 	isOpen,
 	onClose,
-	onFetchActivities,
-	stravaActivities,
-	loadingStrava,
-	onProcess,
-	onDeleteStrava,
+	onActivityChanged,
 }: ActivitiesModalProps) {
+	// Move ALL activity logic INSIDE the modal (no more prop drilling!)
+	const {
+		activities: stravaActivities,
+		loading: loadingStrava,
+		loadStravaActivities,
+		handleSaveActivity: saveActivity,
+		handleRemoveActivity: removeStravaActivity,
+	} = useActivitiesManager(onActivityChanged);
 	const [processingIds, setProcessingIds] = useState<Set<number>>(new Set());
 	const [deletingIds, setDeletingIds] = useState<Set<number>>(new Set());
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -61,7 +60,7 @@ export function ActivitiesModal({
 	}, [isOpen]);
 
 	const handleFetchActivities = async () => {
-		await onFetchActivities();
+		await loadStravaActivities();
 		setHasSynced(true);
 	};
 
@@ -69,7 +68,7 @@ export function ActivitiesModal({
 		e.stopPropagation();
 		setProcessingIds((prev) => new Set(prev).add(activityId));
 		try {
-			await onProcess(activityId);
+			await saveActivity(activityId);
 			toast.success('Activity processed', {
 				description: 'Hexagons updated on map',
 			});
@@ -99,7 +98,7 @@ export function ActivitiesModal({
 		setShowDeleteDialog(false);
 		try {
 			if (activityToDelete.type === 'strava') {
-				await onDeleteStrava(activityToDelete.id);
+				await removeStravaActivity(activityToDelete.id);
 			} else {
 				await deleteStoredActivity(activityToDelete.id);
 			}

@@ -1,4 +1,4 @@
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useLazyQuery } from '@apollo/client/react';
 import {
@@ -10,7 +10,6 @@ import {
 	VersusStatsDocument
 } from '@/gql/graphql';
 import { useAuth } from '@/contexts/useAuth';
-import { useActivitiesManager } from '@/hooks/useActivitiesManager';
 import { useProfileStats } from '@/hooks/useProfileStats';
 import { ActivitiesModal } from '@/components/ActivitiesModal';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
@@ -74,17 +73,8 @@ export function ProfilePage() {
 	// Lazy query for fetching rival users
 	const [fetchRivalUsers, { data: rivalUsersData }] = useLazyQuery(UsersByIdsDocument);
 
-	// Activities management
-	const {
-		showModal,
-		activities,
-		loading: activitiesLoading,
-		openModal,
-		closeModal,
-		loadStravaActivities,
-		handleSaveActivity,
-		handleRemoveActivity
-	} = useActivitiesManager();
+	// Activities modal state (simplified - no more prop drilling!)
+	const [showActivitiesModal, setShowActivitiesModal] = useState(false);
 
 	// Calculate stats using custom hook
 	const stats = useProfileStats({
@@ -178,9 +168,8 @@ export function ProfilePage() {
 					stravaId={user.stravaId}
 					isOwnProfile={isOwnProfile}
 					isAdmin={currentUser?.isAdmin}
-					onOpenActivities={openModal}
+					onOpenActivities={() => setShowActivitiesModal(true)}
 					onLogout={logout}
-					activitiesLoading={activitiesLoading}
 				/>
 
 				{/* Main Stats Grid - Hexagonal Numbers */}
@@ -250,15 +239,12 @@ export function ProfilePage() {
 			</div>
 
 			{/* Activities Modal */}
-			<ActivitiesModal
-				isOpen={showModal}
-				onClose={closeModal}
-				onFetchActivities={loadStravaActivities}
-				stravaActivities={activities}
-				loadingStrava={activitiesLoading}
-				onProcess={handleSaveActivity}
-				onDeleteStrava={handleRemoveActivity}
-			/>
+			{showActivitiesModal && (
+				<ActivitiesModal
+					isOpen={showActivitiesModal}
+					onClose={() => setShowActivitiesModal(false)}
+				/>
+			)}
 		</div>
 	);
 }

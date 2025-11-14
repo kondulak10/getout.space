@@ -75,7 +75,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 **Activity Processing Pipeline:**
 1. Strava webhook → `POST /api/strava/webhook` (backend/src/routes/webhook.routes.ts)
 2. Token validation/refresh → `getValidAccessToken()` (backend/src/services/strava.service.ts)
-3. Fetch activity → `fetchStravaActivity()` validates it's a running activity (Run, TrailRun, VirtualRun only)
+3. Fetch activity → `fetchStravaActivity()` validates it's a running activity (Run, TrailRun only)
 4. Route analysis → `analyzeRouteAndConvertToHexagons()` (backend/src/utils/routeToHexagons.ts):
    - Closed loops (start/end < 500m): Fill interior with `polygonToCells`
    - Linear routes: Use `gridPathCells` to fill gaps between GPS points
