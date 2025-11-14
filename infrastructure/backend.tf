@@ -360,6 +360,7 @@ resource "aws_secretsmanager_secret_version" "backend_env" {
     FRONTEND_URL                  = "https://${var.domain_name}"
     BACKEND_URL                   = "https://api.${var.domain_name}"
     AWS_REGION                    = var.aws_region
+    SENTRY_DSN_BACKEND            = var.sentry_dsn_backend
   })
 }
 
@@ -444,6 +445,10 @@ resource "aws_ecs_task_definition" "backend" {
         {
           name      = "AWS_REGION"
           valueFrom = "${aws_secretsmanager_secret.backend_env.arn}:AWS_REGION::"
+        },
+        {
+          name      = "SENTRY_DSN_BACKEND"
+          valueFrom = "${aws_secretsmanager_secret.backend_env.arn}:SENTRY_DSN_BACKEND::"
         }
       ]
 

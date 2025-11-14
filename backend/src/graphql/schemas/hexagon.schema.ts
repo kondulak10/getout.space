@@ -40,6 +40,11 @@ export const hexagonSchema = gql`
 		hexCount: Int!
 	}
 
+	type VersusStats {
+		user1StolenFromUser2: Int!
+		user2StolenFromUser1: Int!
+	}
+
 	extend type Query {
 		"""
 		Get all hexagons owned by current user
@@ -112,6 +117,12 @@ export const hexagonSchema = gql`
 		Requires: Authentication
 		"""
 		regionalOGDiscoverers(parentHexagonIds: [String!]!, limit: Int): [LeaderboardEntry!]!
+
+		"""
+		Get versus stats between two users (how many hexes each stole directly from the other)
+		Requires: Authentication
+		"""
+		versusStats(userId1: ID!, userId2: ID!): VersusStats!
 	}
 
 	extend type Mutation {

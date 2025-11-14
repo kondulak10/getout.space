@@ -69,7 +69,9 @@
       "Bash(git add:*)",
       "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\pages\\ProfilePage.tsx\")",
       "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\components\\ui\\LoadingScreen.tsx\")",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(gh auth:*)",
+      "Bash(git diff:*)"
     ],
     "deny": [],
     "ask": []

@@ -200,6 +200,7 @@ AWS_ACCESS_KEY_ID=  # For S3 uploads
 AWS_SECRET_ACCESS_KEY=
 S3_BUCKET_NAME=getout-profile-images
 SLACK_WEBHOOK_URL=  # Optional
+SENTRY_DSN_BACKEND=  # Optional - Sentry error tracking DSN for backend
 ```
 
 **Frontend (.env):**
@@ -207,6 +208,7 @@ SLACK_WEBHOOK_URL=  # Optional
 VITE_API_URL=http://localhost:4000/graphql
 VITE_BACKEND_URL=http://localhost:4000
 VITE_MAPBOX_TOKEN=pk....
+VITE_SENTRY_DSN_FRONTEND=  # Optional - Sentry error tracking DSN for frontend
 ```
 
 ## Development Workflow

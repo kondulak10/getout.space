@@ -5,6 +5,7 @@ import {
 	sendActivityProcessedNotification,
 	sendActivityProcessingErrorNotification,
 } from '../services/slack.service';
+import { webhookLimiter, sseLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
 
@@ -20,7 +21,7 @@ interface StravaWebhookEvent {
 	updates?: Record<string, unknown>;
 }
 
-router.get('/api/strava/webhook', (req: Request, res: Response) => {
+router.get('/api/strava/webhook', webhookLimiter, (req: Request, res: Response) => {
 	const mode = req.query['hub.mode'];
 	const token = req.query['hub.verify_token'];
 	const challenge = req.query['hub.challenge'];
@@ -41,7 +42,7 @@ router.get('/api/strava/webhook', (req: Request, res: Response) => {
 	}
 });
 
-router.post('/api/strava/webhook', (req: Request, res: Response) => {
+router.post('/api/strava/webhook', webhookLimiter, (req: Request, res: Response) => {
 	const event = req.body;
 
 	console.log('📥 Webhook event received:');
@@ -58,7 +59,7 @@ router.post('/api/strava/webhook', (req: Request, res: Response) => {
 	}
 });
 
-router.get('/api/strava/events', (req: Request, res: Response) => {
+router.get('/api/strava/events', sseLimiter, (req: Request, res: Response) => {
 	console.log('🔌 New SSE client connected');
 
 	res.setHeader('Content-Type', 'text/event-stream');

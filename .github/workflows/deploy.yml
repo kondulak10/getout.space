@@ -45,6 +45,7 @@ jobs:
         env:
           VITE_BACKEND_URL: https://api.getout.space
           VITE_MAPBOX_TOKEN: pk.eyJ1Ijoia291ZGVsa2EiLCJhIjoiY2o4b3YzajV4MDljOTJxcnNnOHJvY2lpMCJ9.ILCCsALFB59ZFSegrCTruA
+          VITE_SENTRY_DSN_FRONTEND: ${{ secrets.SENTRY_DSN_FRONTEND }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4

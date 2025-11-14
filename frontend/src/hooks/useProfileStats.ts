@@ -8,7 +8,6 @@ interface HexagonData {
 	lastCapturedAt: unknown;
 	firstCapturedBy?: { id: string } | null;
 	currentOwnerId: string;
-	captureHistory?: Array<{ userId: string; stravaId: number; capturedAt: unknown }> | null;
 }
 
 interface StolenHexagonData {
@@ -16,7 +15,6 @@ interface StolenHexagonData {
 	hexagonId: string;
 	currentOwnerId: string;
 	currentOwnerStravaId: number | null;
-	captureHistory?: Array<{ userId: string; stravaId: number; capturedAt: unknown }> | null;
 }
 
 interface PublicStatsData {
@@ -56,18 +54,10 @@ export function useProfileStats({ user, hexagons, stolenHexagons, publicStats }:
 		// Conquered Hexagons - taken from others
 		const conqueredHexagons = hexagons.filter((hex) => hex.firstCapturedBy?.id !== user.id).length;
 
-		// Clean Territory - never challenged
-		const cleanTerritory = hexagons.filter(
-			(hex) => !hex.captureHistory || hex.captureHistory.length === 0
-		).length;
+		// Clean Territory - never challenged (captureCount === 1 means never stolen)
+		const cleanTerritory = hexagons.filter((hex) => hex.captureCount === 1).length;
 
-		// Revenge Captures - reclaimed hexagons
-		const revengeCaptures = hexagons.filter((hex) => {
-			if (!hex.captureHistory || hex.captureHistory.length === 0) return false;
-			return hex.captureHistory.some((entry) => entry.userId === user.id);
-		}).length;
-
-		// Battle tested hexagons
+		// Battle tested hexagons - challenged at least once
 		const battleTestedHexagons = hexagons.filter((hex) => hex.captureCount > 1).length;
 
 		// Total battles
@@ -135,7 +125,6 @@ export function useProfileStats({ user, hexagons, stolenHexagons, publicStats }:
 			ogHexagons,
 			conqueredHexagons,
 			cleanTerritory,
-			revengeCaptures,
 			battleTestedHexagons,
 			totalBattles,
 			topRivals,

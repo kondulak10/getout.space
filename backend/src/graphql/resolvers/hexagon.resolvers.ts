@@ -336,6 +336,35 @@ export const hexagonResolvers = {
 				throw new GraphQLError('Failed to fetch regional OG discoverers');
 			}
 		},
+
+		versusStats: async (
+			_: unknown,
+			{ userId1, userId2 }: { userId1: string; userId2: string },
+			context: GraphQLContext
+		) => {
+			requireAuth(context);
+
+			try {
+				// Count hexagons where user1 directly stole from user2 (user1 is current owner, user2 was immediate previous owner)
+				const user1StolenFromUser2 = await Hexagon.countDocuments({
+					currentOwnerId: userId1,
+					lastPreviousOwnerId: userId2,
+				});
+
+				// Count hexagons where user2 directly stole from user1 (user2 is current owner, user1 was immediate previous owner)
+				const user2StolenFromUser1 = await Hexagon.countDocuments({
+					currentOwnerId: userId2,
+					lastPreviousOwnerId: userId1,
+				});
+
+				return {
+					user1StolenFromUser2,
+					user2StolenFromUser1,
+				};
+			} catch (error) {
+				throw new GraphQLError('Failed to fetch versus stats');
+			}
+		},
 	},
 
 	Mutation: {

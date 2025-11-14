@@ -1,5 +1,11 @@
+// Initialize Sentry FIRST (before other imports)
+import * as Sentry from '@sentry/node';
+import { initializeSentry } from './config/sentry';
+initializeSentry();
+
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
+import compression from 'compression';
 import cors from 'cors';
 import 'dotenv/config';
 import express from 'express';
@@ -11,6 +17,8 @@ import { typeDefs } from './graphql/schemas/index';
 import stravaRoutes from './routes/strava.routes';
 import testRoutes from './routes/test.routes';
 import webhookRoutes from './routes/webhook.routes';
+import { globalLimiter, graphqlLimiter } from './middleware/rateLimiter';
+import { rateLimitPlugin } from './graphql/plugins/rateLimitPlugin';
 
 const PORT = process.env.PORT || 4000;
 
@@ -29,6 +37,23 @@ app.use(
 		credentials: true,
 	})
 );
+
+// Compression middleware - reduces response sizes by 70-80% for JSON
+app.use(
+	compression({
+		level: 6, // Compression level (1-9, default 6) - balance between speed and ratio
+		threshold: 1024, // Only compress responses larger than 1KB
+		filter: (req, res) => {
+			// Don't compress if client explicitly requests no compression
+			if (req.headers['x-no-compression']) {
+				return false;
+			}
+			// Use compression's default filter for other cases
+			return compression.filter(req, res);
+		},
+	})
+);
+
 app.use(express.json());
 
 // Simple request/response logging middleware
@@ -71,6 +96,9 @@ app.use((req, res, next) => {
 	next();
 });
 
+// Global rate limiter (baseline protection for all endpoints)
+app.use(globalLimiter);
+
 app.get('/', (req, res) => {
 	res.sendFile(path.join(__dirname, 'templates', 'landing.html'));
 });
@@ -84,12 +112,14 @@ const startApolloServer = async () => {
 		typeDefs,
 		resolvers,
 		introspection: true,
+		plugins: [rateLimitPlugin],
 	});
 
 	await server.start();
 
 	app.use(
 		'/graphql',
+		graphqlLimiter, // Rate limiter for GraphQL endpoint
 		expressMiddleware(server, {
 			context: async ({ req }) => {
 				const { verifyToken, extractTokenFromHeader } = await import('./utils/jwt');
@@ -131,6 +161,20 @@ const startApolloServer = async () => {
 				'request.credentials': 'include',
 			},
 		})
+	);
+
+	// Sentry error handler MUST be after all routes (Sentry v8 API)
+	Sentry.setupExpressErrorHandler(app);
+
+	// Optional: catch-all error handler
+	app.use(
+		(err: Error, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+			console.error('❌ Unhandled error:', err);
+			res.status(500).json({
+				error: 'Internal server error',
+				...(process.env.NODE_ENV === 'development' && { details: err.message }),
+			});
+		}
 	);
 
 	app.listen(PORT, () => {

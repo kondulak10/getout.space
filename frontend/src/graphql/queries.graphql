@@ -319,11 +319,6 @@ query UserHexagonsForStats($userId: ID!) {
 			id
 		}
 		currentOwnerId
-		captureHistory {
-			userId
-			stravaId
-			capturedAt
-		}
 	}
 }
 
@@ -380,5 +375,12 @@ query UsersByIds($ids: [ID!]!) {
 			profile
 			imghex
 		}
+	}
+}
+
+query VersusStats($userId1: ID!, $userId2: ID!) {
+	versusStats(userId1: $userId1, userId2: $userId2) {
+		user1StolenFromUser2
+		user2StolenFromUser1
 	}
 }

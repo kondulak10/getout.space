@@ -6,7 +6,8 @@ import {
 	UserHexagonsForStatsDocument,
 	UserPublicStatsDocument,
 	UsersByIdsDocument,
-	HexagonsStolenFromUserDocument
+	HexagonsStolenFromUserDocument,
+	VersusStatsDocument
 } from '@/gql/graphql';
 import { useAuth } from '@/contexts/useAuth';
 import { useActivitiesManager } from '@/hooks/useActivitiesManager';
@@ -63,11 +64,11 @@ export function ProfilePage() {
 	const user = userPublicStatsData?.userPublicStats;
 	const userProfile = user?.stravaProfile || null;
 
-	// Fetch current user's data (for versus stats when viewing another profile)
-	const { data: currentUserHexagonsData, loading: currentUserHexagonsLoading } = useQuery(UserHexagonsForStatsDocument, {
-		variables: { userId: currentUser?.id || '' },
-		skip: !currentUser?.id || isOwnProfile,
-		fetchPolicy: 'network-only'
+	// Fetch versus stats when viewing another profile
+	const { data: versusStatsData, loading: versusStatsLoading } = useQuery(VersusStatsDocument, {
+		variables: { userId1: profileUserId || '', userId2: currentUser?.id || '' },
+		skip: !profileUserId || !currentUser?.id || isOwnProfile,
+		fetchPolicy: 'cache-and-network'
 	});
 
 	// Lazy query for fetching rival users
@@ -93,44 +94,17 @@ export function ProfilePage() {
 		publicStats: userPublicStatsData?.userPublicStats
 	});
 
-	// Calculate versus stats (only when viewing another profile)
+	// Transform versus stats from query (only when viewing another profile)
 	const versusStats = useMemo(() => {
-		if (isOwnProfile || !currentUser || !user) return null;
-
-		const profileHexagons = userHexagonsData?.userHexagons || [];
-		const currentUserHexagons = currentUserHexagonsData?.userHexagons || [];
-
-		// Count hexagons where profile user DIRECTLY captured from current user
-		let profileStolenFromCurrent = 0;
-		profileHexagons.forEach((hex) => {
-			if (hex.captureHistory && hex.captureHistory.length > 0) {
-				// Check if current user is the LAST entry in capture history (immediate previous owner)
-				const lastEntry = hex.captureHistory[hex.captureHistory.length - 1];
-				if (lastEntry?.userId === currentUser.id) {
-					profileStolenFromCurrent++;
-				}
-			}
-		});
-
-		// Count hexagons where current user DIRECTLY captured from profile user
-		let currentUserStolenFromProfile = 0;
-		currentUserHexagons.forEach((hex) => {
-			if (hex.captureHistory && hex.captureHistory.length > 0) {
-				// Check if profile user is the LAST entry in capture history (immediate previous owner)
-				const lastEntry = hex.captureHistory[hex.captureHistory.length - 1];
-				if (lastEntry?.userId === user.id) {
-					currentUserStolenFromProfile++;
-				}
-			}
-		});
+		if (isOwnProfile || !currentUser || !user || !versusStatsData) return null;
 
 		return {
-			profileUserTotalHexagons: profileHexagons.length,
-			currentUserTotalHexagons: currentUserHexagons.length,
-			profileStolenFromCurrent,
-			currentUserStolenFromProfile
+			profileUserTotalHexagons: userHexagonsData?.userHexagons?.length || 0,
+			currentUserTotalHexagons: stats?.totalHexagons || 0,
+			profileStolenFromCurrent: versusStatsData.versusStats.user1StolenFromUser2,
+			currentUserStolenFromProfile: versusStatsData.versusStats.user2StolenFromUser1
 		};
-	}, [isOwnProfile, currentUser, user, userHexagonsData, currentUserHexagonsData]);
+	}, [isOwnProfile, currentUser, user, versusStatsData, userHexagonsData, stats]);
 
 	// Fetch rival user data when stats are available
 	useEffect(() => {
@@ -231,7 +205,7 @@ export function ProfilePage() {
 						currentUserName={currentUser.profile?.firstname || 'You'}
 						currentUserTotalHexagons={versusStats?.currentUserTotalHexagons || 0}
 						currentUserStolenFromProfile={versusStats?.currentUserStolenFromProfile || 0}
-						loading={userHexagonsLoading || currentUserHexagonsLoading}
+						loading={userHexagonsLoading || versusStatsLoading}
 					/>
 				)}
 
@@ -240,7 +214,6 @@ export function ProfilePage() {
 					ogHexagons={stats?.ogHexagons || 0}
 					conqueredHexagons={stats?.conqueredHexagons || 0}
 					cleanTerritory={stats?.cleanTerritory || 0}
-					revengeCaptures={stats?.revengeCaptures || 0}
 					totalHexagons={stats?.totalHexagons || 0}
 					loading={userHexagonsLoading}
 				/>

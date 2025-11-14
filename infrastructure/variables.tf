@@ -70,3 +70,17 @@ variable "admin_strava_id" {
   type        = string
   sensitive   = true
 }
+
+variable "sentry_dsn_backend" {
+  description = "Sentry DSN for backend error tracking (optional)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "sentry_dsn_frontend" {
+  description = "Sentry DSN for frontend error tracking (optional)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}

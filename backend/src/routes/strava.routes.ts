@@ -20,10 +20,11 @@ import {
 	sendActivityProcessedNotification,
 	sendActivityProcessingErrorNotification,
 } from '../services/slack.service';
+import { authLimiter, activityProcessingLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
 
-router.get('/api/strava/auth', (req: Request, res: Response) => {
+router.get('/api/strava/auth', authLimiter, (req: Request, res: Response) => {
 	const clientId = process.env.STRAVA_CLIENT_ID;
 	const redirectUri = process.env.FRONTEND_URL;
 	const scope = 'read,activity:read_all';
@@ -33,7 +34,7 @@ router.get('/api/strava/auth', (req: Request, res: Response) => {
 	res.json({ authUrl });
 });
 
-router.post('/api/strava/callback', async (req: Request, res: Response) => {
+router.post('/api/strava/callback', authLimiter, async (req: Request, res: Response) => {
 	try {
 		const { code, scope } = req.body;
 
@@ -426,6 +427,7 @@ router.delete(
 
 router.post(
 	'/api/strava/process-activity',
+	activityProcessingLimiter,
 	authenticateToken,
 	async (req: AuthRequest, res: Response) => {
 		const { activityId, source = 'manual' } = req.body;
@@ -519,6 +521,7 @@ router.get('/api/auth/me', authenticateToken, async (req: AuthRequest, res: Resp
 
 router.post(
 	'/api/auth/refresh-token',
+	authLimiter,
 	authenticateToken,
 	async (req: AuthRequest, res: Response) => {
 		try {

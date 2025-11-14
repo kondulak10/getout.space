@@ -12,3 +12,7 @@ jwt_secret                    = "your_64_char_hex_jwt_secret"
 encryption_key                = "your_64_char_hex_encryption_key"
 slack_webhook_url             = "https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
 mapbox_token                  = "your_mapbox_access_token"
+admin_strava_id               = "your_strava_user_id"
+
+# Sentry Error Tracking (optional)
+sentry_dsn_backend            = "https://your_backend_dsn@o123.ingest.sentry.io/456"

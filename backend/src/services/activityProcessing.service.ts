@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import polyline from '@mapbox/polyline';
 import * as h3 from 'h3-js';
+import * as Sentry from '@sentry/node';
 import { Activity, IActivity } from '../models/Activity';
 import { Hexagon, IHexagon } from '../models/Hexagon';
 import { IUser } from '../models/User';
@@ -44,6 +45,13 @@ export async function processActivity(
 	user: IUser,
 	userId: string
 ): Promise<ProcessActivityResult> {
+	// Set user context for error tracking
+	Sentry.setUser({
+		id: userId,
+		username: `${user.stravaProfile.firstname} ${user.stravaProfile.lastname}`,
+		stravaId: user.stravaId.toString(),
+	});
+
 	const session = await mongoose.startSession();
 	session.startTransaction();
 
@@ -214,6 +222,17 @@ export async function processActivity(
 	} catch (error: unknown) {
 		await session.abortTransaction();
 		console.error('❌ Error processing activity:', error);
+
+		// Add extra context to Sentry
+		Sentry.setContext('activity', {
+			stravaActivityId,
+			userId,
+			userName: `${user.stravaProfile.firstname} ${user.stravaProfile.lastname}`,
+		});
+
+		// Capture the error in Sentry
+		Sentry.captureException(error);
+
 		throw error instanceof Error ? error : new Error('Unknown error occurred');
 	} finally {
 		session.endSession();
