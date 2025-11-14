@@ -333,11 +333,6 @@ query HexagonsStolenFromUser($userId: ID!) {
 		hexagonId
 		currentOwnerId
 		currentOwnerStravaId
-		captureHistory {
-			userId
-			stravaId
-			capturedAt
-		}
 	}
 }
 

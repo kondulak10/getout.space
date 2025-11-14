@@ -28,6 +28,10 @@ export interface IHexagon extends Document {
 	firstCapturedBy: Types.ObjectId;
 	lastCapturedAt: Date;
 
+	// Denormalized field for efficient "stolen from" queries
+	// Stores the userId of the immediate previous owner (last entry in captureHistory)
+	lastPreviousOwnerId?: Types.ObjectId;
+
 	activityType: string;
 	routeType?: 'line' | 'area';
 
@@ -105,6 +109,12 @@ const hexagonSchema = new Schema<IHexagon>(
 		routeType: {
 			type: String,
 			enum: ['line', 'area'],
+		},
+		lastPreviousOwnerId: {
+			type: Schema.Types.ObjectId,
+			ref: 'User',
+			required: false,
+			index: true,
 		},
 		captureHistory: {
 			type: [

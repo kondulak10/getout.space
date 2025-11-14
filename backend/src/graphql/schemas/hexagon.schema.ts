@@ -27,6 +27,7 @@ export const hexagonSchema = gql`
 		firstCapturedAt: Date!
 		firstCapturedBy: User
 		lastCapturedAt: Date!
+		lastPreviousOwnerId: ID
 		activityType: String!
 		routeType: String
 		captureHistory: [CaptureHistoryEntry!]!

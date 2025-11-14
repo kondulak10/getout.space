@@ -100,35 +100,27 @@ export function ProfilePage() {
 		const profileHexagons = userHexagonsData?.userHexagons || [];
 		const currentUserHexagons = currentUserHexagonsData?.userHexagons || [];
 
-		// Count hexagons where profile user captured from current user
+		// Count hexagons where profile user DIRECTLY captured from current user
 		let profileStolenFromCurrent = 0;
 		profileHexagons.forEach((hex) => {
 			if (hex.captureHistory && hex.captureHistory.length > 0) {
-				// Check if current user appears in capture history
-				const hasCurrentUser = hex.captureHistory.some((entry) => entry.userId === currentUser.id);
-				if (hasCurrentUser) {
+				// Check if current user is the LAST entry in capture history (immediate previous owner)
+				const lastEntry = hex.captureHistory[hex.captureHistory.length - 1];
+				if (lastEntry?.userId === currentUser.id) {
 					profileStolenFromCurrent++;
 				}
 			}
-			// Also check if current user was first to capture but profile user now owns it
-			if (hex.firstCapturedBy?.id === currentUser.id && hex.currentOwnerId === user.id) {
-				profileStolenFromCurrent++;
-			}
 		});
 
-		// Count hexagons where current user captured from profile user
+		// Count hexagons where current user DIRECTLY captured from profile user
 		let currentUserStolenFromProfile = 0;
 		currentUserHexagons.forEach((hex) => {
 			if (hex.captureHistory && hex.captureHistory.length > 0) {
-				// Check if profile user appears in capture history
-				const hasProfileUser = hex.captureHistory.some((entry) => entry.userId === user.id);
-				if (hasProfileUser) {
+				// Check if profile user is the LAST entry in capture history (immediate previous owner)
+				const lastEntry = hex.captureHistory[hex.captureHistory.length - 1];
+				if (lastEntry?.userId === user.id) {
 					currentUserStolenFromProfile++;
 				}
-			}
-			// Also check if profile user was first to capture but current user now owns it
-			if (hex.firstCapturedBy?.id === user.id && hex.currentOwnerId === currentUser.id) {
-				currentUserStolenFromProfile++;
 			}
 		});
 

@@ -1,7 +1,10 @@
 import { Request, Response, Router } from 'express';
 import { User } from '../models/User';
 import { processActivity } from '../services/activityProcessing.service';
-import { sendSlackNotification } from '../services/slack.service';
+import {
+	sendActivityProcessedNotification,
+	sendActivityProcessingErrorNotification,
+} from '../services/slack.service';
 
 const router = Router();
 
@@ -93,36 +96,54 @@ function broadcastToClients(event: StravaWebhookEvent) {
 }
 
 async function handleNewActivity(stravaOwnerId: number, stravaActivityId: number) {
+	let user;
+
 	try {
 		console.log(`🏃 Processing new activity ${stravaActivityId} for Strava user ${stravaOwnerId}`);
 
-		const user = await User.findOne({ stravaId: stravaOwnerId });
+		user = await User.findOne({ stravaId: stravaOwnerId });
 		if (!user) {
 			console.error(`❌ User not found for Strava ID: ${stravaOwnerId}`);
 			return;
 		}
 
-		const result = await processActivity(stravaActivityId, user, user._id.toString());
+		// Helper to build notification params
+		const buildNotificationParams = () => ({
+			userName: `${user!.stravaProfile.firstname} ${user!.stravaProfile.lastname}`,
+			userStravaId: user!.stravaId,
+			userId: user!._id.toString(),
+			stravaActivityId,
+			source: 'webhook' as const,
+		});
 
-		const message = [
-			`🎉 *New Activity Processed!*`,
-			`👤 User: ${user.stravaProfile.firstname} ${user.stravaProfile.lastname}`,
-			`🆔 User ID: ${user._id}`,
-			`🔗 Strava Profile: <https://www.strava.com/athletes/${user.stravaId}|${user.stravaId}>`,
-			`🏃 Activity: ${result.activity.name}`,
-			`🔗 Strava Activity: <https://www.strava.com/activities/${stravaActivityId}|${stravaActivityId}>`,
-			`📏 Distance: ${(result.activity.distance / 1000).toFixed(2)} km`,
-			`🔷 Hexagons: ${result.hexagons.created} created, ${result.hexagons.updated} updated`,
-		].join('\n');
+		await processActivity(stravaActivityId, user, user._id.toString());
 
-		await sendSlackNotification(message);
+		await sendActivityProcessedNotification(buildNotificationParams());
 
 		console.log(`✅ Successfully processed activity ${stravaActivityId}`);
 	} catch (error) {
 		console.error(`❌ Failed to process activity ${stravaActivityId}:`, error);
-		await sendSlackNotification(
-			`❌ *Failed to process activity*\n🔗 Strava Activity: <https://www.strava.com/activities/${stravaActivityId}|${stravaActivityId}>\n🔗 Strava Athlete: <https://www.strava.com/athletes/${stravaOwnerId}|${stravaOwnerId}>\nError: ${error instanceof Error ? error.message : 'Unknown error'}`
-		);
+
+		const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+		const isNonRunningActivity = errorMessage.includes('Only running activities');
+
+		// Silently fail for non-running activities
+		if (isNonRunningActivity) {
+			console.log('ℹ️ Skipping non-running activity');
+			return;
+		}
+
+		// For real errors, send Slack notification if user is available
+		if (user) {
+			await sendActivityProcessingErrorNotification({
+				userName: `${user.stravaProfile.firstname} ${user.stravaProfile.lastname}`,
+				userStravaId: user.stravaId,
+				userId: user._id.toString(),
+				stravaActivityId,
+				source: 'webhook',
+				error: errorMessage,
+			});
+		}
 	}
 }
 

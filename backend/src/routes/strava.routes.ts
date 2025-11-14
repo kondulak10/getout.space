@@ -15,7 +15,11 @@ import { Activity } from '../models/Activity';
 import { processAndUploadProfileImage } from '../utils/imageProcessing';
 import { geocodeToHex } from '../utils/geocoding';
 import { getValidAccessToken } from '../services/strava.service';
-import { sendSlackNotification } from '../services/slack.service';
+import {
+	sendNewUserSignupNotification,
+	sendActivityProcessedNotification,
+	sendActivityProcessingErrorNotification,
+} from '../services/slack.service';
 
 const router = Router();
 
@@ -187,24 +191,11 @@ router.post('/api/strava/callback', async (req: Request, res: Response) => {
 		}
 
 		if (isNewUser) {
-			const locationParts = [
-				user.stravaProfile.city,
-				user.stravaProfile.state,
-				user.stravaProfile.country,
-			].filter(Boolean);
-			const location = locationParts.length > 0 ? locationParts.join(', ') : 'Unknown';
-			const stravaProfileUrl = `https://www.strava.com/athletes/${user.stravaId}`;
-			const adminBadge = user.isAdmin ? ' 👑 (ADMIN)' : '';
-
-			const message = `🎉 *New User Signup!*${adminBadge}
-
-*Name:* ${user.stravaProfile.firstname} ${user.stravaProfile.lastname}
-*Username:* ${user.stravaProfile.username || 'N/A'}
-*Strava Profile:* ${stravaProfileUrl}
-*Location:* ${location}
-*Initial Hex:* ${user.lastHex || 'Not set'}`;
-
-			await sendSlackNotification(message);
+			await sendNewUserSignupNotification({
+				userName: `${user.stravaProfile.firstname} ${user.stravaProfile.lastname}`,
+				userStravaId: user.stravaId,
+				userId: tempUserId,
+			});
 		}
 
 		const token = generateToken(user);
@@ -437,15 +428,26 @@ router.post(
 	'/api/strava/process-activity',
 	authenticateToken,
 	async (req: AuthRequest, res: Response) => {
+		const { activityId, source = 'manual' } = req.body;
+		const currentUser = req.user!;
+
+		if (!activityId) {
+			return res.status(400).json({ error: 'activityId is required' });
+		}
+
+		// Helper to build notification params
+		const buildNotificationParams = () => ({
+			userName: `${currentUser.stravaProfile.firstname} ${currentUser.stravaProfile.lastname}`,
+			userStravaId: currentUser.stravaId,
+			userId: req.userId!,
+			stravaActivityId: activityId,
+			source: source as 'manual' | 'after_signup',
+		});
+
 		try {
-			const { activityId } = req.body;
-			const currentUser = req.user!;
-
-			if (!activityId) {
-				return res.status(400).json({ error: 'activityId is required' });
-			}
-
 			const result = await processActivity(activityId, currentUser, req.userId!);
+
+			await sendActivityProcessedNotification(buildNotificationParams());
 
 			res.json({
 				success: true,
@@ -455,8 +457,18 @@ router.post(
 			console.error('❌ Error processing activity:', error);
 
 			const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+			const isNonRunningActivity = errorMessage.includes('Only running activities');
 
-			if (errorMessage.includes('Only running activities')) {
+			// Send Slack notification for real errors (not non-running activities)
+			if (!isNonRunningActivity) {
+				await sendActivityProcessingErrorNotification({
+					...buildNotificationParams(),
+					error: errorMessage,
+				});
+			}
+
+			// Return appropriate error response
+			if (isNonRunningActivity) {
 				return res.status(400).json({
 					error: 'Only running activities are allowed',
 					details: errorMessage,

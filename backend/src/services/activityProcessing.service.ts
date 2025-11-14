@@ -320,6 +320,8 @@ async function processHexagons(
 						},
 					};
 					updateDoc.$inc = { captureCount: 1 };
+					// Set lastPreviousOwnerId for efficient "stolen from" queries
+					updateDoc.$set.lastPreviousOwnerId = existingHex.currentOwnerId;
 
 					const previousOwnerId = existingHex.currentOwnerId.toString();
 					affectedUsers.set(previousOwnerId, (affectedUsers.get(previousOwnerId) || 0) + 1);

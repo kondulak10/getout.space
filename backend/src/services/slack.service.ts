@@ -1,3 +1,65 @@
+// Types
+type ActivityProcessingSource = 'webhook' | 'after_signup' | 'manual';
+
+interface BaseUserParams {
+	userName: string;
+	userStravaId: number;
+	userId: string;
+}
+
+interface ActivityProcessedParams extends BaseUserParams {
+	stravaActivityId: number;
+	source: ActivityProcessingSource;
+}
+
+interface NewUserSignupParams extends BaseUserParams {}
+
+interface ActivityProcessingErrorParams extends ActivityProcessedParams {
+	error: string;
+}
+
+// Constants
+const ACTIVITY_SOURCE_EMOJIS: Record<ActivityProcessingSource, string> = {
+	webhook: '🔔',
+	after_signup: '🎯',
+	manual: '🔧',
+} as const;
+
+const NEW_USER_EMOJI = '👋';
+
+// Helper functions
+function buildGetoutProfileUrl(userId: string): string {
+	return `https://getout.space/profile/${userId}`;
+}
+
+function buildStravaProfileUrl(stravaId: number): string {
+	return `https://www.strava.com/athletes/${stravaId}`;
+}
+
+function buildStravaActivityUrl(activityId: number): string {
+	return `https://www.strava.com/activities/${activityId}`;
+}
+
+function buildUserLinks(params: BaseUserParams): string {
+	const { userName, userStravaId, userId } = params;
+	const getoutProfileUrl = buildGetoutProfileUrl(userId);
+	const stravaProfileUrl = buildStravaProfileUrl(userStravaId);
+
+	return `👤 <${getoutProfileUrl}|${userName}>
+🔗 <${stravaProfileUrl}|Strava Profile>`;
+}
+
+function buildActivityLinks(params: ActivityProcessedParams): string {
+	const { userName, userStravaId, userId, stravaActivityId } = params;
+	const getoutProfileUrl = buildGetoutProfileUrl(userId);
+	const stravaProfileUrl = buildStravaProfileUrl(userStravaId);
+	const stravaActivityUrl = buildStravaActivityUrl(stravaActivityId);
+
+	return `👤 <${getoutProfileUrl}|${userName}>
+🔗 <${stravaProfileUrl}|Strava Profile> | <${stravaActivityUrl}|Activity>`;
+}
+
+// Main notification sender
 export async function sendSlackNotification(message: string): Promise<void> {
 	const webhookUrl = process.env.SLACK_WEBHOOK_URL;
 
@@ -23,4 +85,35 @@ export async function sendSlackNotification(message: string): Promise<void> {
 	} catch (error) {
 		console.error('❌ Failed to send Slack notification:', error);
 	}
+}
+
+// Notification functions
+export async function sendNewUserSignupNotification(params: NewUserSignupParams): Promise<void> {
+	const message = `${NEW_USER_EMOJI} *New User Signup!*
+${buildUserLinks(params)}`;
+
+	await sendSlackNotification(message);
+}
+
+export async function sendActivityProcessedNotification(
+	params: ActivityProcessedParams
+): Promise<void> {
+	const emoji = ACTIVITY_SOURCE_EMOJIS[params.source];
+
+	const message = `${emoji} *Activity Processed*
+${buildActivityLinks(params)}`;
+
+	await sendSlackNotification(message);
+}
+
+export async function sendActivityProcessingErrorNotification(
+	params: ActivityProcessingErrorParams
+): Promise<void> {
+	const emoji = ACTIVITY_SOURCE_EMOJIS[params.source];
+
+	const message = `${emoji} ❌ *Activity Processing Failed*
+${buildActivityLinks(params)}
+⚠️ Error: ${params.error}`;
+
+	await sendSlackNotification(message);
 }

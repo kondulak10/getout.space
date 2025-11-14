@@ -191,11 +191,13 @@ export const hexagonResolvers = {
 			requireAuth(context);
 
 			try {
-				// Find hexagons where the user appears in captureHistory but is NOT the current owner
+				// Find hexagons where the user was the IMMEDIATE previous owner (using indexed field)
+				// This ensures we only count direct steals, not indirect ones through multiple users
 				const hexagons = await Hexagon.find({
-					currentOwnerId: { $ne: userId },
-					'captureHistory.userId': userId,
-				}).sort({ lastCapturedAt: -1 });
+					lastPreviousOwnerId: userId,
+				})
+					.select('-captureHistory') // Exclude captureHistory for performance
+					.sort({ lastCapturedAt: -1 });
 
 				return hexagons;
 			} catch (error) {
@@ -399,6 +401,9 @@ export const hexagonResolvers = {
 							activityType: existingHex.activityType,
 						};
 						existingHex.captureHistory.push(historyEntry);
+
+						// Set lastPreviousOwnerId for efficient "stolen from" queries
+						existingHex.lastPreviousOwnerId = existingHex.currentOwnerId;
 
 						existingHex.currentOwnerId = currentUser._id;
 						existingHex.currentOwnerStravaId = currentUser.stravaId;
