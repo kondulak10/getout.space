@@ -26,7 +26,7 @@ export function StravaSyncBadge() {
 
 				{/* Text */}
 				<div className="flex flex-col leading-tight">
-					<span className="text-xs md:text-sm font-bold text-gray-900 tracking-tight">
+					<span className="text-xs md:text-sm font-bold text-gray-900 tracking-tight whitespace-nowrap">
 						AUTO sync with Strava!
 					</span>
 					<span className="text-[10px] md:text-xs font-medium text-gray-500">
