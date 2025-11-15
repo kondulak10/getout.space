@@ -1,3 +1,4 @@
+import { StravaSyncBadge } from "@/components/StravaSyncBadge";
 import { useStravaAuth } from "@/hooks/useStravaAuth";
 
 export function LandingOverlay() {
@@ -5,13 +6,8 @@ export function LandingOverlay() {
 
 	return (
 		<div className="absolute inset-0 z-20 flex items-center justify-center p-4">
+			<StravaSyncBadge />
 			<div className="max-w-6xl w-full space-y-12 text-center">
-				<div className="px-4 py-2 bg-amber-500/90 backdrop-blur-sm rounded-lg shadow-lg border border-amber-400 inline-block mx-auto">
-					<p className="text-sm font-medium text-black">
-						🔒 Invite-Only • Currently in Testing Mode
-					</p>
-				</div>
-
 				<div className="space-y-6">
 					<h1
 						className="text-7xl md:text-9xl font-black text-white tracking-tight uppercase flex items-center justify-center gap-2"
@@ -26,7 +22,7 @@ export function LandingOverlay() {
 						Turn every run into conquered territory
 					</p>
 					<p className="text-base md:text-lg text-gray-400 max-w-2xl mx-auto">
-						Automatic sync from Strava, battle your friends or fellow runners
+						Battle your friends or fellow runners
 					</p>
 				</div>
 

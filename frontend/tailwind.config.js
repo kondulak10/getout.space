@@ -55,10 +55,26 @@ export default {
         holographic: {
           '0%, 100%': { backgroundPosition: '0% 50%' },
           '50%': { backgroundPosition: '100% 50%' }
+        },
+        'bounce-slow': {
+          '0%, 100%': {
+            transform: 'translateY(-5%)',
+            animationTimingFunction: 'cubic-bezier(0.8, 0, 1, 1)'
+          },
+          '50%': {
+            transform: 'translateY(0)',
+            animationTimingFunction: 'cubic-bezier(0, 0, 0.2, 1)'
+          }
+        },
+        'spin-slow': {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(360deg)' }
         }
       },
       animation: {
-        holographic: 'holographic 3s ease infinite'
+        holographic: 'holographic 3s ease infinite',
+        'bounce-slow': 'bounce-slow 2s ease-in-out infinite',
+        'spin-slow': 'spin-slow 3s linear infinite'
       }
     }
   },
