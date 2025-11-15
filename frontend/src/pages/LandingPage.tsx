@@ -6,7 +6,7 @@ export function LandingPage() {
 	const { showLoading } = useAppLoadingState();
 
 	return (
-		<div className="relative w-full h-screen bg-black overflow-hidden">
+		<div className="relative w-full h-dvh md:h-screen bg-black overflow-hidden">
 			<div className="absolute inset-0">
 				<div className="absolute inset-0 opacity-10 bg-noise"></div>
 
@@ -38,8 +38,8 @@ export function LandingPage() {
 				}
 
 				@keyframes pulse-glow {
-					0%, 100% { opacity: 0.15; }
-					50% { opacity: 0.3; }
+					0%, 100% { opacity: 0.2; }
+					50% { opacity: 0.35; }
 				}
 
 				@keyframes drift {
@@ -58,9 +58,9 @@ export function LandingPage() {
 					position: absolute;
 					inset: 0;
 					background-image:
-						linear-gradient(30deg, transparent 48%, rgba(251, 146, 60, 0.12) 49%, rgba(251, 146, 60, 0.12) 51%, transparent 52%),
-						linear-gradient(150deg, transparent 48%, rgba(251, 146, 60, 0.12) 49%, rgba(251, 146, 60, 0.12) 51%, transparent 52%),
-						linear-gradient(90deg, transparent 48%, rgba(251, 146, 60, 0.12) 49%, rgba(251, 146, 60, 0.12) 51%, transparent 52%);
+						linear-gradient(30deg, transparent 48%, rgba(251, 146, 60, 0.10) 49%, rgba(251, 146, 60, 0.10) 51%, transparent 52%),
+						linear-gradient(150deg, transparent 48%, rgba(251, 146, 60, 0.10) 49%, rgba(251, 146, 60, 0.10) 51%, transparent 52%),
+						linear-gradient(90deg, transparent 48%, rgba(251, 146, 60, 0.10) 49%, rgba(251, 146, 60, 0.10) 51%, transparent 52%);
 					background-size: 120px 208px, 120px 208px, 120px 208px;
 					background-position: 0 0, 0 0, 60px 104px;
 					animation: pulse-glow 6s ease-in-out infinite;
@@ -74,8 +74,8 @@ export function LandingPage() {
 					position: absolute;
 					width: 80px;
 					height: 92px;
-					opacity: 0.15;
-					background: linear-gradient(135deg, rgba(251, 146, 60, 0.3), rgba(249, 115, 22, 0.2));
+					opacity: 0.25;
+					background: linear-gradient(135deg, rgba(251, 146, 60, 0.4), rgba(249, 115, 22, 0.3));
 					clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
 					filter: blur(1px);
 				}
