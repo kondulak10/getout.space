@@ -70,6 +70,13 @@ export function ProfilePage() {
 		fetchPolicy: 'cache-and-network'
 	});
 
+	// Fetch current user's public stats when viewing another profile
+	const { data: currentUserPublicStatsData, loading: currentUserPublicStatsLoading } = useQuery(UserPublicStatsDocument, {
+		variables: { userId: currentUser?.id || '' },
+		skip: !currentUser?.id || isOwnProfile,
+		fetchPolicy: 'cache-and-network'
+	});
+
 	// Lazy query for fetching rival users
 	const [fetchRivalUsers, { data: rivalUsersData }] = useLazyQuery(UsersByIdsDocument);
 
@@ -90,11 +97,11 @@ export function ProfilePage() {
 
 		return {
 			profileUserTotalHexagons: userHexagonsData?.userHexagons?.length || 0,
-			currentUserTotalHexagons: stats?.totalHexagons || 0,
+			currentUserTotalHexagons: currentUserPublicStatsData?.userPublicStats?.totalHexagons || 0,
 			profileStolenFromCurrent: versusStatsData.versusStats.user1StolenFromUser2,
 			currentUserStolenFromProfile: versusStatsData.versusStats.user2StolenFromUser1
 		};
-	}, [isOwnProfile, currentUser, user, versusStatsData, userHexagonsData, stats]);
+	}, [isOwnProfile, currentUser, user, versusStatsData, userHexagonsData, currentUserPublicStatsData]);
 
 	// Fetch rival user data when stats are available
 	useEffect(() => {
@@ -194,7 +201,7 @@ export function ProfilePage() {
 						currentUserName={currentUser.profile?.firstname || 'You'}
 						currentUserTotalHexagons={versusStats?.currentUserTotalHexagons || 0}
 						currentUserStolenFromProfile={versusStats?.currentUserStolenFromProfile || 0}
-						loading={userHexagonsLoading || versusStatsLoading}
+						loading={userHexagonsLoading || versusStatsLoading || currentUserPublicStatsLoading}
 					/>
 				)}
 

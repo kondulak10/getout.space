@@ -3,8 +3,8 @@
  * Generated at build time by scripts/generate-version.js
  */
 
-export const APP_VERSION = '1411-0952';
-export const BUILD_TIMESTAMP = '2025-11-14T08:52:14.290Z';
+export const APP_VERSION = '1511-0539';
+export const BUILD_TIMESTAMP = '2025-11-15T04:39:11.519Z';
 
 export const getVersionString = () => APP_VERSION;
 

@@ -305,7 +305,8 @@ export const hexagonResolvers = {
 					})
 				);
 
-				return results;
+				// Filter out entries with null users (deleted users)
+				return results.filter((entry) => entry.user !== null);
 			} catch (error) {
 				throw new GraphQLError('Failed to fetch regional active leaders');
 			}
@@ -349,7 +350,8 @@ export const hexagonResolvers = {
 					})
 				);
 
-				return results;
+				// Filter out entries with null users (deleted users)
+				return results.filter((entry) => entry.user !== null);
 			} catch (error) {
 				throw new GraphQLError('Failed to fetch regional OG discoverers');
 			}

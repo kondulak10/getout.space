@@ -36,7 +36,7 @@ export const hexagonSchema = gql`
 	}
 
 	type LeaderboardEntry {
-		user: User!
+		user: User
 		hexCount: Int!
 	}
 
