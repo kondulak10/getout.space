@@ -123,9 +123,10 @@ export function useMapShareImage() {
 					// Detect if we're on any mobile device
 					const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-					// Add cache-busting for CDN/S3 images on mobile to avoid CORS issues
+					// Add cache-busting for CDN/S3 images to avoid CORS issues on ALL platforms
+					// Without this, browsers may use cached versions with incorrect/missing CORS headers
 					// Check for both S3 and CloudFront URLs
-					const needsCacheBust = isMobile && (
+					const needsCacheBust = (
 						profileImageUrl.includes('s3.amazonaws.com') ||
 						profileImageUrl.includes('cdn.getout.space')
 					);
@@ -169,9 +170,15 @@ export function useMapShareImage() {
 
 					// CRITICAL: Explicitly decode the image before drawing to canvas
 					// This ensures the image is fully decoded and ready for canvas rendering
-					// Without this, mobile browsers (especially iOS) may fail to draw the image
-					await img.decode();
-					console.log('✅ Profile image decoded successfully');
+					// Mobile browsers (especially iOS Safari) require this, but it's good practice for all browsers
+					// Wrap in try-catch as older browsers may not support decode()
+					try {
+						await img.decode();
+						console.log('✅ Profile image decoded successfully');
+					} catch (decodeError) {
+						// decode() not supported or failed, but image is loaded via onload handler
+						console.log('ℹ️ Image decode not supported or failed, using loaded image', decodeError);
+					}
 
 					const profileSize = 120;
 					const profileX = centerX;
