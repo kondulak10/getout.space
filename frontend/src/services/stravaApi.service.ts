@@ -62,9 +62,32 @@ export interface AuthResponse {
 	statusCode?: number;
 }
 export async function getStravaAuthUrl(): Promise<string> {
-	const response = await fetch(`${BACKEND_URL}/api/strava/auth`);
-	const data = await response.json();
-	return data.authUrl;
+	try {
+		console.log('🔗 Fetching Strava auth URL from:', `${BACKEND_URL}/api/strava/auth`);
+		const response = await fetch(`${BACKEND_URL}/api/strava/auth`);
+
+		console.log('📡 Response status:', response.status, response.ok);
+
+		if (!response.ok) {
+			const errorText = await response.text();
+			console.error('❌ Backend returned error:', errorText);
+			throw new Error(`Failed to get auth URL: ${response.status}`);
+		}
+
+		const data = await response.json();
+		console.log('✅ Received data:', data);
+
+		if (!data.authUrl || typeof data.authUrl !== 'string') {
+			console.error('❌ Invalid authUrl received:', data.authUrl);
+			throw new Error('Invalid authentication URL received from server');
+		}
+
+		console.log('🎯 Auth URL:', data.authUrl);
+		return data.authUrl;
+	} catch (error) {
+		console.error('❌ getStravaAuthUrl failed:', error);
+		throw error;
+	}
 }
 export async function exchangeCodeForToken(code: string, scope: string): Promise<AuthResponse> {
 	const response = await fetch(`${BACKEND_URL}/api/strava/callback`, {

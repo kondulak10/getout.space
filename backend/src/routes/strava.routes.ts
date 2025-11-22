@@ -29,6 +29,17 @@ router.get('/api/strava/auth', authLimiter, (req: Request, res: Response) => {
 	const redirectUri = process.env.FRONTEND_URL;
 	const scope = 'read,activity:read_all';
 
+	if (!clientId || !redirectUri) {
+		console.error('❌ Missing Strava configuration:', {
+			hasClientId: !!clientId,
+			hasRedirectUri: !!redirectUri,
+		});
+		return res.status(500).json({
+			error: 'Strava authentication is not properly configured',
+			details: 'Missing required environment variables. Please spam jan.kondula@gmail.com',
+		});
+	}
+
 	const authUrl = `https://www.strava.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&approval_prompt=auto&scope=${scope}`;
 
 	res.json({ authUrl });

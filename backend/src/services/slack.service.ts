@@ -25,7 +25,7 @@ const ACTIVITY_SOURCE_EMOJIS: Record<ActivityProcessingSource, string> = {
 	manual: '🔧',
 } as const;
 
-const NEW_USER_EMOJI = '👋';
+const NEW_USER_EMOJI = '🎉';
 
 // Helper functions
 function buildGetoutProfileUrl(userId: string): string {

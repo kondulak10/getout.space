@@ -32,9 +32,32 @@ export function useStravaAuth(options?: UseStravaAuthOptions) {
 		}
 	}, []);
 
-	const loginWithStrava = async () => {
-		const authUrl = await getStravaAuthUrl();
-		window.location.href = authUrl;
+	const loginWithStrava = () => {
+		console.log('🚀 Starting Strava login...');
+
+		// Safari fix: Don't use async/await - use .then() to keep the user gesture context
+		getStravaAuthUrl()
+			.then((authUrl) => {
+				console.log('🔀 Redirecting to:', authUrl);
+				window.location.href = authUrl;
+			})
+			.catch((error) => {
+				console.error('❌ Login failed:', error);
+				const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+				toast.error('Login failed! Please spam jan.kondula@gmail.com', {
+					description: `Error: ${errorMessage}. Jan clearly didn't fix this properly.`,
+					duration: 10000,
+				});
+
+				// Also show a browser alert for extra visibility
+				alert(
+					'🚨 Login Failed!\n\n' +
+					`Error: ${errorMessage}\n\n` +
+					'Please spam jan.kondula@gmail.com because he failed to fix the login properly.\n\n' +
+					'(Check the browser console for technical details)'
+				);
+			});
 	};
 
 	const autoProcessLatestRuns = async () => {
