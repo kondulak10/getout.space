@@ -3,11 +3,11 @@ import rateLimit from 'express-rate-limit';
 /**
  * GLOBAL RATE LIMITER
  * Applies to ALL endpoints as baseline protection
- * 300 requests per 15 minutes per IP
+ * 1000 requests per 15 minutes per IP (~66/min for normal usage)
  */
 export const globalLimiter = rateLimit({
 	windowMs: 15 * 60 * 1000, // 15 minutes
-	max: 300, // 300 requests per window
+	max: 1000, // 1000 requests per window
 	message: {
 		error: 'Too many requests from this IP, please try again later.',
 		retryAfter: '15 minutes',
@@ -21,11 +21,11 @@ export const globalLimiter = rateLimit({
 /**
  * AUTH RATE LIMITER
  * Protects login/signup endpoints from brute force
- * 10 requests per 15 minutes per IP
+ * 100 requests per 15 minutes per IP (accounts for shared IPs, debugging, mobile NAT)
  */
 export const authLimiter = rateLimit({
 	windowMs: 15 * 60 * 1000,
-	max: 10,
+	max: 100,
 	message: {
 		error: 'Too many authentication attempts, please try again later.',
 		retryAfter: '15 minutes',
@@ -43,11 +43,11 @@ export const authLimiter = rateLimit({
 /**
  * WEBHOOK RATE LIMITER
  * Protects webhook endpoint from spam
- * 300 requests per 15 minutes per IP
+ * 1000 requests per 15 minutes per IP (Strava can send bursts)
  */
 export const webhookLimiter = rateLimit({
 	windowMs: 15 * 60 * 1000,
-	max: 300,
+	max: 1000,
 	message: {
 		error: 'Too many webhook requests, please try again later.',
 	},
@@ -58,11 +58,11 @@ export const webhookLimiter = rateLimit({
 /**
  * ACTIVITY PROCESSING RATE LIMITER
  * Prevents spam processing of activities
- * 30 requests per 15 minutes per user
+ * 200 requests per 15 minutes per user (allows batch processing old activities)
  */
 export const activityProcessingLimiter = rateLimit({
 	windowMs: 15 * 60 * 1000,
-	max: 30,
+	max: 200,
 	message: {
 		error: 'Too many activity processing requests, please slow down.',
 		retryAfter: '15 minutes',
@@ -80,11 +80,11 @@ export const activityProcessingLimiter = rateLimit({
 /**
  * SSE CONNECTION LIMITER
  * Prevents too many concurrent SSE connections
- * 5 connections per minute per IP
+ * 30 connections per minute per IP (allows page refreshes + multiple tabs)
  */
 export const sseLimiter = rateLimit({
 	windowMs: 60 * 1000, // 1 minute
-	max: 5,
+	max: 30,
 	message: {
 		error: 'Too many active connections, please close some tabs.',
 	},
@@ -95,11 +95,11 @@ export const sseLimiter = rateLimit({
 /**
  * GRAPHQL RATE LIMITER
  * General rate limiter for GraphQL endpoint
- * 60 requests per minute per user/IP
+ * 300 requests per minute per user/IP (allows heavy map usage - panning/zooming)
  */
 export const graphqlLimiter = rateLimit({
 	windowMs: 60 * 1000, // 1 minute
-	max: 60,
+	max: 300,
 	message: {
 		error: 'Too many GraphQL requests, please slow down.',
 	},
