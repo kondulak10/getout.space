@@ -472,9 +472,10 @@ router.post(
 
 			const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 			const isNonRunningActivity = errorMessage.includes('Only running activities');
+			const hasNoGPS = errorMessage.includes('no GPS data') || errorMessage.includes('summary_polyline missing');
 
-			// Send Slack notification for real errors (not non-running activities)
-			if (!isNonRunningActivity) {
+			// Send Slack notification for real errors (skip non-running activities and GPS-less activities)
+			if (!isNonRunningActivity && !hasNoGPS) {
 				await sendActivityProcessingErrorNotification({
 					...buildNotificationParams(),
 					error: errorMessage,
@@ -489,8 +490,11 @@ router.post(
 				});
 			}
 
-			if (errorMessage.includes('no GPS data')) {
-				return res.status(400).json({ error: errorMessage });
+			if (hasNoGPS) {
+				return res.status(400).json({
+					error: 'Activity has no GPS data',
+					details: errorMessage
+				});
 			}
 
 			if (errorMessage.includes('Strava API error')) {

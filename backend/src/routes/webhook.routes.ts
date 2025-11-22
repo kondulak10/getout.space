@@ -127,10 +127,11 @@ async function handleNewActivity(stravaOwnerId: number, stravaActivityId: number
 
 		const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 		const isNonRunningActivity = errorMessage.includes('Only running activities');
+		const hasNoGPS = errorMessage.includes('summary_polyline missing');
 
-		// Silently fail for non-running activities
-		if (isNonRunningActivity) {
-			console.log('ℹ️ Skipping non-running activity');
+		// Silently skip non-running activities and activities without GPS (treadmill runs, manual entries, etc.)
+		if (isNonRunningActivity || hasNoGPS) {
+			console.log(`ℹ️ Skipping activity: ${errorMessage}`);
 			return;
 		}
 
