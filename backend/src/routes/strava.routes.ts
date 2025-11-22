@@ -24,7 +24,8 @@ import { authLimiter, activityProcessingLimiter } from '../middleware/rateLimite
 
 const router = Router();
 
-router.get('/api/strava/auth', authLimiter, (req: Request, res: Response) => {
+// No authLimiter here - this just returns a URL, globalLimiter is sufficient
+router.get('/api/strava/auth', (req: Request, res: Response) => {
 	const clientId = process.env.STRAVA_CLIENT_ID;
 	const redirectUri = process.env.FRONTEND_URL;
 	const scope = 'read,activity:read_all';
