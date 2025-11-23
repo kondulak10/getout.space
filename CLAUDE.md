@@ -172,6 +172,15 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 - **mutations/:** Apollo mutations (useMutation hooks)
 - **schema.ts:** Generated TypeScript types from codegen
 
+**Styling Standards:**
+- **USE TAILWIND CSS** for all component styling
+- **DO NOT create CSS modules** (*.module.css files) - use Tailwind utility classes directly in JSX
+- Use Tailwind's arbitrary values `[property:value]` for custom styles (e.g., `[text-shadow:0_2px_4px_rgba(0,0,0,0.8)]`)
+- Use inline `style` prop only for dynamic values that can't be expressed in Tailwind classes
+- Leverage Tailwind's responsive prefixes (`md:`, `lg:`) for mobile-first design
+- Use `tailwind-merge` (via `clsx` or `cn` helper) when combining conditional classes
+- Reference tailwind.config.js for custom theme colors, animations, and design tokens
+
 ### Database Schema Details
 
 **Hexagon Document Fields:**
@@ -259,6 +268,15 @@ VITE_AMPLITUDE_API_KEY=  # Optional - Amplitude analytics for frontend event tra
 3. Check MongoDB directly for hexagon documents
 4. Verify Strava token hasn't expired: `getValidAccessToken()` auto-refreshes
 5. Use `node scripts/check-webhook.js` to verify webhook subscription
+
+### When Adding or Modifying UI Components:
+
+1. **Always use Tailwind CSS utility classes** - never create CSS modules
+2. Use Tailwind's arbitrary values for custom properties: `className="[text-shadow:0_2px_4px_rgba(0,0,0,0.8)]"`
+3. For responsive design, use Tailwind's breakpoint prefixes: `md:text-lg`, `lg:gap-4`
+4. For conditional classes, use template literals: `` className={`base-class ${condition ? 'true-class' : 'false-class'}`} ``
+5. Only use inline `style` prop for dynamic values (colors from API, calculated positions, etc.)
+6. Check tailwind.config.js for available custom colors, animations, and theme values
 
 ### Testing Locally with Strava Webhooks:
 

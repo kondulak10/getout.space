@@ -77,7 +77,8 @@
       "Bash(nul)",
       "WebFetch(domain:communityhub.strava.com)",
       "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\ANALYSIS_DOUBLE_AUTH_LOAD.md\")",
-      "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\components\\EmailCollectionOverlay.css\")"
+      "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\components\\EmailCollectionOverlay.css\")",
+      "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\components\\MapStats.module.css\")"
     ],
     "deny": [
       "Bash(npm run build:*)",

@@ -25,11 +25,15 @@ interface HexagonData {
 const STORAGE_KEY = "activity_profile_image_positions";
 export function useActivityProfileImages(
 	mapRef: React.RefObject<MapboxMap | null>,
-	hexagonsData: HexagonData[] | null
+	hexagonsData: HexagonData[] | null,
+	isReducedOpacity: boolean
 ) {
 	const { user } = useAuth();
 	const layersAddedRef = useRef<Set<string>>(new Set());
+	const currentUserLayersRef = useRef<Set<string>>(new Set());
 	const markersRef = useRef<mapboxgl.Marker[]>([]);
+
+	const imageOpacity = isReducedOpacity ? 0.5 : 0.9;
 	useEffect(() => {
 		const map = mapRef.current;
 		if (!map) {
@@ -58,10 +62,11 @@ export function useActivityProfileImages(
 				});
 			}
 			layersAddedRef.current.clear();
+			currentUserLayersRef.current.clear();
 		};
 		cleanupExistingLayers();
 		const onMapLoad = () => {
-			const addProfileImage = (hexagonId: string, imageUrl: string, uniqueId: string) => {
+			const addProfileImage = (hexagonId: string, imageUrl: string, uniqueId: string, isCurrentUser: boolean) => {
 				const layerId = `profile-image-${uniqueId}`;
 				const sourceId = `profile-image-source-${uniqueId}`;
 				if (layersAddedRef.current.has(layerId)) {
@@ -127,15 +132,19 @@ export function useActivityProfileImages(
 						map.on("error", errorHandler);
 					}
 					if (!map.getLayer(layerId)) {
+						const opacity = isCurrentUser ? 0.9 : imageOpacity;
 						map.addLayer({
 							id: layerId,
 							type: "raster",
 							source: sourceId,
 							paint: {
-								"raster-opacity": 0.9,
+								"raster-opacity": opacity,
 							},
 						});
 						layersAddedRef.current.add(layerId);
+						if (isCurrentUser) {
+							currentUserLayersRef.current.add(layerId);
+						}
 					} else {
 						map.moveLayer(layerId);
 					}
@@ -168,6 +177,7 @@ export function useActivityProfileImages(
 			Object.entries(userHexagons).forEach(([userId, userData]) => {
 				const { isPremium, imghex, hexagons: userHexes } = userData;
 				if (!imghex) return;
+				const isCurrentUser = userId === user?.id;
 				const activityHexagons: ActivityHexagons = {};
 				userHexes.forEach((hex: HexagonData) => {
 					if (hex.currentStravaActivityId) {
@@ -193,7 +203,7 @@ export function useActivityProfileImages(
 							const hexagonId = hexagons[index];
 							const uniqueId = `${userId}-${activityId}-${i}`;
 							const imageUrlWithCacheBust = `${imghex}?t=${cacheBustTimestamp}`;
-							addProfileImage(hexagonId, imageUrlWithCacheBust, uniqueId);
+							addProfileImage(hexagonId, imageUrlWithCacheBust, uniqueId, isCurrentUser);
 						}
 					});
 				} else {
@@ -206,7 +216,7 @@ export function useActivityProfileImages(
 						const hexagonId = selectedHexagons[activityId];
 						const uniqueId = `${userId}-${activityId}`;
 						const imageUrlWithCacheBust = `${imghex}?t=${cacheBustTimestamp}`;
-						addProfileImage(hexagonId, imageUrlWithCacheBust, uniqueId);
+						addProfileImage(hexagonId, imageUrlWithCacheBust, uniqueId, isCurrentUser);
 					});
 					localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedHexagons));
 				}
@@ -233,6 +243,27 @@ export function useActivityProfileImages(
 				});
 			}
 			layersAddedRef.current.clear();
+			currentUserLayersRef.current.clear();
 		};
-	}, [mapRef, hexagonsData, user?.profile.imghex]);
+	}, [mapRef, hexagonsData, user?.profile.imghex, imageOpacity]);
+
+	// Update layer opacity when isReducedOpacity changes (only for other users' images)
+	useEffect(() => {
+		const map = mapRef.current;
+		if (!map || layersAddedRef.current.size === 0) return;
+
+		layersAddedRef.current.forEach((layerId) => {
+			// Skip current user's layers - they always stay at full opacity
+			if (currentUserLayersRef.current.has(layerId)) return;
+
+			try {
+				if (map.getLayer(layerId)) {
+					map.setPaintProperty(layerId, "raster-opacity", imageOpacity);
+				}
+			} catch (error) {
+				// Layer might not exist yet, ignore
+				console.debug("Failed to update image opacity:", error);
+			}
+		});
+	}, [isReducedOpacity, mapRef, imageOpacity]);
 }

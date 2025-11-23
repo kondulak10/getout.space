@@ -16,7 +16,7 @@ export function MapView({ user }: MapViewProps) {
 	const initialHexFromUrl = useRef(searchParams.get("hex"));
 	const [sourcesReady, setSourcesReady] = useState(false);
 
-	const opacityUser = isReducedOpacity ? 0.2 : 0.7;
+	const opacityUser = 0.7; // Always full opacity for current user
 	const opacityOthers = isReducedOpacity ? 0.2 : 0.5;
 
 	const { initialCenter, initialZoom } = useMemo(() => {

@@ -14,7 +14,7 @@ interface MapContentProps {
 }
 
 export function MapContent({ user }: MapContentProps) {
-	const { mapRef, refetchHexagonsRef } = useMap();
+	const { mapRef, refetchHexagonsRef, isReducedOpacity } = useMap();
 
 	const { selectedHexagon, hexagonDetailLoading, handleHexagonClick, clearSelection } =
 		useHexagonSelection(user.id);
@@ -33,7 +33,7 @@ export function MapContent({ user }: MapContentProps) {
 		};
 	}, [refetchHexagons, refetchHexagonsRef]);
 
-	useActivityProfileImages(mapRef, hexagonsData ?? null);
+	useActivityProfileImages(mapRef, hexagonsData ?? null, isReducedOpacity);
 
 	const handleActivityChanged = () => {
 		// Activity processing is rare (1-2x per session)
