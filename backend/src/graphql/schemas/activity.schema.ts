@@ -10,7 +10,7 @@ export const activitySchema = gql`
 		id: ID!
 		stravaActivityId: Float!
 		userId: ID!
-		user: User
+		user: UserPublic
 		source: String!
 		name: String!
 		type: String!

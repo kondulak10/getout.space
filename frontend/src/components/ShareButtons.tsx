@@ -2,6 +2,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { toast } from 'sonner';
 import { useMapShareImage } from '@/hooks/useMapShareImage';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import { useMap } from '@/contexts/useMap';
 import type { LocalStats } from '@/utils/calculateLocalStats';
 
 interface ShareButtonsProps {
@@ -11,8 +12,12 @@ interface ShareButtonsProps {
 }
 
 export function ShareButtons({ localStats, totalHexagons, globalRank }: ShareButtonsProps) {
+	const { isZoomedOut } = useMap();
 	const { generateAndShareImage, isGenerating, canShare } = useMapShareImage();
 	const { track } = useAnalytics();
+
+	// Hide when zoomed out
+	if (isZoomedOut) return null;
 
 	const shareLink = () => {
 		track('share_link_clicked', {});

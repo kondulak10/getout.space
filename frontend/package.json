@@ -17,7 +17,11 @@
 		"preview": "vite preview",
 		"codegen": "graphql-codegen --config codegen.ts",
 		"ts:check": "tsc  --watch",
-		"generate:testdata": "node scripts/generate-test-data.js"
+		"generate:testdata": "node scripts/generate-test-data.js",
+		"test:e2e": "playwright test",
+		"test:e2e:ui": "playwright test --ui",
+		"test:e2e:debug": "playwright test --debug",
+		"test:e2e:report": "playwright show-report"
 	},
 	"dependencies": {
 		"@amplitude/analytics-browser": "^2.31.3",
@@ -56,6 +60,7 @@
 		"@graphql-codegen/typed-document-node": "^6.1.0",
 		"@graphql-codegen/typescript": "^5.0.2",
 		"@graphql-codegen/typescript-operations": "^5.0.2",
+		"@playwright/test": "^1.56.1",
 		"@tailwindcss/postcss": "^4.1.16",
 		"@types/canvas-confetti": "^1.9.0",
 		"@types/mapbox__polyline": "^1.0.5",

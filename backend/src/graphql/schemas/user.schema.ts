@@ -13,6 +13,20 @@ export const userSchema = gql`
 		username: String
 	}
 
+	"""
+	Public user data visible to all authenticated users
+	"""
+	type UserPublic {
+		id: ID!
+		stravaId: Int!
+		stravaProfile: StravaProfile!
+		createdAt: Date!
+	}
+
+	"""
+	Full user data - only visible to the user themselves or admins
+	Includes sensitive fields: email, tokenExpiresAt, tokenIsExpired
+	"""
 	type User {
 		id: ID!
 		stravaId: Int!
@@ -60,16 +74,16 @@ export const userSchema = gql`
 		usersCount: Int!
 
 		"""
-		Get user by ID
+		Get user by ID (public data only)
 		Requires: Authentication
 		"""
-		user(id: ID!): User
+		user(id: ID!): UserPublic
 
 		"""
-		Get multiple users by their IDs
+		Get multiple users by their IDs (public data only)
 		Requires: Authentication
 		"""
-		usersByIds(ids: [ID!]!): [User!]!
+		usersByIds(ids: [ID!]!): [UserPublic!]!
 
 		"""
 		Get public stats for a user (aggregated data only)

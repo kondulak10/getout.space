@@ -9,19 +9,33 @@ import { isValidEmail } from '../../constants/validation';
 
 export const userResolvers = {
 	User: {
-		tokenIsExpired: (parent: IUser) => {
-			// Always return the value - these fields are only accessed via 'me' query (own data) or by admins
-			const now = Math.floor(Date.now() / 1000);
-			return parent.tokenExpiresAt < now;
+		tokenIsExpired: (parent: IUser, _: unknown, context: GraphQLContext) => {
+			// Only return for own profile or admin
+			if (context.userId?.toString() === parent._id.toString() || context.user?.isAdmin) {
+				const now = Math.floor(Date.now() / 1000);
+				return parent.tokenExpiresAt < now;
+			}
+			throw new GraphQLError('Unauthorized to view token status', {
+				extensions: { code: 'FORBIDDEN' },
+			});
 		},
 
-		tokenExpiresAt: (parent: IUser) => {
-			// Always return the value - these fields are only accessed via 'me' query (own data) or by admins
-			return parent.tokenExpiresAt;
+		tokenExpiresAt: (parent: IUser, _: unknown, context: GraphQLContext) => {
+			// Only return for own profile or admin
+			if (context.userId?.toString() === parent._id.toString() || context.user?.isAdmin) {
+				return parent.tokenExpiresAt;
+			}
+			throw new GraphQLError('Unauthorized to view token expiration', {
+				extensions: { code: 'FORBIDDEN' },
+			});
 		},
 
-		email: (parent: IUser) => {
-			return parent.email || null;
+		email: (parent: IUser, _: unknown, context: GraphQLContext) => {
+			// Only return for own profile or admin
+			if (context.userId?.toString() === parent._id.toString() || context.user?.isAdmin) {
+				return parent.email || null;
+			}
+			return null; // Hide email from others
 		},
 
 		/**
@@ -202,11 +216,7 @@ export const userResolvers = {
 			}
 		},
 
-		updateEmail: async (
-			_: unknown,
-			{ email }: { email: string },
-			context: GraphQLContext
-		) => {
+		updateEmail: async (_: unknown, { email }: { email: string }, context: GraphQLContext) => {
 			const currentUser = requireAuth(context);
 
 			// Validate email format using shared validation function

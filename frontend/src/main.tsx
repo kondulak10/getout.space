@@ -2,11 +2,15 @@
 import { initializeSentry } from '@/config/sentry'
 initializeSentry();
 
-// Initialize Amplitude analytics
+// Initialize Amplitude analytics (production only)
 import { analytics } from '@/lib/analytics'
 const amplitudeKey = import.meta.env.VITE_AMPLITUDE_API_KEY;
-if (amplitudeKey) {
+const isProduction = import.meta.env.MODE === 'production';
+if (amplitudeKey && isProduction) {
   analytics.init(amplitudeKey);
+  console.log('✅ Amplitude analytics enabled (production mode)');
+} else if (!isProduction) {
+  console.log('ℹ️  Amplitude analytics disabled (not in production)');
 }
 
 import * as Sentry from '@sentry/react'

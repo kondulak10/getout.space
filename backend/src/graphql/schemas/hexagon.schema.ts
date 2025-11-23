@@ -3,7 +3,7 @@ import { gql } from 'graphql-tag';
 export const hexagonSchema = gql`
 	type CaptureHistoryEntry {
 		userId: ID!
-		user: User
+		user: UserPublic
 		stravaId: Int!
 		activityId: ID!
 		activity: Activity
@@ -16,7 +16,7 @@ export const hexagonSchema = gql`
 		id: ID!
 		hexagonId: String!
 		currentOwnerId: ID!
-		currentOwner: User
+		currentOwner: UserPublic
 		currentOwnerStravaId: Int!
 		currentOwnerIsPremium: Boolean
 		currentOwnerImghex: String
@@ -25,7 +25,7 @@ export const hexagonSchema = gql`
 		currentStravaActivityId: Float!
 		captureCount: Int!
 		firstCapturedAt: Date!
-		firstCapturedBy: User
+		firstCapturedBy: UserPublic
 		lastCapturedAt: Date!
 		lastPreviousOwnerId: ID
 		activityType: String!
@@ -36,7 +36,7 @@ export const hexagonSchema = gql`
 	}
 
 	type LeaderboardEntry {
-		user: User
+		user: UserPublic
 		hexCount: Int!
 	}
 

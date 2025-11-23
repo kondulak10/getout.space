@@ -18,7 +18,10 @@ interface MapStatsProps {
  * Total: All hexes owned by the player with global rank
  */
 export function MapStats({ localStats, totalHexagons, globalRank, isLoading, className }: MapStatsProps) {
-	const { isReducedOpacity, toggleOpacity } = useMap();
+	const { isReducedOpacity, toggleOpacity, isZoomedOut } = useMap();
+
+	// Hide when zoomed out
+	if (isZoomedOut) return null;
 
 	// Format rank text with tier rounding
 	const getFormattedRank = (rank: number, count: number) => {
@@ -54,7 +57,7 @@ export function MapStats({ localStats, totalHexagons, globalRank, isLoading, cla
 						style={{ color: localRank.color }}
 					>
 						<FontAwesomeIcon
-							icon={getTrophyIcon(localStats.rank) as IconProp}
+							icon={getTrophyIcon() as IconProp}
 							className="text-lg [filter:drop-shadow(0_2px_4px_rgba(0,0,0,0.8))_drop-shadow(0_0_12px_rgba(255,215,0,0.6))] md:text-base"
 							style={{ color: getTrophyColor(localStats.rank) }}
 						/>
@@ -77,7 +80,7 @@ export function MapStats({ localStats, totalHexagons, globalRank, isLoading, cla
 						style={{ color: globalRankFormatted.color }}
 					>
 						<FontAwesomeIcon
-							icon={getTrophyIcon(globalRank!) as IconProp}
+							icon={getTrophyIcon() as IconProp}
 							className="text-lg [filter:drop-shadow(0_2px_4px_rgba(0,0,0,0.8))_drop-shadow(0_0_12px_rgba(255,215,0,0.6))] md:text-base"
 							style={{ color: getTrophyColor(globalRank!) }}
 						/>

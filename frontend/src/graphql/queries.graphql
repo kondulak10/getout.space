@@ -306,31 +306,6 @@ query RegionalOGDiscoverers($parentHexagonIds: [String!]!, $limit: Int) {
 	}
 }
 
-query User($id: ID!) {
-	user(id: $id) {
-		id
-		stravaId
-		isAdmin
-		isPremium
-		stravaProfile {
-			firstname
-			lastname
-			profile
-			imghex
-			city
-			state
-			country
-			sex
-			username
-		}
-		tokenExpiresAt
-		tokenIsExpired
-		lastHex
-		createdAt
-		updatedAt
-	}
-}
-
 query UserHexagonsForStats($userId: ID!) {
 	userHexagons(userId: $userId) {
 		id

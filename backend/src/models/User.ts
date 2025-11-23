@@ -124,7 +124,17 @@ const userSchema = new Schema<IUser>(
 	},
 	{
 		timestamps: true,
-		toJSON: { getters: false },
+		toJSON: {
+			getters: false,
+			transform: (_doc, ret) => {
+				// Never expose Strava tokens in JSON output
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				delete (ret as any).accessToken;
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				delete (ret as any).refreshToken;
+				return ret;
+			},
+		},
 		toObject: { getters: true },
 	}
 );

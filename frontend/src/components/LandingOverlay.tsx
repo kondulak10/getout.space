@@ -31,6 +31,7 @@ export function LandingOverlay() {
 						src="/btn_strava_connect_with_orange.svg"
 						alt="Connect with Strava"
 						onClick={loginWithStrava}
+						data-testid="login-button"
 						className="inline-block cursor-pointer hover:opacity-90 transition-opacity h-12 md:h-14"
 					/>
 					<p className="text-sm text-gray-500">Made by Mapheim & Powered by Strava</p>

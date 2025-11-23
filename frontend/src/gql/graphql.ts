@@ -41,7 +41,7 @@ export type Activity = {
   timezone: Maybe<Scalars['String']['output']>;
   type: Scalars['String']['output'];
   updatedAt: Scalars['Date']['output'];
-  user: Maybe<User>;
+  user: Maybe<UserPublic>;
   userId: Scalars['ID']['output'];
 };
 
@@ -53,7 +53,7 @@ export type CaptureHistoryEntry = {
   capturedAt: Scalars['Date']['output'];
   stravaActivityId: Scalars['Float']['output'];
   stravaId: Scalars['Int']['output'];
-  user: Maybe<User>;
+  user: Maybe<UserPublic>;
   userId: Scalars['ID']['output'];
 };
 
@@ -65,14 +65,14 @@ export type Hexagon = {
   createdAt: Scalars['Date']['output'];
   currentActivity: Maybe<Activity>;
   currentActivityId: Scalars['ID']['output'];
-  currentOwner: Maybe<User>;
+  currentOwner: Maybe<UserPublic>;
   currentOwnerId: Scalars['ID']['output'];
   currentOwnerImghex: Maybe<Scalars['String']['output']>;
   currentOwnerIsPremium: Maybe<Scalars['Boolean']['output']>;
   currentOwnerStravaId: Scalars['Int']['output'];
   currentStravaActivityId: Scalars['Float']['output'];
   firstCapturedAt: Scalars['Date']['output'];
-  firstCapturedBy: Maybe<User>;
+  firstCapturedBy: Maybe<UserPublic>;
   hexagonId: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   lastCapturedAt: Scalars['Date']['output'];
@@ -99,7 +99,7 @@ export type LeaderboardEntry = {
   rank: Scalars['Int']['output'];
   stravaId: Scalars['Int']['output'];
   totalDistance: Scalars['Float']['output'];
-  user: Maybe<User>;
+  user: Maybe<UserPublic>;
   userId: Scalars['ID']['output'];
   username: Scalars['String']['output'];
 };
@@ -317,10 +317,10 @@ export type Query = {
    */
   regionalOGDiscoverers: Array<LeaderboardEntry>;
   /**
-   * Get user by ID
+   * Get user by ID (public data only)
    * Requires: Authentication
    */
-  user: Maybe<User>;
+  user: Maybe<UserPublic>;
   /**
    * Get activities for a specific user
    * Requires: Authentication
@@ -343,10 +343,10 @@ export type Query = {
    */
   users: Array<User>;
   /**
-   * Get multiple users by their IDs
+   * Get multiple users by their IDs (public data only)
    * Requires: Authentication
    */
-  usersByIds: Array<User>;
+  usersByIds: Array<UserPublic>;
   /**
    * Get total count of all users (Admin only)
    * Requires: Authentication + Admin
@@ -502,6 +502,10 @@ export type StravaProfile = {
   username: Maybe<Scalars['String']['output']>;
 };
 
+/**
+ * Full user data - only visible to the user themselves or admins
+ * Includes sensitive fields: email, tokenExpiresAt, tokenIsExpired
+ */
 export type User = {
   __typename: 'User';
   activityCount: Maybe<Scalars['Int']['output']>;
@@ -516,6 +520,15 @@ export type User = {
   tokenExpiresAt: Scalars['Int']['output'];
   tokenIsExpired: Scalars['Boolean']['output'];
   updatedAt: Scalars['Date']['output'];
+};
+
+/** Public user data visible to all authenticated users */
+export type UserPublic = {
+  __typename: 'UserPublic';
+  createdAt: Scalars['Date']['output'];
+  id: Scalars['ID']['output'];
+  stravaId: Scalars['Int']['output'];
+  stravaProfile: StravaProfile;
 };
 
 export type UserPublicStats = {
@@ -628,7 +641,7 @@ export type HexagonDetailQueryVariables = Exact<{
 }>;
 
 
-export type HexagonDetailQuery = { hexagon: { __typename: 'Hexagon', hexagonId: string, captureCount: number, firstCapturedAt: unknown, lastCapturedAt: unknown, currentOwner: { __typename: 'User', id: string, stravaId: number, stravaProfile: { __typename: 'StravaProfile', firstname: string, profile: string | null, imghex: string | null } } | null, firstCapturedBy: { __typename: 'User', id: string, stravaId: number, stravaProfile: { __typename: 'StravaProfile', firstname: string, profile: string | null, imghex: string | null } } | null, currentActivity: { __typename: 'Activity', id: string, stravaActivityId: number, name: string, distance: number, averageSpeed: number, startDateLocal: unknown, movingTime: number } | null, captureHistory: Array<{ __typename: 'CaptureHistoryEntry', userId: string, stravaId: number, activityId: string, stravaActivityId: number, capturedAt: unknown, activityType: string, user: { __typename: 'User', id: string, stravaId: number, stravaProfile: { __typename: 'StravaProfile', firstname: string, profile: string | null, imghex: string | null } } | null, activity: { __typename: 'Activity', id: string, stravaActivityId: number, distance: number, averageSpeed: number, startDateLocal: unknown } | null }> } | null };
+export type HexagonDetailQuery = { hexagon: { __typename: 'Hexagon', hexagonId: string, captureCount: number, firstCapturedAt: unknown, lastCapturedAt: unknown, currentOwner: { __typename: 'UserPublic', id: string, stravaId: number, stravaProfile: { __typename: 'StravaProfile', firstname: string, profile: string | null, imghex: string | null } } | null, firstCapturedBy: { __typename: 'UserPublic', id: string, stravaId: number, stravaProfile: { __typename: 'StravaProfile', firstname: string, profile: string | null, imghex: string | null } } | null, currentActivity: { __typename: 'Activity', id: string, stravaActivityId: number, name: string, distance: number, averageSpeed: number, startDateLocal: unknown, movingTime: number } | null, captureHistory: Array<{ __typename: 'CaptureHistoryEntry', userId: string, stravaId: number, activityId: string, stravaActivityId: number, capturedAt: unknown, activityType: string, user: { __typename: 'UserPublic', id: string, stravaId: number, stravaProfile: { __typename: 'StravaProfile', firstname: string, profile: string | null, imghex: string | null } } | null, activity: { __typename: 'Activity', id: string, stravaActivityId: number, distance: number, averageSpeed: number, startDateLocal: unknown } | null }> } | null };
 
 export type DeleteMyAccountMutationVariables = Exact<{ [key: string]: never; }>;
 
@@ -653,7 +666,7 @@ export type MyActivitiesQuery = { myActivities: Array<{ __typename: 'Activity', 
 export type MyHexagonsForStatsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MyHexagonsForStatsQuery = { myHexagons: Array<{ __typename: 'Hexagon', id: string, hexagonId: string, captureCount: number, firstCapturedAt: unknown, lastCapturedAt: unknown, currentOwnerId: string, firstCapturedBy: { __typename: 'User', id: string } | null, captureHistory: Array<{ __typename: 'CaptureHistoryEntry', userId: string, stravaId: number, capturedAt: unknown }> }> };
+export type MyHexagonsForStatsQuery = { myHexagons: Array<{ __typename: 'Hexagon', id: string, hexagonId: string, captureCount: number, firstCapturedAt: unknown, lastCapturedAt: unknown, currentOwnerId: string, firstCapturedBy: { __typename: 'UserPublic', id: string } | null, captureHistory: Array<{ __typename: 'CaptureHistoryEntry', userId: string, stravaId: number, capturedAt: unknown }> }> };
 
 export type MyActivitiesForStatsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -697,7 +710,7 @@ export type RegionalActiveLeadersQueryVariables = Exact<{
 }>;
 
 
-export type RegionalActiveLeadersQuery = { regionalActiveLeaders: Array<{ __typename: 'LeaderboardEntry', hexCount: number, user: { __typename: 'User', id: string, stravaId: number, stravaProfile: { __typename: 'StravaProfile', firstname: string, lastname: string, profile: string | null, imghex: string | null } } | null }> };
+export type RegionalActiveLeadersQuery = { regionalActiveLeaders: Array<{ __typename: 'LeaderboardEntry', hexCount: number, user: { __typename: 'UserPublic', id: string, stravaId: number, stravaProfile: { __typename: 'StravaProfile', firstname: string, lastname: string, profile: string | null, imghex: string | null } } | null }> };
 
 export type RegionalOgDiscoverersQueryVariables = Exact<{
   parentHexagonIds: Array<Scalars['String']['input']> | Scalars['String']['input'];
@@ -705,21 +718,14 @@ export type RegionalOgDiscoverersQueryVariables = Exact<{
 }>;
 
 
-export type RegionalOgDiscoverersQuery = { regionalOGDiscoverers: Array<{ __typename: 'LeaderboardEntry', hexCount: number, user: { __typename: 'User', id: string, stravaId: number, stravaProfile: { __typename: 'StravaProfile', firstname: string, lastname: string, profile: string | null, imghex: string | null } } | null }> };
-
-export type UserQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type UserQuery = { user: { __typename: 'User', id: string, stravaId: number, isAdmin: boolean, isPremium: boolean, tokenExpiresAt: number, tokenIsExpired: boolean, lastHex: string | null, createdAt: unknown, updatedAt: unknown, stravaProfile: { __typename: 'StravaProfile', firstname: string, lastname: string, profile: string | null, imghex: string | null, city: string | null, state: string | null, country: string | null, sex: string | null, username: string | null } } | null };
+export type RegionalOgDiscoverersQuery = { regionalOGDiscoverers: Array<{ __typename: 'LeaderboardEntry', hexCount: number, user: { __typename: 'UserPublic', id: string, stravaId: number, stravaProfile: { __typename: 'StravaProfile', firstname: string, lastname: string, profile: string | null, imghex: string | null } } | null }> };
 
 export type UserHexagonsForStatsQueryVariables = Exact<{
   userId: Scalars['ID']['input'];
 }>;
 
 
-export type UserHexagonsForStatsQuery = { userHexagons: Array<{ __typename: 'Hexagon', id: string, hexagonId: string, captureCount: number, firstCapturedAt: unknown, lastCapturedAt: unknown, currentOwnerId: string, firstCapturedBy: { __typename: 'User', id: string } | null }> };
+export type UserHexagonsForStatsQuery = { userHexagons: Array<{ __typename: 'Hexagon', id: string, hexagonId: string, captureCount: number, firstCapturedAt: unknown, lastCapturedAt: unknown, currentOwnerId: string, firstCapturedBy: { __typename: 'UserPublic', id: string } | null }> };
 
 export type HexagonsStolenFromUserQueryVariables = Exact<{
   userId: Scalars['ID']['input'];
@@ -747,7 +753,7 @@ export type UsersByIdsQueryVariables = Exact<{
 }>;
 
 
-export type UsersByIdsQuery = { usersByIds: Array<{ __typename: 'User', id: string, stravaId: number, stravaProfile: { __typename: 'StravaProfile', firstname: string, lastname: string, profile: string | null, imghex: string | null } }> };
+export type UsersByIdsQuery = { usersByIds: Array<{ __typename: 'UserPublic', id: string, stravaId: number, stravaProfile: { __typename: 'StravaProfile', firstname: string, lastname: string, profile: string | null, imghex: string | null } }> };
 
 export type VersusStatsQueryVariables = Exact<{
   userId1: Scalars['ID']['input'];
@@ -794,7 +800,6 @@ export const GetHexagonsCountDocument = {"kind":"Document","definitions":[{"kind
 export const GetActivitiesCountDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetActivitiesCount"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activitiesCount"}}]}}]} as unknown as DocumentNode<GetActivitiesCountQuery, GetActivitiesCountQueryVariables>;
 export const RegionalActiveLeadersDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"RegionalActiveLeaders"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"parentHexagonIds"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"regionalActiveLeaders"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"parentHexagonIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"parentHexagonIds"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"stravaId"}},{"kind":"Field","name":{"kind":"Name","value":"stravaProfile"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"firstname"}},{"kind":"Field","name":{"kind":"Name","value":"lastname"}},{"kind":"Field","name":{"kind":"Name","value":"profile"}},{"kind":"Field","name":{"kind":"Name","value":"imghex"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"hexCount"}}]}}]}}]} as unknown as DocumentNode<RegionalActiveLeadersQuery, RegionalActiveLeadersQueryVariables>;
 export const RegionalOgDiscoverersDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"RegionalOGDiscoverers"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"parentHexagonIds"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"regionalOGDiscoverers"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"parentHexagonIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"parentHexagonIds"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"stravaId"}},{"kind":"Field","name":{"kind":"Name","value":"stravaProfile"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"firstname"}},{"kind":"Field","name":{"kind":"Name","value":"lastname"}},{"kind":"Field","name":{"kind":"Name","value":"profile"}},{"kind":"Field","name":{"kind":"Name","value":"imghex"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"hexCount"}}]}}]}}]} as unknown as DocumentNode<RegionalOgDiscoverersQuery, RegionalOgDiscoverersQueryVariables>;
-export const UserDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"User"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"user"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"stravaId"}},{"kind":"Field","name":{"kind":"Name","value":"isAdmin"}},{"kind":"Field","name":{"kind":"Name","value":"isPremium"}},{"kind":"Field","name":{"kind":"Name","value":"stravaProfile"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"firstname"}},{"kind":"Field","name":{"kind":"Name","value":"lastname"}},{"kind":"Field","name":{"kind":"Name","value":"profile"}},{"kind":"Field","name":{"kind":"Name","value":"imghex"}},{"kind":"Field","name":{"kind":"Name","value":"city"}},{"kind":"Field","name":{"kind":"Name","value":"state"}},{"kind":"Field","name":{"kind":"Name","value":"country"}},{"kind":"Field","name":{"kind":"Name","value":"sex"}},{"kind":"Field","name":{"kind":"Name","value":"username"}}]}},{"kind":"Field","name":{"kind":"Name","value":"tokenExpiresAt"}},{"kind":"Field","name":{"kind":"Name","value":"tokenIsExpired"}},{"kind":"Field","name":{"kind":"Name","value":"lastHex"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]}}]} as unknown as DocumentNode<UserQuery, UserQueryVariables>;
 export const UserHexagonsForStatsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"UserHexagonsForStats"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"userId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"userHexagons"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"userId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"userId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"hexagonId"}},{"kind":"Field","name":{"kind":"Name","value":"captureCount"}},{"kind":"Field","name":{"kind":"Name","value":"firstCapturedAt"}},{"kind":"Field","name":{"kind":"Name","value":"lastCapturedAt"}},{"kind":"Field","name":{"kind":"Name","value":"firstCapturedBy"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"currentOwnerId"}}]}}]}}]} as unknown as DocumentNode<UserHexagonsForStatsQuery, UserHexagonsForStatsQueryVariables>;
 export const HexagonsStolenFromUserDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"HexagonsStolenFromUser"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"userId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"hexagonsStolenFromUser"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"userId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"userId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"hexagonId"}},{"kind":"Field","name":{"kind":"Name","value":"currentOwnerId"}},{"kind":"Field","name":{"kind":"Name","value":"currentOwnerStravaId"}}]}}]}}]} as unknown as DocumentNode<HexagonsStolenFromUserQuery, HexagonsStolenFromUserQueryVariables>;
 export const UserActivitiesForStatsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"UserActivitiesForStats"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"userId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"userActivities"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"userId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"userId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"distance"}},{"kind":"Field","name":{"kind":"Name","value":"movingTime"}},{"kind":"Field","name":{"kind":"Name","value":"startDateLocal"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]} as unknown as DocumentNode<UserActivitiesForStatsQuery, UserActivitiesForStatsQueryVariables>;

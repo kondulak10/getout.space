@@ -14,6 +14,17 @@ export const HEX_COLORS = [
 	"#FDCB6E",
 ] as const;
 export const IMAGE_PROBABILITY = 0.1;
+
+/**
+ * Minimum zoom level required to display activities and hexagons.
+ * Below this threshold, the location search is shown instead.
+ */
+export const MIN_ZOOM_FOR_ACTIVITIES = 9.5;
+
+/**
+ * Default zoom level when flying to a location or hexagon
+ */
+export const DEFAULT_FLY_TO_ZOOM = 13;
 export const getRingSizeForZoom = (zoom: number): number => {
 	if (zoom < 2) return 5;
 	if (zoom < 4) return 10;

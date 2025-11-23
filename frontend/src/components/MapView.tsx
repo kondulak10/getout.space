@@ -193,7 +193,7 @@ export function MapView({ user }: MapViewProps) {
 
 	return (
 		<>
-			<div ref={mapContainerRef} className="w-full h-[calc(100dvh-90px)] md:h-full" />
+			<div ref={mapContainerRef} data-testid="map-container" className="w-full h-[calc(100dvh-90px)] md:h-full" />
 			{isLoaded && sourcesReady && <MapContent user={user} />}
 		</>
 	);

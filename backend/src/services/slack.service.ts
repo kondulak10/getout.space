@@ -34,7 +34,11 @@ const NEW_USER_EMOJI = '🎉';
  * Reduces code duplication in route handlers
  */
 export function buildActivityNotificationParams(
-	user: { _id: { toString(): string }; stravaId: number; stravaProfile: { firstname: string; lastname: string } },
+	user: {
+		_id: { toString(): string };
+		stravaId: number;
+		stravaProfile: { firstname: string; lastname: string };
+	},
 	stravaActivityId: number,
 	source: ActivityProcessingSource
 ): ActivityProcessedParams {

@@ -3,11 +3,15 @@ import * as Sentry from '@sentry/node';
 import { initializeSentry } from './config/sentry';
 initializeSentry();
 
-// Initialize Amplitude analytics
+// Initialize Amplitude analytics (production only)
 import { analyticsService } from './services/analytics.service';
 const amplitudeKey = process.env.AMPLITUDE_API_KEY;
-if (amplitudeKey) {
+const isProduction = process.env.NODE_ENV === 'production';
+if (amplitudeKey && isProduction) {
 	analyticsService.init(amplitudeKey);
+	console.log('✅ Amplitude analytics enabled (production mode)');
+} else if (!isProduction) {
+	console.log('ℹ️  Amplitude analytics disabled (not in production)');
 }
 
 import { ApolloServer } from '@apollo/server';

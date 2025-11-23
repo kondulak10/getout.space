@@ -10,6 +10,8 @@ export interface MapContextType {
 	currentParentHexagonIds: React.MutableRefObject<string[]>;
 	isReducedOpacity: boolean;
 	toggleOpacity: () => void;
+	isZoomedOut: boolean;
+	setIsZoomedOut: (isZoomedOut: boolean) => void;
 }
 
 export const MapContext = createContext<MapContextType | undefined>(undefined);

@@ -455,7 +455,11 @@ router.post(
 
 			// Send success notification
 			await sendActivityProcessedNotification(
-				buildActivityNotificationParams(currentUser, activityId, source as 'manual' | 'after_signup')
+				buildActivityNotificationParams(
+					currentUser,
+					activityId,
+					source as 'manual' | 'after_signup'
+				)
 			);
 
 			res.json({
@@ -473,7 +477,11 @@ router.post(
 			// Send Slack notification for real errors (skip non-running activities and GPS-less activities)
 			if (!isNonRunningActivity && !hasNoGPS) {
 				await sendActivityProcessingErrorNotification({
-					...buildActivityNotificationParams(currentUser, activityId, source as 'manual' | 'after_signup'),
+					...buildActivityNotificationParams(
+						currentUser,
+						activityId,
+						source as 'manual' | 'after_signup'
+					),
 					error: errorMessage,
 				});
 			}

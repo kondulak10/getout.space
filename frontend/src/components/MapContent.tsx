@@ -1,7 +1,7 @@
 import { HexOverlay } from "@/components/HexOverlay";
 import { HexagonDetailModal } from "@/components/HexagonDetailModal";
 import { HexagonLoadingIndicator } from "@/components/HexagonLoadingIndicator";
-import { ZoomWarning } from "@/components/ZoomWarning";
+import { LocationSearch } from "@/components/LocationSearch";
 import { useMap } from "@/contexts/useMap";
 import { useActivityProfileImages } from "@/hooks/useActivityProfileImages";
 import { useHexagonSelection } from "@/hooks/useHexagonSelection";
@@ -48,7 +48,7 @@ export function MapContent({ user }: MapContentProps) {
 				onActivityChanged={handleActivityChanged}
 			/>
 			<HexagonLoadingIndicator isLoading={loading} />
-			<ZoomWarning />
+			<LocationSearch />
 
 			{(selectedHexagon || hexagonDetailLoading) && (
 				<HexagonDetailModal

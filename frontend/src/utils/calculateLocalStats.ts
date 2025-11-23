@@ -48,7 +48,7 @@ export function calculateLocalStats(
 /**
  * Get trophy icon name based on rank
  */
-export function getTrophyIcon(_rank: number): string {
+export function getTrophyIcon(): string {
 	return "trophy"; // Always use trophy icon
 }
 

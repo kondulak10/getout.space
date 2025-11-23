@@ -82,7 +82,7 @@ export function HexagonDetailModal({ hexagonData, loading = false, onClose }: He
 	};
 	return (
 		<Dialog open={true} onOpenChange={(open) => !open && onClose()}>
-			<DialogContent>
+			<DialogContent data-testid="hexagon-modal">
 				<DialogHeader>
 					<DialogTitle>
 						<FontAwesomeIcon icon={faTrophy} className="w-5 h-5 text-orange-500" />

@@ -1,5 +1,10 @@
 import rateLimit from 'express-rate-limit';
 
+// Helper to safely get IP address (handles IPv6)
+const getClientIp = (req: any): string => {
+	return req.ip || req.socket?.remoteAddress || 'unknown';
+};
+
 /**
  * GLOBAL RATE LIMITER
  * Applies to ALL endpoints as baseline protection
@@ -73,7 +78,11 @@ export const activityProcessingLimiter = rateLimit({
 	// Key by user ID (not IP) for authenticated requests
 	keyGenerator: (req) => {
 		const userId = (req as any).userId;
-		return userId || req.ip || 'anonymous';
+		if (userId) {
+			return `user:${userId}`;
+		}
+		// Fall back to IP using safe helper
+		return `ip:${getClientIp(req)}`;
 	},
 });
 
@@ -109,7 +118,11 @@ export const graphqlLimiter = rateLimit({
 	// Key by user ID if authenticated, otherwise IP
 	keyGenerator: (req) => {
 		const userId = (req as any).userId;
-		return userId || req.ip || 'anonymous';
+		if (userId) {
+			return `user:${userId}`;
+		}
+		// Fall back to IP using safe helper
+		return `ip:${getClientIp(req)}`;
 	},
 
 	// Skip rate limit for admins
