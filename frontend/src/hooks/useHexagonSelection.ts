@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLazyQuery } from '@apollo/client/react';
 import { HexagonDetailDocument } from '@/gql/graphql';
+import { analytics } from '@/lib/analytics';
 export interface SelectedHexagonData {
 	hexagonId: string;
 	captureCount: number;
@@ -54,10 +55,10 @@ export interface SelectedHexagonData {
 		activityType: string;
 	}>;
 }
-export function useHexagonSelection() {
+export function useHexagonSelection(currentUserId?: string) {
 	const [selectedHexagon, setSelectedHexagon] = useState<SelectedHexagonData | null>(null);
 	const [fetchHexagonDetail, { loading: hexagonDetailLoading }] = useLazyQuery(HexagonDetailDocument, {
-		fetchPolicy: 'no-cache', 
+		fetchPolicy: 'no-cache',
 	});
 	const handleHexagonClick = async (hexagonId: string) => {
 		try {
@@ -71,7 +72,7 @@ export function useHexagonSelection() {
 				return;
 			}
 			if (data?.hexagon?.currentActivity) {
-				setSelectedHexagon({
+				const hexagonData = {
 					hexagonId: data.hexagon.hexagonId,
 					captureCount: data.hexagon.captureCount,
 					firstCapturedAt: data.hexagon.firstCapturedAt as string,
@@ -140,7 +141,16 @@ export function useHexagonSelection() {
 							capturedAt: (entry.capturedAt as string) || new Date().toISOString(),
 							activityType: entry.activityType || 'Unknown',
 						})),
+				};
+
+				// Track hexagon click event
+				analytics.track('hexagon_clicked', {
+					hexagon_id: hexagonId,
+					owner_id: hexagonData.currentOwner?.id,
+					is_own_hexagon: currentUserId ? hexagonData.currentOwner?.id === currentUserId : false,
 				});
+
+				setSelectedHexagon(hexagonData);
 			}
 		} catch {
 			// Failed to fetch hexagon details

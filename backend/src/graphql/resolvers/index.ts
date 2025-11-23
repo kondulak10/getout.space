@@ -3,6 +3,7 @@ import { userResolvers } from './user.resolvers';
 import { activityResolvers } from './activity.resolvers';
 import { hexagonResolvers } from './hexagon.resolvers';
 import { notificationResolvers } from './notification.resolvers';
+import { leaderboardResolvers } from './leaderboard.resolvers';
 import { DateScalar } from '../scalars/date.scalar';
 
 export { GraphQLContext } from './auth.helpers';
@@ -17,5 +18,6 @@ export const resolvers = merge(
 	userResolvers,
 	activityResolvers,
 	hexagonResolvers,
-	notificationResolvers
+	notificationResolvers,
+	leaderboardResolvers
 );

@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { useActivitiesManager } from '@/hooks/useActivitiesManager';
 import { useStoredActivities } from '@/hooks/useStoredActivities';
+import { useAnalytics } from '@/hooks/useAnalytics';
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -28,6 +29,8 @@ export function ActivitiesModal({
 	onClose,
 	onActivityChanged,
 }: ActivitiesModalProps) {
+	const { track } = useAnalytics();
+
 	// Move ALL activity logic INSIDE the modal (no more prop drilling!)
 	const {
 		activities: stravaActivities,
@@ -44,6 +47,11 @@ export function ActivitiesModal({
 	const [hasSynced, setHasSynced] = useState(false);
 	const activitiesPerPage = 5;
 	const navigate = useNavigate();
+
+	const handleClose = () => {
+		track('activities_modal_closed', {});
+		onClose();
+	};
 
 	
 	const {
@@ -120,7 +128,7 @@ export function ActivitiesModal({
 	};
 
 	const handleShowOnMap = (hexId: string) => {
-		onClose();
+		handleClose();
 		navigate(`/?hex=${hexId}`);
 	};
 
@@ -158,7 +166,7 @@ export function ActivitiesModal({
 
 	return (
 		<>
-			<Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+			<Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
 				<DialogContent className="max-w-3xl bg-[rgba(10,10,10,0.95)] border border-white/10 text-gray-100">
 					<DialogHeader>
 						<DialogTitle className="text-gray-100 text-xl font-bold flex items-center gap-2">

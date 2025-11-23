@@ -22,6 +22,7 @@ export interface IUser extends Document {
 	isAdmin: boolean;
 	isPremium: boolean;
 	stravaProfile: IStravaProfile;
+	email?: string;
 	lastHex?: string;
 	createdAt: Date;
 	updatedAt: Date;
@@ -107,6 +108,14 @@ const userSchema = new Schema<IUser>(
 		stravaProfile: {
 			type: stravaProfileSchema,
 			required: true,
+		},
+		email: {
+			type: String,
+			required: false,
+			unique: true,
+			sparse: true, // Allows multiple null values
+			lowercase: true,
+			trim: true,
 		},
 		lastHex: {
 			type: String,

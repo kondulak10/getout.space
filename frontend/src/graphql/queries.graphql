@@ -15,6 +15,8 @@ query Me {
 			sex
 			username
 		}
+		email
+		activityCount
 		tokenExpiresAt
 		tokenIsExpired
 		lastHex
@@ -149,6 +151,13 @@ query HexagonDetail($hexagonId: String!) {
 
 mutation DeleteMyAccount {
 	deleteMyAccount
+}
+
+mutation UpdateEmail($email: String!) {
+	updateEmail(email: $email) {
+		id
+		email
+	}
 }
 
 query MyActivities($limit: Int, $offset: Int) {
@@ -397,4 +406,22 @@ query VersusStats($userId1: ID!, $userId2: ID!) {
 		user1StolenFromUser2
 		user2StolenFromUser1
 	}
+}
+
+query GlobalLeaderboard {
+	globalLeaderboard {
+		userId
+		stravaId
+		username
+		imghex
+		profileImageUrl
+		hexagonCount
+		activityCount
+		totalDistance
+		rank
+	}
+}
+
+query MyGlobalRank {
+	myGlobalRank
 }

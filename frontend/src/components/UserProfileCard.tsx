@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/useAuth';
 import { useUserActivities } from '@/hooks/useUserActivities';
+import { useAnalytics } from '@/hooks/useAnalytics';
 import { NotificationDropdown } from './NotificationDropdown';
 import { NotificationModal } from './NotificationModal';
 import { ErrorBoundary } from './ErrorBoundary';
@@ -22,7 +23,29 @@ export function UserProfileCard({
 	const { user } = useAuth();
 	const { latestActivity } = useUserActivities();
 	const [showNotifications, setShowNotifications] = useState(false);
+	const { track } = useAnalytics();
 	const navigate = useNavigate();
+
+	const handleActivitiesClick = () => {
+		track('activities_modal_opened', {});
+		onOpenActivities();
+	};
+
+	const handleLeaderboardClick = () => {
+		track('leaderboard_opened', {});
+		onOpenLeaderboard();
+	};
+
+	const handleProfileClick = () => {
+		if (!user) return;
+		track('profile_button_clicked', { from_location: 'user_card' });
+		navigate(`/profile/${user.id}`);
+	};
+
+	const handleNotificationsClick = () => {
+		track('notifications_opened', {});
+		setShowNotifications(true);
+	};
 
 	if (!user) return null;
 
@@ -32,7 +55,7 @@ export function UserProfileCard({
 				<div className="bg-[rgba(10,10,10,0.9)] backdrop-blur-md border border-white/10 rounded-xl p-3 shadow-2xl">
 					<div
 						className="flex items-center gap-3 mb-3 cursor-pointer hover:bg-white/5 rounded-lg p-2 -m-2 transition-all"
-						onClick={() => navigate(`/profile/${user.id}`)}
+						onClick={handleProfileClick}
 					>
 						<img
 							src={user.profile.imghex || user.profile.profile}
@@ -48,7 +71,7 @@ export function UserProfileCard({
 					</div>
 					<div className="grid grid-cols-2 gap-2 mb-3">
 						<button
-							onClick={onOpenActivities}
+							onClick={handleActivitiesClick}
 							disabled={activitiesLoading}
 							className="flex items-center justify-start gap-2 bg-white/5 border border-white/10 text-gray-300 px-3 py-2 rounded-md transition-all cursor-pointer hover:bg-white/10 hover:border-white/20 hover:text-white disabled:opacity-50"
 							title="Activities"
@@ -62,7 +85,7 @@ export function UserProfileCard({
 								e.preventDefault();
 								e.stopPropagation();
 								try {
-									onOpenLeaderboard();
+									handleLeaderboardClick();
 								} catch (error) {
 									console.error('Error opening leaderboard:', error);
 								}
@@ -76,11 +99,11 @@ export function UserProfileCard({
 						<NotificationDropdown
 							bellClassName="flex items-center justify-start gap-2 bg-white/5 border border-white/10 text-gray-300 px-3 py-2 rounded-md transition-all cursor-pointer hover:bg-white/10 hover:border-white/20 hover:text-white relative"
 							iconClassName="w-3.5 h-3.5"
-							onClick={() => setShowNotifications(true)}
+							onClick={handleNotificationsClick}
 							showLabel={true}
 						/>
 						<button
-							onClick={() => navigate(`/profile/${user.id}`)}
+							onClick={handleProfileClick}
 							className="flex items-center justify-start gap-2 bg-white/5 border border-white/10 text-gray-300 px-3 py-2 rounded-md transition-all cursor-pointer hover:bg-white/10 hover:border-white/20 hover:text-white"
 							title="Profile"
 						>

@@ -19,6 +19,8 @@ export const userSchema = gql`
 		isAdmin: Boolean!
 		isPremium: Boolean!
 		stravaProfile: StravaProfile!
+		email: String
+		activityCount: Int
 		tokenExpiresAt: Int!
 		tokenIsExpired: Boolean!
 		lastHex: String
@@ -96,5 +98,11 @@ export const userSchema = gql`
 		Requires: Authentication + Admin
 		"""
 		refreshUserToken(id: ID!): User!
+
+		"""
+		Update email address for current user
+		Requires: Authentication
+		"""
+		updateEmail(email: String!): User!
 	}
 `;

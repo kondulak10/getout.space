@@ -12,9 +12,12 @@ interface MapViewProps {
 
 export function MapView({ user }: MapViewProps) {
 	const [searchParams, setSearchParams] = useSearchParams();
-	const { flyToHex, mapRef } = useMap();
+	const { flyToHex, mapRef, isReducedOpacity } = useMap();
 	const initialHexFromUrl = useRef(searchParams.get("hex"));
 	const [sourcesReady, setSourcesReady] = useState(false);
+
+	const opacityUser = isReducedOpacity ? 0.2 : 0.7;
+	const opacityOthers = isReducedOpacity ? 0.2 : 0.5;
 
 	const { initialCenter, initialZoom } = useMemo(() => {
 		const hexFromUrl = searchParams.get("hex");
@@ -74,7 +77,12 @@ export function MapView({ user }: MapViewProps) {
 						source: "hexagons",
 						paint: {
 							"fill-color": ["get", "color"],
-							"fill-opacity": 0.5,
+							"fill-opacity": [
+								"case",
+								["get", "isCurrentUser"],
+								opacityUser,
+								opacityOthers,
+							],
 						},
 					});
 
@@ -110,7 +118,7 @@ export function MapView({ user }: MapViewProps) {
 						paint: {
 							"line-color": "#FFFFFF",
 							"line-width": 2,
-							"line-opacity": 0.6,
+							"line-opacity": 0.3,
 						},
 					});
 				} catch {
@@ -164,10 +172,29 @@ export function MapView({ user }: MapViewProps) {
 		}, 100);
 	}, [isLoaded, searchParams, setSearchParams, flyToHex]);
 
+	// Update layer opacity when isReducedOpacity changes
+	useEffect(() => {
+		if (!mapRef.current || !sourcesReady) return;
+
+		const map = mapRef.current;
+
+		try {
+			map.setPaintProperty("hexagon-fills", "fill-opacity", [
+				"case",
+				["get", "isCurrentUser"],
+				opacityUser,
+				opacityOthers,
+			]);
+		} catch (error) {
+			// Layer might not exist yet, ignore
+			console.debug("Failed to update opacity:", error);
+		}
+	}, [isReducedOpacity, mapRef, sourcesReady, opacityUser, opacityOthers]);
+
 	return (
 		<>
 			<div ref={mapContainerRef} className="w-full h-[calc(100dvh-90px)] md:h-full" />
-			{isLoaded && sourcesReady && <MapContent />}
+			{isLoaded && sourcesReady && <MapContent user={user} />}
 		</>
 	);
 }

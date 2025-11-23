@@ -3,6 +3,13 @@ import * as Sentry from '@sentry/node';
 import { initializeSentry } from './config/sentry';
 initializeSentry();
 
+// Initialize Amplitude analytics
+import { analyticsService } from './services/analytics.service';
+const amplitudeKey = process.env.AMPLITUDE_API_KEY;
+if (amplitudeKey) {
+	analyticsService.init(amplitudeKey);
+}
+
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import compression from 'compression';
@@ -19,12 +26,16 @@ import testRoutes from './routes/test.routes';
 import webhookRoutes from './routes/webhook.routes';
 import { globalLimiter, graphqlLimiter } from './middleware/rateLimiter';
 import { rateLimitPlugin } from './graphql/plugins/rateLimitPlugin';
+import { initializeLeaderboardCron } from './services/leaderboard.service';
 
 const PORT = process.env.PORT || 4000;
 
 const app = express();
 
 connectDatabase();
+
+// Initialize cron jobs
+initializeLeaderboardCron();
 
 app.use(
 	cors({

@@ -3,6 +3,7 @@ import { userSchema } from './user.schema';
 import { activitySchema } from './activity.schema';
 import { hexagonSchema } from './hexagon.schema';
 import { notificationTypeDefs } from './notification.schema';
+import { leaderboardSchema } from './leaderboard.schema';
 
 const baseSchema = gql`
 	scalar Date
@@ -22,4 +23,5 @@ export const typeDefs = [
 	activitySchema,
 	hexagonSchema,
 	notificationTypeDefs,
+	leaderboardSchema,
 ];

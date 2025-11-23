@@ -6,17 +6,23 @@ import { useMap } from "@/contexts/useMap";
 import { useActivityProfileImages } from "@/hooks/useActivityProfileImages";
 import { useHexagonSelection } from "@/hooks/useHexagonSelection";
 import { useHexagons } from "@/hooks/useHexagons";
+import type { User } from "@/contexts/auth.types";
 import { useEffect } from "react";
 
-export function MapContent() {
+interface MapContentProps {
+	user: User;
+}
+
+export function MapContent({ user }: MapContentProps) {
 	const { mapRef, refetchHexagonsRef } = useMap();
 
 	const { selectedHexagon, hexagonDetailLoading, handleHexagonClick, clearSelection } =
-		useHexagonSelection();
+		useHexagonSelection(user.id);
 
 	const { loading, refetchHexagons, hexagonsData } = useHexagons({
 		mapRef,
 		onHexagonClick: handleHexagonClick,
+		currentUserId: user.id,
 	});
 
 	useEffect(() => {
@@ -38,6 +44,7 @@ export function MapContent() {
 	return (
 		<>
 			<HexOverlay
+				hexagonsData={hexagonsData}
 				onActivityChanged={handleActivityChanged}
 			/>
 			<HexagonLoadingIndicator isLoading={loading} />

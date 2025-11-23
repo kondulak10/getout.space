@@ -361,6 +361,7 @@ resource "aws_secretsmanager_secret_version" "backend_env" {
     BACKEND_URL                   = "https://api.${var.domain_name}"
     AWS_REGION                    = var.aws_region
     SENTRY_DSN_BACKEND            = var.sentry_dsn_backend
+    AMPLITUDE_API_KEY             = var.amplitude_api_key
   })
 }
 
@@ -449,6 +450,10 @@ resource "aws_ecs_task_definition" "backend" {
         {
           name      = "SENTRY_DSN_BACKEND"
           valueFrom = "${aws_secretsmanager_secret.backend_env.arn}:SENTRY_DSN_BACKEND::"
+        },
+        {
+          name      = "AMPLITUDE_API_KEY"
+          valueFrom = "${aws_secretsmanager_secret.backend_env.arn}:AMPLITUDE_API_KEY::"
         }
       ]
 

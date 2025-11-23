@@ -28,6 +28,25 @@ const ACTIVITY_SOURCE_EMOJIS: Record<ActivityProcessingSource, string> = {
 const NEW_USER_EMOJI = '🎉';
 
 // Helper functions
+
+/**
+ * Build activity notification params from user data
+ * Reduces code duplication in route handlers
+ */
+export function buildActivityNotificationParams(
+	user: { _id: { toString(): string }; stravaId: number; stravaProfile: { firstname: string; lastname: string } },
+	stravaActivityId: number,
+	source: ActivityProcessingSource
+): ActivityProcessedParams {
+	return {
+		userName: `${user.stravaProfile.firstname} ${user.stravaProfile.lastname}`,
+		userStravaId: user.stravaId,
+		userId: user._id.toString(),
+		stravaActivityId,
+		source,
+	};
+}
+
 function buildGetoutProfileUrl(userId: string): string {
 	return `https://getout.space/profile/${userId}`;
 }

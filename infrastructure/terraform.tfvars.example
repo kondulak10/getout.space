@@ -16,3 +16,6 @@ admin_strava_id               = "your_strava_user_id"
 
 # Sentry Error Tracking (optional)
 sentry_dsn_backend            = "https://your_backend_dsn@o123.ingest.sentry.io/456"
+
+# Amplitude Analytics (optional)
+amplitude_api_key             = "your_amplitude_api_key"

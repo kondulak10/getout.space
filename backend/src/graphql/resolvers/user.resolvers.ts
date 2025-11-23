@@ -5,6 +5,7 @@ import { Hexagon } from '../../models/Hexagon';
 import { refreshStravaToken } from '../../utils/strava';
 import { GraphQLContext, requireAuth, requireAdmin } from './auth.helpers';
 import { IdArg, UserIdArg } from './resolver.types';
+import { isValidEmail } from '../../constants/validation';
 
 export const userResolvers = {
 	User: {
@@ -17,6 +18,34 @@ export const userResolvers = {
 		tokenExpiresAt: (parent: IUser) => {
 			// Always return the value - these fields are only accessed via 'me' query (own data) or by admins
 			return parent.tokenExpiresAt;
+		},
+
+		email: (parent: IUser) => {
+			return parent.email || null;
+		},
+
+		/**
+		 * Conditional resolver for activityCount
+		 *
+		 * IMPORTANT: This field is ONLY populated when user.email is null.
+		 * This is intentional to determine if we should show the email collection overlay.
+		 *
+		 * Frontend dependency: AuthProvider.tsx checks both hasEmail and activityCount
+		 * to show the overlay after 3+ activities if email is not set.
+		 *
+		 * @returns {number|null} Activity count if email is null, otherwise null
+		 */
+		activityCount: async (parent: IUser) => {
+			// Only count activities if email is null (to decide if we should show email overlay)
+			if (parent.email) {
+				return null;
+			}
+			try {
+				const count = await Activity.countDocuments({ userId: parent._id });
+				return count;
+			} catch (error) {
+				return null;
+			}
 		},
 	},
 
@@ -170,6 +199,48 @@ export const userResolvers = {
 					throw error;
 				}
 				throw new GraphQLError('Failed to refresh token');
+			}
+		},
+
+		updateEmail: async (
+			_: unknown,
+			{ email }: { email: string },
+			context: GraphQLContext
+		) => {
+			const currentUser = requireAuth(context);
+
+			// Validate email format using shared validation function
+			if (!isValidEmail(email)) {
+				throw new GraphQLError('Invalid email format', {
+					extensions: { code: 'INVALID_INPUT' },
+				});
+			}
+
+			try {
+				// Check if email already exists (excluding current user)
+				// Note: email.toLowerCase() is redundant since User model has lowercase: true,
+				// but keeping for explicit clarity
+				const existingUser = await User.findOne({
+					email: email.toLowerCase(),
+					_id: { $ne: currentUser._id },
+				});
+
+				if (existingUser) {
+					throw new GraphQLError('Email already in use', {
+						extensions: { code: 'EMAIL_IN_USE' },
+					});
+				}
+
+				// Update user email
+				currentUser.email = email.toLowerCase();
+				await currentUser.save();
+
+				return currentUser;
+			} catch (error) {
+				if (error instanceof GraphQLError) {
+					throw error;
+				}
+				throw new GraphQLError('Failed to update email');
 			}
 		},
 	},

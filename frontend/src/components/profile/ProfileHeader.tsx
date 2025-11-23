@@ -54,13 +54,13 @@ export function ProfileHeader({
 				</div>
 			</div>
 			{isOwnProfile && (
-				<div className="flex gap-2">
+				<div className="flex gap-2 mt-4">
 					<button
 						onClick={onOpenActivities}
 						disabled={activitiesLoading}
-						className="flex items-center gap-2 bg-orange-500/20 border border-orange-500/40 text-orange-400 px-4 py-2 rounded-lg hover:bg-orange-500/30 hover:border-orange-500/50 transition-all cursor-pointer font-medium disabled:opacity-50"
+						className="flex items-center gap-2 bg-orange-500/20 border border-orange-500/40 text-orange-400 px-3 py-1.5 rounded-lg hover:bg-orange-500/30 hover:border-orange-500/50 transition-all cursor-pointer text-sm font-medium disabled:opacity-50"
 					>
-						<FontAwesomeIcon icon="running" className="w-4 h-4" />
+						<FontAwesomeIcon icon="running" className="w-3.5 h-3.5" />
 						Manage Activities
 					</button>
 					<button
@@ -68,9 +68,9 @@ export function ProfileHeader({
 							onLogout?.();
 							navigate('/');
 						}}
-						className="flex items-center gap-2 bg-red-500/20 border border-red-500/40 text-red-400 px-4 py-2 rounded-lg hover:bg-red-500/30 hover:border-red-500/50 hover:text-red-300 transition-all cursor-pointer font-medium"
+						className="flex items-center gap-2 bg-red-500/20 border border-red-500/40 text-red-400 px-3 py-1.5 rounded-lg hover:bg-red-500/30 hover:border-red-500/50 hover:text-red-300 transition-all cursor-pointer text-sm font-medium"
 					>
-						<FontAwesomeIcon icon="sign-out-alt" className="w-4 h-4" />
+						<FontAwesomeIcon icon="sign-out-alt" className="w-3.5 h-3.5" />
 						Logout
 					</button>
 				</div>

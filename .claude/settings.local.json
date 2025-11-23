@@ -10,7 +10,6 @@
       "Bash(npm install:*)",
       "Bash(npm run generate:testdata:*)",
       "Bash(npx tsc:*)",
-      "Bash(npm run build:*)",
       "Bash(terraform plan:*)",
       "Bash(aws cloudfront create-invalidation:*)",
       "Bash(npm audit:*)",
@@ -76,9 +75,14 @@
       "Bash(test:*)",
       "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\backend\\exports\\users.json\")",
       "Bash(nul)",
-      "WebFetch(domain:communityhub.strava.com)"
+      "WebFetch(domain:communityhub.strava.com)",
+      "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\ANALYSIS_DOUBLE_AUTH_LOAD.md\")",
+      "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\components\\EmailCollectionOverlay.css\")"
     ],
-    "deny": [],
+    "deny": [
+      "Bash(npm run build:*)",
+      "Bash(npm run dev:*)"
+    ],
     "ask": []
   }
 }

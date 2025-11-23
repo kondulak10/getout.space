@@ -8,6 +8,8 @@ export interface MapContextType {
 	refetchHexagons: () => void;
 	refetchHexagonsRef: React.MutableRefObject<(() => void) | undefined>;
 	currentParentHexagonIds: React.MutableRefObject<string[]>;
+	isReducedOpacity: boolean;
+	toggleOpacity: () => void;
 }
 
 export const MapContext = createContext<MapContextType | undefined>(undefined);

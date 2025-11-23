@@ -1,15 +1,20 @@
 import { Request, Response, Router } from 'express';
+import { randomUUID } from 'crypto';
 import { User } from '../models/User';
 import { processActivity } from '../services/activityProcessing.service';
 import {
 	sendActivityProcessedNotification,
 	sendActivityProcessingErrorNotification,
+	buildActivityNotificationParams,
 } from '../services/slack.service';
 import { webhookLimiter, sseLimiter } from '../middleware/rateLimiter';
+import { analyticsService } from '../services/analytics.service';
 
 const router = Router();
 
-const sseClients: Response[] = [];
+// Use Map instead of array for better connection management
+// Key: connection ID, Value: Response object
+const sseClients = new Map<string, Response>();
 
 interface StravaWebhookEvent {
 	object_type: string;
@@ -31,6 +36,12 @@ router.get('/api/strava/webhook', webhookLimiter, (req: Request, res: Response) 
 	console.log('Token:', token);
 	console.log('Challenge:', challenge);
 
+	// Track webhook verification
+	analyticsService.track('webhook_verification', {
+		mode: String(mode),
+		challenge: String(challenge),
+	});
+
 	const verifyToken = process.env.STRAVA_WEBHOOK_VERIFY_TOKEN;
 
 	if (mode === 'subscribe' && token === verifyToken) {
@@ -48,6 +59,13 @@ router.post('/api/strava/webhook', webhookLimiter, (req: Request, res: Response)
 	console.log('📥 Webhook event received:');
 	console.log(JSON.stringify(event, null, 2));
 
+	// Track webhook event received
+	analyticsService.track('activity_webhook_received', {
+		strava_activity_id: event.object_id || 0,
+		aspect_type: event.aspect_type || 'unknown',
+		owner_id: event.owner_id || 0,
+	});
+
 	res.status(200).json({ success: true });
 
 	broadcastToClients(event);
@@ -60,38 +78,39 @@ router.post('/api/strava/webhook', webhookLimiter, (req: Request, res: Response)
 });
 
 router.get('/api/strava/events', sseLimiter, (req: Request, res: Response) => {
-	console.log('🔌 New SSE client connected');
+	const connectionId = randomUUID();
+	console.log(`🔌 New SSE client connected (ID: ${connectionId})`);
 
 	res.setHeader('Content-Type', 'text/event-stream');
 	res.setHeader('Cache-Control', 'no-cache');
 	res.setHeader('Connection', 'keep-alive');
 	res.setHeader('Access-Control-Allow-Origin', '*');
 
-	sseClients.push(res);
+	sseClients.set(connectionId, res);
 
 	res.write(
 		`data: ${JSON.stringify({ type: 'connected', message: 'Connected to activity feed' })}\n\n`
 	);
 
 	req.on('close', () => {
-		console.log('🔌 SSE client disconnected');
-		const index = sseClients.indexOf(res);
-		if (index !== -1) {
-			sseClients.splice(index, 1);
-		}
+		console.log(`🔌 SSE client disconnected (ID: ${connectionId})`);
+		sseClients.delete(connectionId);
 	});
 });
 
 function broadcastToClients(event: StravaWebhookEvent) {
 	const message = `data: ${JSON.stringify(event)}\n\n`;
 
-	console.log(`📡 Broadcasting to ${sseClients.length} connected clients`);
+	console.log(`📡 Broadcasting to ${sseClients.size} connected clients`);
 
-	sseClients.forEach((client) => {
+	// Iterate through Map entries
+	sseClients.forEach((client, connectionId) => {
 		try {
 			client.write(message);
 		} catch (error) {
-			console.error('Error broadcasting to client:', error);
+			console.error(`❌ Error broadcasting to client ${connectionId}:`, error);
+			// Remove failed connection
+			sseClients.delete(connectionId);
 		}
 	});
 }
@@ -108,18 +127,12 @@ async function handleNewActivity(stravaOwnerId: number, stravaActivityId: number
 			return;
 		}
 
-		// Helper to build notification params
-		const buildNotificationParams = () => ({
-			userName: `${user!.stravaProfile.firstname} ${user!.stravaProfile.lastname}`,
-			userStravaId: user!.stravaId,
-			userId: user!._id.toString(),
-			stravaActivityId,
-			source: 'webhook' as const,
-		});
-
 		await processActivity(stravaActivityId, user, user._id.toString());
 
-		await sendActivityProcessedNotification(buildNotificationParams());
+		// Send success notification
+		await sendActivityProcessedNotification(
+			buildActivityNotificationParams(user, stravaActivityId, 'webhook')
+		);
 
 		console.log(`✅ Successfully processed activity ${stravaActivityId}`);
 	} catch (error) {
@@ -138,11 +151,7 @@ async function handleNewActivity(stravaOwnerId: number, stravaActivityId: number
 		// For real errors, send Slack notification if user is available
 		if (user) {
 			await sendActivityProcessingErrorNotification({
-				userName: `${user.stravaProfile.firstname} ${user.stravaProfile.lastname}`,
-				userStravaId: user.stravaId,
-				userId: user._id.toString(),
-				stravaActivityId,
-				source: 'webhook',
+				...buildActivityNotificationParams(user, stravaActivityId, 'webhook'),
 				error: errorMessage,
 			});
 		}

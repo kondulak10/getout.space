@@ -84,3 +84,10 @@ variable "sentry_dsn_frontend" {
   sensitive   = true
   default     = ""
 }
+
+variable "amplitude_api_key" {
+  description = "Amplitude API key for analytics tracking (optional)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}

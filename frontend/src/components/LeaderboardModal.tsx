@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from '@/components/ui/dialog';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { useNavigate } from 'react-router-dom';
+import { useAnalytics } from '@/hooks/useAnalytics';
 
 interface LeaderboardModalProps {
 	parentHexagonIds: string[];
@@ -16,7 +17,13 @@ type TabType = 'active' | 'og';
 
 export function LeaderboardModal({ parentHexagonIds, onClose }: LeaderboardModalProps) {
 	const [activeTab, setActiveTab] = useState<TabType>('active');
+	const { track } = useAnalytics();
 	const navigate = useNavigate();
+
+	const handleClose = () => {
+		track('leaderboard_closed', {});
+		onClose();
+	};
 
 	const safeParentHexagonIds = Array.isArray(parentHexagonIds) ? parentHexagonIds.filter(Boolean) : [];
 	const shouldSkip = safeParentHexagonIds.length === 0;
@@ -121,10 +128,6 @@ export function LeaderboardModal({ parentHexagonIds, onClose }: LeaderboardModal
 				))}
 			</div>
 		);
-	};
-
-	const handleClose = () => {
-		onClose();
 	};
 
 	return (

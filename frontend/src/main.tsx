@@ -2,6 +2,13 @@
 import { initializeSentry } from '@/config/sentry'
 initializeSentry();
 
+// Initialize Amplitude analytics
+import { analytics } from '@/lib/analytics'
+const amplitudeKey = import.meta.env.VITE_AMPLITUDE_API_KEY;
+if (amplitudeKey) {
+  analytics.init(amplitudeKey);
+}
+
 import * as Sentry from '@sentry/react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'

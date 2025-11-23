@@ -20,6 +20,7 @@
 		"generate:testdata": "node scripts/generate-test-data.js"
 	},
 	"dependencies": {
+		"@amplitude/analytics-browser": "^2.31.3",
 		"@apollo/client": "^4.0.8",
 		"@fortawesome/fontawesome-svg-core": "^7.1.0",
 		"@fortawesome/pro-light-svg-icons": "^7.1.0",

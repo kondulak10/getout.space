@@ -8,6 +8,7 @@ import {
 	GetHexagonsCountDocument,
 	GetUsersCountDocument,
 	GetUsersDocument,
+	GlobalLeaderboardDocument,
 	NotificationsCountDocument,
 } from "@/gql/graphql";
 import { useLazyQuery, useQuery } from "@apollo/client/react";
@@ -29,6 +30,9 @@ export default function AdminPage() {
 		fetchPolicy: "network-only",
 	});
 	const [fetchNotifications] = useLazyQuery(AllNotificationsDocument, {
+		fetchPolicy: "network-only",
+	});
+	const [fetchLeaderboard] = useLazyQuery(GlobalLeaderboardDocument, {
 		fetchPolicy: "network-only",
 	});
 	const handleFetchUsers = async () => {
@@ -82,6 +86,22 @@ export default function AdminPage() {
 			if (result.data) {
 				console.log("=== NOTIFICATIONS ===");
 				console.log(result.data.notifications);
+			}
+		} finally {
+			setLoadingEntity(null);
+		}
+	};
+	const handleFetchLeaderboard = async () => {
+		setLoadingEntity("leaderboard");
+		try {
+			const result = await fetchLeaderboard();
+			if (result.data) {
+				console.log("=== LEADERBOARD ===");
+				const leaderboardWithLinks = result.data.globalLeaderboard.slice(0, 1000).map((entry) => ({
+					...entry,
+					stravaUrl: `https://www.strava.com/athletes/${entry.stravaId}`,
+				}));
+				console.log(leaderboardWithLinks);
 			}
 		} finally {
 			setLoadingEntity(null);
@@ -227,6 +247,27 @@ export default function AdminPage() {
 							</p>
 						</button>
 						<button
+							onClick={handleFetchLeaderboard}
+							disabled={loadingEntity !== null}
+							className={`
+								flex flex-col items-center justify-center
+								p-6 rounded-lg border-2 transition-all
+								${
+									loadingEntity === "leaderboard"
+										? "border-red-500 bg-red-50"
+										: loadingEntity !== null
+											? "border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed"
+											: "border-gray-300 bg-white hover:border-red-500 hover:bg-red-50 cursor-pointer"
+								}
+							`}
+						>
+							<div className="text-4xl mb-3">{loadingEntity === "leaderboard" ? "⏳" : "🏆"}</div>
+							<h3 className="text-lg font-semibold mb-1">Leaderboard</h3>
+							<p className="text-sm text-gray-500 text-center">
+								{loadingEntity === "leaderboard" ? "Loading..." : "View top 1000 in console"}
+							</p>
+						</button>
+						<button
 							onClick={handleExportAuth}
 							disabled={loadingEntity !== null}
 							className={`
@@ -243,6 +284,16 @@ export default function AdminPage() {
 							<h3 className="text-lg font-semibold mb-1">Export Auth</h3>
 							<p className="text-sm text-gray-500 text-center">Export JWT token to console</p>
 						</button>
+						<a
+							href="https://analytics.amplitude.com/"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="flex flex-col items-center justify-center p-6 rounded-lg border-2 border-gray-300 bg-white hover:border-indigo-500 hover:bg-indigo-50 cursor-pointer transition-all"
+						>
+							<div className="text-4xl mb-3">📊</div>
+							<h3 className="text-lg font-semibold mb-1">Analytics</h3>
+							<p className="text-sm text-gray-500 text-center">View Amplitude Dashboard</p>
+						</a>
 					</div>
 					<div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
 						<p className="text-sm text-blue-800">

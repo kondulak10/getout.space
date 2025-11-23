@@ -32,7 +32,7 @@ export function ZoomWarning() {
 	if (!showWarning) return null;
 
 	return (
-		<div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/70 text-white px-4 py-2 rounded-md text-sm font-medium text-center pointer-events-none z-10 whitespace-nowrap">
+		<div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/70 px-4 py-2 rounded-md text-sm font-medium text-center pointer-events-none z-10 whitespace-nowrap" style={{ color: '#FF7F00' }}>
 			Zoom in to see activities
 		</div>
 	);

@@ -25,12 +25,16 @@ export type HexagonColor = typeof HEXAGON_COLORS[number];
 const userColorMap = new Map<string, number>();
 let nextColorIndex = 0;
 
-export function getUserColor(userId: string): HexagonColor {
-	
+export function getUserColor(userId: string, currentUserId?: string): HexagonColor | string {
+	// Logged-in user's hexagons are always Strava orange
+	if (currentUserId && userId === currentUserId) {
+		return "#fc4c02";
+	}
+
 	let colorIndex = userColorMap.get(userId);
 
 	if (colorIndex === undefined) {
-		
+
 		colorIndex = nextColorIndex % HEXAGON_COLORS.length;
 		userColorMap.set(userId, colorIndex);
 		nextColorIndex++;

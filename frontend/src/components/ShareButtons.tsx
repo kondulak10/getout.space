@@ -1,20 +1,35 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { toast } from 'sonner';
 import { useMapShareImage } from '@/hooks/useMapShareImage';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import type { LocalStats } from '@/utils/calculateLocalStats';
 
-export function ShareButtons() {
+interface ShareButtonsProps {
+	localStats: LocalStats;
+	totalHexagons: number;
+	globalRank?: number;
+}
+
+export function ShareButtons({ localStats, totalHexagons, globalRank }: ShareButtonsProps) {
 	const { generateAndShareImage, isGenerating, canShare } = useMapShareImage();
+	const { track } = useAnalytics();
 
 	const shareLink = () => {
+		track('share_link_clicked', {});
 		const url = 'https://getout.space';
 		navigator.clipboard.writeText(url);
 		toast.success('Link copied to clipboard!');
 	};
 
+	const handleShareImage = () => {
+		track('share_image_clicked', {});
+		generateAndShareImage(localStats, totalHexagons, globalRank);
+	};
+
 	return (
 		<div className="absolute top-4 left-4 z-10 flex gap-2">
 			<button
-				onClick={generateAndShareImage}
+				onClick={handleShareImage}
 				disabled={isGenerating || !canShare}
 				className="bg-white/95 hover:bg-white border border-black/20 text-black px-4 py-3 rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center gap-2 font-semibold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
 				title="Share or Download Image"

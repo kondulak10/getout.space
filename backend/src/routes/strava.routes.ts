@@ -1,26 +1,27 @@
 import { Request, Response, Router } from 'express';
-import { User } from '../models/User';
-import { generateToken } from '../utils/jwt';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { activityProcessingLimiter, authLimiter } from '../middleware/rateLimiter';
+import { Activity } from '../models/Activity';
+import { User } from '../models/User';
 import {
-	processActivity,
 	deleteActivityAndRestoreHexagons,
+	processActivity,
 } from '../services/activityProcessing.service';
 import {
-	StravaOAuthTokenResponse,
-	StravaActivity,
-	StravaAthleteStats,
-} from '../types/strava.types';
-import { Activity } from '../models/Activity';
-import { processAndUploadProfileImage } from '../utils/imageProcessing';
-import { geocodeToHex } from '../utils/geocoding';
-import { getValidAccessToken } from '../services/strava.service';
-import {
-	sendNewUserSignupNotification,
 	sendActivityProcessedNotification,
 	sendActivityProcessingErrorNotification,
+	sendNewUserSignupNotification,
+	buildActivityNotificationParams,
 } from '../services/slack.service';
-import { authLimiter, activityProcessingLimiter } from '../middleware/rateLimiter';
+import { getValidAccessToken } from '../services/strava.service';
+import {
+	StravaActivity,
+	StravaAthleteStats,
+	StravaOAuthTokenResponse,
+} from '../types/strava.types';
+import { geocodeToHex } from '../utils/geocoding';
+import { processAndUploadProfileImage } from '../utils/imageProcessing';
+import { generateToken } from '../utils/jwt';
 
 const router = Router();
 
@@ -449,19 +450,13 @@ router.post(
 			return res.status(400).json({ error: 'activityId is required' });
 		}
 
-		// Helper to build notification params
-		const buildNotificationParams = () => ({
-			userName: `${currentUser.stravaProfile.firstname} ${currentUser.stravaProfile.lastname}`,
-			userStravaId: currentUser.stravaId,
-			userId: req.userId!,
-			stravaActivityId: activityId,
-			source: source as 'manual' | 'after_signup',
-		});
-
 		try {
 			const result = await processActivity(activityId, currentUser, req.userId!);
 
-			await sendActivityProcessedNotification(buildNotificationParams());
+			// Send success notification
+			await sendActivityProcessedNotification(
+				buildActivityNotificationParams(currentUser, activityId, source as 'manual' | 'after_signup')
+			);
 
 			res.json({
 				success: true,
@@ -472,12 +467,13 @@ router.post(
 
 			const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 			const isNonRunningActivity = errorMessage.includes('Only running activities');
-			const hasNoGPS = errorMessage.includes('no GPS data') || errorMessage.includes('summary_polyline missing');
+			const hasNoGPS =
+				errorMessage.includes('no GPS data') || errorMessage.includes('summary_polyline missing');
 
 			// Send Slack notification for real errors (skip non-running activities and GPS-less activities)
 			if (!isNonRunningActivity && !hasNoGPS) {
 				await sendActivityProcessingErrorNotification({
-					...buildNotificationParams(),
+					...buildActivityNotificationParams(currentUser, activityId, source as 'manual' | 'after_signup'),
 					error: errorMessage,
 				});
 			}
@@ -493,7 +489,7 @@ router.post(
 			if (hasNoGPS) {
 				return res.status(400).json({
 					error: 'Activity has no GPS data',
-					details: errorMessage
+					details: errorMessage,
 				});
 			}
 

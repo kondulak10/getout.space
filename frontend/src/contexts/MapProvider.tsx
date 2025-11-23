@@ -1,12 +1,13 @@
 import * as h3 from "h3-js";
 import type { Map as MapboxMap } from "mapbox-gl";
-import { ReactNode, useCallback, useRef } from "react";
+import { ReactNode, useCallback, useRef, useState } from "react";
 import { MapContext, MapContextType } from "./map.types";
 
 export function MapProvider({ children }: { children: ReactNode }) {
 	const mapRef = useRef<MapboxMap | null>(null);
 	const refetchHexagonsRef = useRef<(() => void) | undefined>(undefined);
 	const currentParentHexagonIds = useRef<string[]>([]);
+	const [isReducedOpacity, setIsReducedOpacity] = useState(false);
 
 	const flyToHex = useCallback((hexId: string, zoom: number = 13) => {
 		if (!mapRef.current) {
@@ -44,6 +45,10 @@ export function MapProvider({ children }: { children: ReactNode }) {
 		refetchHexagonsRef.current?.();
 	}, []);
 
+	const toggleOpacity = useCallback(() => {
+		setIsReducedOpacity((prev) => !prev);
+	}, []);
+
 	const value: MapContextType = {
 		mapRef,
 		flyToHex,
@@ -51,6 +56,8 @@ export function MapProvider({ children }: { children: ReactNode }) {
 		refetchHexagons,
 		refetchHexagonsRef,
 		currentParentHexagonIds,
+		isReducedOpacity,
+		toggleOpacity,
 	};
 
 	return <MapContext.Provider value={value}>{children}</MapContext.Provider>;

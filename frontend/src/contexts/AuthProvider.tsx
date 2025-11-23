@@ -3,23 +3,17 @@ import { useQuery } from "@apollo/client/react";
 import { MeDocument } from "@/gql/graphql";
 import { AuthContext, AuthContextType, User } from "./auth.types";
 import { refreshToken } from "@/services/stravaApi.service";
+import { analytics } from "@/lib/analytics";
+import { EmailCollectionOverlay } from "@/components/EmailCollectionOverlay";
 const TOKEN_KEY = "getout_auth_token";
 export function AuthProvider({ children }: { children: ReactNode }) {
-	const [token, setToken] = useState<string | null>(null);
+	// Read token synchronously during initialization to eliminate unnecessary loading state
+	const [token, setToken] = useState<string | null>(() => localStorage.getItem(TOKEN_KEY));
 	const [user, setUser] = useState<User | null>(null);
-	const [isInitialized, setIsInitialized] = useState(false);
-	useEffect(() => {
-		const initializeAuth = async () => {
-			const storedToken = localStorage.getItem(TOKEN_KEY);
-			if (storedToken) {
-				setToken(storedToken);
-			}
-			setIsInitialized(true);
-		};
-		initializeAuth();
-	}, []);
+	const [showEmailOverlay, setShowEmailOverlay] = useState(false);
+
 	const { data: userData, loading: userLoading, error: userError } = useQuery(MeDocument, {
-		skip: !token || !isInitialized,
+		skip: !token,
 	});
 	useEffect(() => {
 		const handleUserData = async () => {
@@ -46,6 +40,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 					updatedAt: String(userData.me.updatedAt),
 				};
 				setUser(newUser);
+
+				// Identify user in analytics
+				analytics.identify(newUser.id, {
+					stravaId: newUser.stravaId,
+					username: newUser.profile.username,
+					city: newUser.profile.city,
+					state: newUser.profile.state,
+					country: newUser.profile.country,
+					isAdmin: newUser.isAdmin,
+				});
+
+				// Check if we should show email collection overlay
+				// NOTE: Backend only populates activityCount when email is null (see user.resolvers.ts)
+				// This is intentional - we only need the count to decide whether to show the overlay
+				const hasEmail = userData.me.email != null;
+				const activityCount = userData.me.activityCount ?? 0;
+				const shouldShowEmailOverlay = !hasEmail && activityCount >= 3;
+				setShowEmailOverlay(shouldShowEmailOverlay);
+
 				// Scope validation happens during Strava OAuth registration in backend.
 				const now = Math.floor(Date.now() / 1000);
 				const timeUntilExpiry = userData.me.tokenExpiresAt - now;
@@ -82,21 +95,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		setToken(newToken);
 		setUser(newUser);
 		localStorage.setItem(TOKEN_KEY, newToken);
+
+		// Track login and identify user in analytics
+		analytics.identify(newUser.id, {
+			stravaId: newUser.stravaId,
+			username: newUser.profile.username,
+			city: newUser.profile.city,
+			state: newUser.profile.state,
+			country: newUser.profile.country,
+			isAdmin: newUser.isAdmin,
+		});
 	};
 	const logout = () => {
 		setToken(null);
 		setUser(null);
 		localStorage.removeItem(TOKEN_KEY);
+
+		// Reset analytics on logout
+		analytics.reset();
 	};
 	const value: AuthContextType = {
 		user,
 		token,
 		isAuthenticated: !!token,
 		isAdmin: user?.isAdmin ?? false,
-		isLoading: !isInitialized || userLoading,
+		isLoading: userLoading,
 		login,
 		logout,
 		setUser,
 	};
-	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+	return (
+		<AuthContext.Provider value={value}>
+			{children}
+			{showEmailOverlay && (
+				<EmailCollectionOverlay onComplete={() => setShowEmailOverlay(false)} />
+			)}
+		</AuthContext.Provider>
+	);
 }

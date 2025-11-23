@@ -9,8 +9,9 @@ import { useMap } from "@/contexts/useMap";
 interface UseHexagonsOptions {
 	mapRef: React.RefObject<MapboxMap | null>;
 	onHexagonClick?: (hexagonId: string) => void;
+	currentUserId?: string;
 }
-export const useHexagons = ({ mapRef, onHexagonClick }: UseHexagonsOptions) => {
+export const useHexagons = ({ mapRef, onHexagonClick, currentUserId }: UseHexagonsOptions) => {
 	const [visibleHexCount, setVisibleHexCount] = useState(0);
 	const [userCount, setUserCount] = useState(0);
 	const [loading, setLoading] = useState(false);
@@ -107,14 +108,31 @@ export const useHexagons = ({ mapRef, onHexagonClick }: UseHexagonsOptions) => {
 				if (lastCenterHexRef.current === centerParentHex) {
 					return;
 				}
-				const parentHexagonIds = gridDisk(centerParentHex, 1);
-				currentParentHexagonIds.current = parentHexagonIds;
-				updateParentVisualization(parentHexagonIds);
+				// Separate center from ring for center-first loading
+				const allParentHexes = gridDisk(centerParentHex, 1);
+				const ringHexes = allParentHexes.filter(id => id !== centerParentHex);
 
-				// Fetch each parent hexagon individually for better caching
+				currentParentHexagonIds.current = allParentHexes;
+				updateParentVisualization(allParentHexes);
+
 				setLoading(true);
-				const results = await Promise.all(
-					parentHexagonIds.map(parentHexagonId =>
+
+				// PHASE 1: Load center first (gets full bandwidth)
+				const centerResult = await apolloClient.query({
+					query: HexagonsByParentDocument,
+					variables: { parentHexagonId: centerParentHex },
+				});
+
+				const centerHexagons = centerResult.data?.hexagonsByParent || [];
+
+				// Render center immediately (first render - ~70% of viewport)
+				setHexagonsData(centerHexagons);
+				setVisibleHexCount(centerHexagons.length);
+				setUserCount(new Set(centerHexagons.map(hex => hex.currentOwnerId)).size);
+
+				// PHASE 2: Load remaining 6 ring hexes (share bandwidth)
+				const ringResults = await Promise.all(
+					ringHexes.map(parentHexagonId =>
 						apolloClient.query({
 							query: HexagonsByParentDocument,
 							variables: { parentHexagonId },
@@ -122,18 +140,16 @@ export const useHexagons = ({ mapRef, onHexagonClick }: UseHexagonsOptions) => {
 					)
 				);
 
-				// Combine all hexagons from all parent queries
-				const allHexagons = results.flatMap(result => result.data?.hexagonsByParent || []);
+				// Combine all hexagons from center + ring
+				const allHexagons = [
+					...centerHexagons,
+					...ringResults.flatMap(result => result.data?.hexagonsByParent || [])
+				];
 
-				// Calculate counts before setting state (reduces re-renders)
-				const visibleCount = allHexagons.length;
-				const uniqueUsers = new Set(allHexagons.map(hex => hex.currentOwnerId));
-				const usersCount = uniqueUsers.size;
-
-				// Batch all state updates (React 18 batches automatically)
+				// Final render with complete data (second render)
 				setHexagonsData(allHexagons);
-				setVisibleHexCount(visibleCount);
-				setUserCount(usersCount);
+				setVisibleHexCount(allHexagons.length);
+				setUserCount(new Set(allHexagons.map(hex => hex.currentOwnerId)).size);
 				setLoading(false);
 			} catch {
 				// Failed to calculate parent hexagons
@@ -160,7 +176,8 @@ export const useHexagons = ({ mapRef, onHexagonClick }: UseHexagonsOptions) => {
 		// Build GeoJSON features for map rendering
 		const features = hexagonsData.map((hex) => {
 			const feature = h3ToGeoJSON(hex.hexagonId);
-			const color = getUserColor(hex.currentOwnerId);
+			const color = getUserColor(hex.currentOwnerId, currentUserId);
+			const isCurrentUser = currentUserId && hex.currentOwnerId === currentUserId;
 			return {
 				...feature,
 				properties: {
@@ -171,6 +188,7 @@ export const useHexagons = ({ mapRef, onHexagonClick }: UseHexagonsOptions) => {
 					hasImage: false,
 					captureCount: hex.captureCount,
 					activityType: hex.activityType,
+					isCurrentUser: isCurrentUser,
 				},
 			};
 		});
@@ -195,7 +213,7 @@ export const useHexagons = ({ mapRef, onHexagonClick }: UseHexagonsOptions) => {
 		} catch {
 			// Ignore coordinate conversion errors
 		}
-	}, [hexagonsData, mapRef]);
+	}, [hexagonsData, mapRef, currentUserId]);
 	useEffect(() => {
 		const map = mapRef.current;
 		if (!map) return;
