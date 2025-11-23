@@ -10,6 +10,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 if (amplitudeKey && isProduction) {
 	analyticsService.init(amplitudeKey);
 	console.log('✅ Amplitude analytics enabled (production mode)');
+	console.log('🚀 Sequential deployment workflow active');
 } else if (!isProduction) {
 	console.log('ℹ️  Amplitude analytics disabled (not in production)');
 }
