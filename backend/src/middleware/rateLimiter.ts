@@ -1,7 +1,13 @@
 import rateLimit from 'express-rate-limit';
+import type { Request } from 'express';
+
+interface RequestWithUser extends Request {
+	user?: { isAdmin?: boolean };
+	userId?: string;
+}
 
 // Helper to safely get IP address (handles IPv6)
-const getClientIp = (req: any): string => {
+const getClientIp = (req: Request): string => {
 	return req.ip || req.socket?.remoteAddress || 'unknown';
 };
 
@@ -40,7 +46,7 @@ export const authLimiter = rateLimit({
 
 	// Skip rate limit for admins
 	skip: async (req) => {
-		const user = (req as any).user;
+		const user = (req as RequestWithUser).user;
 		return user?.isAdmin === true;
 	},
 });
@@ -77,7 +83,7 @@ export const activityProcessingLimiter = rateLimit({
 
 	// Key by user ID (not IP) for authenticated requests
 	keyGenerator: (req) => {
-		const userId = (req as any).userId;
+		const userId = (req as RequestWithUser).userId;
 		if (userId) {
 			return `user:${userId}`;
 		}
@@ -117,7 +123,7 @@ export const graphqlLimiter = rateLimit({
 
 	// Key by user ID if authenticated, otherwise IP
 	keyGenerator: (req) => {
-		const userId = (req as any).userId;
+		const userId = (req as RequestWithUser).userId;
 		if (userId) {
 			return `user:${userId}`;
 		}
@@ -127,7 +133,7 @@ export const graphqlLimiter = rateLimit({
 
 	// Skip rate limit for admins
 	skip: async (req) => {
-		const user = (req as any).user;
+		const user = (req as RequestWithUser).user;
 		return user?.isAdmin === true;
 	},
 });

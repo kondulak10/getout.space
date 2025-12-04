@@ -11,6 +11,7 @@ export const notificationTypeDefs = `
     message: String!
     read: Boolean!
     relatedActivityId: ID
+    triggeredBy: UserPublic
     createdAt: Date!
   }
 

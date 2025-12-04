@@ -70,7 +70,7 @@ export function HexOverlay({ hexagonsData, onActivityChanged }: HexOverlayProps)
 			<ShareButtons localStats={localStats} totalHexagons={totalHexagons} globalRank={globalRank} />
 
 			{/* Map Stats (top-left, below share buttons) */}
-			<div className="absolute top-36 left-4 z-10">
+			<div className="absolute top-28 md:top-36 left-4 z-10">
 				<MapStats
 					localStats={localStats}
 					totalHexagons={totalHexagons}

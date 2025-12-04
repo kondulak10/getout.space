@@ -230,7 +230,7 @@ export function LocationSearch() {
 						onChange={handleInputChange}
 						onKeyDown={handleKeyDown}
 						placeholder="Search for a location..."
-						className="w-full bg-black/50 text-white placeholder-gray-400 pl-10 pr-4 py-3 rounded-lg border border-white/10 focus:border-[#FF7F00] focus:outline-none focus:ring-1 focus:ring-[#FF7F00] transition-colors"
+						className="w-full bg-black/50 text-white placeholder:text-strava pl-10 pr-4 py-3 rounded-lg border border-white/10 focus:border-[#FF7F00] focus:outline-none focus:ring-1 focus:ring-[#FF7F00] transition-colors"
 						autoComplete="off"
 					/>
 				</div>
@@ -278,8 +278,8 @@ export function LocationSearch() {
 					{searchQuery.length === 0 && (
 						<span>
 							Search for a city or{" "}
-							<span style={{ color: "#FF7F00" }}>zoom in manually</span>{" "}
-							<span className="text-gray-500">to see the markers</span>
+							<span className="font-semibold">zoom in manually</span>{" "}
+							to see the markers
 						</span>
 					)}
 				</div>

@@ -60,7 +60,9 @@ export const useMapbox = (options: UseMapboxOptions = {}) => {
 			map.remove();
 			mapRef.current = null;
 		};
-		
+		// initialCenter and initialZoom are intentionally excluded - they're only used
+		// for initial map creation and shouldn't cause map recreation when changed
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [mapboxToken, style, enableCustomStyling, mapRef]);
 
 	return {

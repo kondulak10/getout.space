@@ -42,10 +42,10 @@ export function MapStats({ localStats, totalHexagons, globalRank, isLoading, cla
 	}
 
 	return (
-		<div className={`flex flex-col gap-2 p-0 ${className || ""}`} style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
+		<div className={`flex flex-col gap-1 md:gap-2 p-0 ${className || ""}`} style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
 			{/* Local hexes (current viewport) */}
 			<div className="flex items-center gap-1.5 text-xl uppercase font-bold tracking-wide text-white [text-shadow:0_2px_4px_rgba(0,0,0,0.8),0_4px_8px_rgba(0,0,0,0.6),0_0_20px_rgba(0,0,0,0.4)] md:text-base md:gap-[0.3rem]">
-				<span className="text-white/85 text-base font-bold tracking-wider min-w-[60px] [text-shadow:0_2px_4px_rgba(0,0,0,0.8),0_4px_8px_rgba(0,0,0,0.6)] md:text-sm md:min-w-[50px]">
+				<span className="text-white/85 text-base font-bold tracking-wider min-w-[60px] [text-shadow:0_2px_4px_rgba(0,0,0,0.8),0_4px_8px_rgba(0,0,0,0.6)]">
 					LOCAL
 				</span>
 				<span className="text-2xl font-black text-white [text-shadow:0_2px_4px_rgba(0,0,0,0.9),0_4px_8px_rgba(0,0,0,0.7),0_0_20px_rgba(255,255,255,0.3)] md:text-xl">
@@ -68,7 +68,7 @@ export function MapStats({ localStats, totalHexagons, globalRank, isLoading, cla
 
 			{/* Total hexes (all time) */}
 			<div className="flex items-center gap-1.5 text-xl uppercase font-bold tracking-wide text-white [text-shadow:0_2px_4px_rgba(0,0,0,0.8),0_4px_8px_rgba(0,0,0,0.6),0_0_20px_rgba(0,0,0,0.4)] md:text-base md:gap-[0.3rem]">
-				<span className="text-white/85 text-base font-bold tracking-wider min-w-[60px] [text-shadow:0_2px_4px_rgba(0,0,0,0.8),0_4px_8px_rgba(0,0,0,0.6)] md:text-sm md:min-w-[50px]">
+				<span className="text-white/85 text-base font-bold tracking-wider min-w-[60px] [text-shadow:0_2px_4px_rgba(0,0,0,0.8),0_4px_8px_rgba(0,0,0,0.6)]">
 					TOTAL
 				</span>
 				<span className="text-2xl font-black text-white [text-shadow:0_2px_4px_rgba(0,0,0,0.9),0_4px_8px_rgba(0,0,0,0.7),0_0_20px_rgba(255,255,255,0.3)] md:text-xl">
@@ -90,7 +90,7 @@ export function MapStats({ localStats, totalHexagons, globalRank, isLoading, cla
 			</div>
 
 			{/* Others Toggle */}
-			<div className="flex items-center gap-2 mt-2 cursor-pointer select-none group" onClick={toggleOpacity}>
+			<div className="flex items-center gap-2 mt-1 md:mt-2 cursor-pointer select-none group" onClick={toggleOpacity}>
 				<span className="text-white/85 text-base font-bold tracking-wider min-w-[60px] [text-shadow:0_2px_4px_rgba(0,0,0,0.8),0_4px_8px_rgba(0,0,0,0.6)]">
 					OTHERS
 				</span>

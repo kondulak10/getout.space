@@ -131,6 +131,8 @@ function TestPageContent() {
 		} else {
 			map.once('load', handleLoad);
 		}
+		// captureMapToCanvas is stable and only needs to run when mapRef loads
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [mapRef]);
 	return (
 		<div className="flex flex-col lg:flex-row w-full h-screen bg-gray-900">

@@ -154,25 +154,28 @@ export function useStaticProfileImages(
 			});
 		}
 
+		// Capture refs at start of effect for cleanup
+		const capturedMap = map;
+		const layersAdded = layersAddedRef;
 		return () => {
-			const currentMap = mapRef.current;
-			if (currentMap && currentMap.getStyle()) {
-				layersAddedRef.current.forEach((layerId) => {
+			// Use captured refs for cleanup
+			const layersToRemove = new Set(layersAdded.current);
+			if (capturedMap && capturedMap.getStyle()) {
+				layersToRemove.forEach((layerId) => {
 					try {
-						if (currentMap.getLayer(layerId)) {
-							currentMap.removeLayer(layerId);
+						if (capturedMap.getLayer(layerId)) {
+							capturedMap.removeLayer(layerId);
 						}
 						const sourceId = layerId.replace('profile-image-', 'profile-image-source-');
-						if (currentMap.getSource(sourceId)) {
-							currentMap.removeSource(sourceId);
+						if (capturedMap.getSource(sourceId)) {
+							capturedMap.removeSource(sourceId);
 						}
-
 					} catch {
 						// Cleanup may fail if already removed
 					}
 				});
 			}
-			layersAddedRef.current.clear();
+			layersAdded.current.clear();
 		};
 	}, [mapRef, mockData]);
 }

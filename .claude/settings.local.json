@@ -79,7 +79,8 @@
       "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\ANALYSIS_DOUBLE_AUTH_LOAD.md\")",
       "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\components\\EmailCollectionOverlay.css\")",
       "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\components\\MapStats.module.css\")",
-      "Bash(npm run test:e2e:*)"
+      "Bash(npm run test:e2e:*)",
+      "Bash(del:*)"
     ],
     "deny": [
       "Bash(npm run build:*)",

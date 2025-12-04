@@ -156,6 +156,9 @@ export function MapView({ user }: MapViewProps) {
 				clearInterval(pollInterval);
 			}
 		};
+		// Note: opacityUser/opacityOthers are only used for initial layer creation.
+		// Opacity updates are handled by the separate useEffect below.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isLoaded, mapRef]);
 
 	useEffect(() => {

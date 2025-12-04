@@ -1,6 +1,11 @@
 import { ApolloServerPlugin } from '@apollo/server';
 import { GraphQLError } from 'graphql';
 
+interface GraphQLContextValue {
+	userId?: string;
+	user?: { isAdmin?: boolean };
+}
+
 interface RateLimitConfig {
 	[operationName: string]: {
 		limit: number; // requests per window
@@ -68,7 +73,7 @@ export const rateLimitPlugin: ApolloServerPlugin = {
 				}
 
 				const config = rateLimitConfig[operationName];
-				const context = requestContext.contextValue as any;
+				const context = requestContext.contextValue as GraphQLContextValue;
 				const userId =
 					context.userId ||
 					requestContext.request.http?.headers.get('x-forwarded-for') ||

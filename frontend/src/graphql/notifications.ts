@@ -7,6 +7,15 @@ export const NOTIFICATION_FRAGMENT = gql`
 		message
 		read
 		relatedActivityId
+		triggeredBy {
+			id
+			stravaId
+			stravaProfile {
+				firstname
+				lastname
+				imghex
+			}
+		}
 		createdAt
 	}
 `;

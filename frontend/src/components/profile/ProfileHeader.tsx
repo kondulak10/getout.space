@@ -41,7 +41,8 @@ export function ProfileHeader({
 					)}
 					<div>
 						<h1 className="text-2xl font-bold text-gray-100">
-							{userProfile?.firstname} {userProfile?.lastname}
+							{userProfile?.firstname}
+							{userProfile?.lastname && ` ${userProfile.lastname.charAt(0).toUpperCase()}.`}
 						</h1>
 						<p className="text-sm text-gray-400">Strava ID: {stravaId}</p>
 						{isOwnProfile && isAdmin && (

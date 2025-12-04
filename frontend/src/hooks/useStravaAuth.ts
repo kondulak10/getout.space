@@ -30,6 +30,9 @@ export function useStravaAuth(options?: UseStravaAuthOptions) {
 			setIsAuthenticating(true);
 			handleOAuthCallback(code);
 		}
+		// This effect runs only on mount to handle OAuth callback from URL params.
+		// handleOAuthCallback is defined below and isAuthenticated check is a guard.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	const loginWithStrava = () => {

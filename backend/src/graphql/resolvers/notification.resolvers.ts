@@ -1,6 +1,7 @@
 import { notificationService } from '../../services/notification.service';
 import { GraphQLContext, requireAuth, requireAdmin } from './auth.helpers';
 import { INotification } from '../../models/Notification';
+import { User } from '../../models/User';
 import { PaginationArgs, IdArg } from './resolver.types';
 
 export const notificationResolvers = {
@@ -55,5 +56,9 @@ export const notificationResolvers = {
 		id: (notification: INotification) => String(notification._id),
 		relatedActivityId: (notification: INotification) =>
 			notification.relatedActivityId ? String(notification.relatedActivityId) : null,
+		triggeredBy: async (notification: INotification) => {
+			if (!notification.triggeredById) return null;
+			return await User.findById(notification.triggeredById);
+		},
 	},
 };

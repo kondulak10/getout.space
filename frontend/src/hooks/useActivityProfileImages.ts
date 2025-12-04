@@ -223,28 +223,36 @@ export function useActivityProfileImages(
 			});
 		};
 		onMapLoad();
+		// Capture refs at start of effect for cleanup
+		const capturedMap = map;
+		const layersAdded = layersAddedRef;
+		const currentUserLayers = currentUserLayersRef;
 		return () => {
 			markersRef.current.forEach((marker) => marker.remove());
 			markersRef.current = [];
-			const currentMap = mapRef.current;
-			if (currentMap && currentMap.getStyle()) {
-				layersAddedRef.current.forEach((layerId) => {
+			// Use captured refs for cleanup
+			const layersToRemove = new Set(layersAdded.current);
+			if (capturedMap && capturedMap.getStyle()) {
+				layersToRemove.forEach((layerId) => {
 					try {
-						if (currentMap.getLayer(layerId)) {
-							currentMap.removeLayer(layerId);
+						if (capturedMap.getLayer(layerId)) {
+							capturedMap.removeLayer(layerId);
 						}
 						const sourceId = layerId.replace("profile-image-", "profile-image-source-");
-						if (currentMap.getSource(sourceId)) {
-							currentMap.removeSource(sourceId);
+						if (capturedMap.getSource(sourceId)) {
+							capturedMap.removeSource(sourceId);
 						}
 					} catch {
 						// Cleanup may fail if already removed
 					}
 				});
 			}
-			layersAddedRef.current.clear();
-			currentUserLayersRef.current.clear();
+			layersAdded.current.clear();
+			currentUserLayers.current.clear();
 		};
+		// user?.id is used for determining current user layers but doesn't need to trigger re-render
+		// since user?.profile.imghex already covers user changes
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [mapRef, hexagonsData, user?.profile.imghex, imageOpacity]);
 
 	// Update layer opacity when isReducedOpacity changes (only for other users' images)

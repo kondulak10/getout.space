@@ -45,13 +45,13 @@ export function Loading({
 		);
 	}
 
-	// Map indicator variant - bottom-left corner
+	// Map indicator variant - bottom-left corner (above mobile nav on small screens)
 	if (variant === 'map') {
 		return (
-			<div className="absolute bottom-4 left-4 z-10">
-				<div className="bg-[rgba(10,10,10,0.95)] backdrop-blur-md border border-white/10 rounded-lg shadow-lg px-3 py-2 flex items-center gap-2">
+			<div className="absolute bottom-24 left-4 md:bottom-4 z-10">
+				<div className="bg-[rgba(10,10,10,0.95)] backdrop-blur-md border-2 border-orange-500 rounded-lg shadow-lg px-3 py-2 flex items-center gap-2">
 					<FontAwesomeIcon icon={faSpinner} spin className="w-4 h-4 text-orange-500" />
-					<span className="text-xs font-medium text-gray-300">{text}</span>
+					<span className="text-xs font-medium text-white">{text}</span>
 				</div>
 			</div>
 		);

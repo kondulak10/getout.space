@@ -156,6 +156,8 @@ export const useHexagons = ({ mapRef, onHexagonClick, currentUserId }: UseHexago
 				setLoading(false);
 			}
 		}, 300);
+		// currentParentHexagonIds is a ref and doesn't trigger re-renders
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [mapRef, apolloClient, updateParentVisualization]);
 	updateHexagonsRef.current = updateHexagonsImpl;
 	useEffect(() => {

@@ -65,6 +65,7 @@ export function UserProfileCard({
 						<div className="flex-1 min-w-0">
 							<div className="font-semibold text-sm text-gray-100 truncate">
 								{user.profile.firstname}
+								{user.profile.lastname && ` ${user.profile.lastname.charAt(0).toUpperCase()}.`}
 							</div>
 							<div className="text-xs text-gray-400">ID: {user.stravaId}</div>
 						</div>

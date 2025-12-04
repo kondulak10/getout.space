@@ -35,37 +35,35 @@ export function ShareButtons({ localStats, totalHexagons, globalRank }: ShareBut
 		<div className="absolute top-4 left-4 z-10">
 			<div className="flex flex-row gap-1 items-center pointer-events-none">
 				{/* Buttons stacked vertically */}
-				<div className="flex flex-col gap-2 pointer-events-auto">
+				<div className="flex flex-col gap-1.5 md:gap-2 pointer-events-auto">
 					<button
 						onClick={handleShareImage}
 						disabled={isGenerating || !canShare}
-						className="bg-white/95 hover:bg-white border border-black/20 text-black px-4 py-3 rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center gap-2 font-semibold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap"
+						className="bg-white/95 hover:bg-white border border-black/20 text-black px-3 py-2 md:px-4 md:py-3 rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center gap-1.5 md:gap-2 font-semibold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap"
 						title="Share or Download Image"
 					>
 						<FontAwesomeIcon
 							icon={isGenerating ? "spinner" : "image"}
-							className={`w-5 h-5 ${isGenerating ? 'animate-spin' : ''}`}
+							className={`w-4 h-4 md:w-5 md:h-5 ${isGenerating ? 'animate-spin' : ''}`}
 						/>
-						<span className="text-sm">Share Image</span>
+						<span className="text-xs md:text-sm">Share Image</span>
 					</button>
 					<button
 						onClick={shareLink}
-						className="bg-white/95 hover:bg-white border border-black/20 text-black px-4 py-3 rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center gap-2 font-semibold cursor-pointer whitespace-nowrap"
+						className="bg-white/95 hover:bg-white border border-black/20 text-black px-3 py-2 md:px-4 md:py-3 rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center gap-1.5 md:gap-2 font-semibold cursor-pointer whitespace-nowrap"
 						title="Copy Link to Clipboard"
 					>
-						<FontAwesomeIcon icon="share-nodes" className="w-5 h-5" />
-						<span className="text-sm">Share Link</span>
+						<FontAwesomeIcon icon="share-nodes" className="w-4 h-4 md:w-5 md:h-5" />
+						<span className="text-xs md:text-sm">Share Link</span>
 					</button>
 				</div>
 
 				{/* Hand-drawn style annotation */}
-				<div className="relative flex flex-row items-center gap-1 select-none pointer-events-none">
+				<div className="relative flex flex-row items-center gap-0.5 md:gap-1 select-none pointer-events-none">
 					{/* Hand-drawn split arrow pointing left */}
 					<svg
-						width="70"
-						height="100"
 						viewBox="0 0 70 100"
-						className="rotate-[5deg] [filter:drop-shadow(0_2px_4px_rgba(0,0,0,0.8))]"
+						className="w-[50px] h-[70px] md:w-[70px] md:h-[100px] rotate-[5deg] [filter:drop-shadow(0_2px_4px_rgba(0,0,0,0.8))]"
 					>
 						{/* Top branch pointing to Share Image button */}
 						<path
@@ -107,11 +105,11 @@ export function ShareButtons({ localStats, totalHexagons, globalRank }: ShareBut
 
 					{/* Hand-drawn text */}
 					<div
-						className="text-white font-bold rotate-[-3deg] [text-shadow:0_2px_6px_rgba(0,0,0,0.9)] leading-tight"
-						style={{ fontFamily: 'Comic Sans MS, cursive' }}
+						className="text-white font-bold rotate-[-3deg] [text-shadow:0_2px_6px_rgba(0,0,0,0.9)] leading-tight text-sm md:text-base"
+						style={{ fontFamily: "'Comic Neue', 'Comic Sans MS', cursive" }}
 					>
-						<div className="text-base">Invite your friends</div>
-						<div className="text-base">to compete with!</div>
+						<div>Invite your friends</div>
+						<div>to compete with!</div>
 					</div>
 				</div>
 			</div>

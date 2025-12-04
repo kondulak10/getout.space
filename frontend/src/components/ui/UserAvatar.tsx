@@ -72,7 +72,9 @@ export function UserAvatar({
 	}
 
 	const displayName = user.stravaProfile?.firstname
-		? `${user.stravaProfile.firstname} ${user.stravaProfile.lastname || ''}`.trim()
+		? user.stravaProfile.lastname
+			? `${user.stravaProfile.firstname} ${user.stravaProfile.lastname.charAt(0).toUpperCase()}.`
+			: user.stravaProfile.firstname
 		: `User ${user.stravaId}`;
 	const imghexUrl = user.stravaProfile?.imghex;
 	const profileUrl = user.stravaProfile?.profile;
