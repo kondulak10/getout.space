@@ -8,7 +8,6 @@ import {
 	buildActivityNotificationParams,
 } from '../services/slack.service';
 import { webhookLimiter, sseLimiter } from '../middleware/rateLimiter';
-import { analyticsService } from '../services/analytics.service';
 
 const router = Router();
 
@@ -36,12 +35,6 @@ router.get('/api/strava/webhook', webhookLimiter, (req: Request, res: Response) 
 	console.log('Token:', token);
 	console.log('Challenge:', challenge);
 
-	// Track webhook verification
-	analyticsService.track('webhook_verification', {
-		mode: String(mode),
-		challenge: String(challenge),
-	});
-
 	const verifyToken = process.env.STRAVA_WEBHOOK_VERIFY_TOKEN;
 
 	if (mode === 'subscribe' && token === verifyToken) {
@@ -58,13 +51,6 @@ router.post('/api/strava/webhook', webhookLimiter, (req: Request, res: Response)
 
 	console.log('📥 Webhook event received:');
 	console.log(JSON.stringify(event, null, 2));
-
-	// Track webhook event received
-	analyticsService.track('activity_webhook_received', {
-		strava_activity_id: event.object_id || 0,
-		aspect_type: event.aspect_type || 'unknown',
-		owner_id: event.owner_id || 0,
-	});
 
 	res.status(200).json({ success: true });
 

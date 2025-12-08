@@ -13,8 +13,10 @@ export interface AnalyticsEvents {
   login_completed: {
     user_id: string;
     strava_id: number;
+    is_new_user: boolean;
   };
   logout: Record<string, never>;
+  email_submitted: Record<string, never>;
 
   // Map interactions
   map_moved: {

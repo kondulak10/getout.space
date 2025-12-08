@@ -137,7 +137,7 @@ export function useStravaAuth(options?: UseStravaAuthOptions) {
 					tokenIsExpired: data.user.tokenIsExpired ?? false,
 					updatedAt: data.user.updatedAt ?? data.user.createdAt,
 				};
-				login(data.token, user);
+				login(data.token, user, data.isNewUser);
 
 				if (data.isNewUser) {
 					import('canvas-confetti').then((confettiModule) => {

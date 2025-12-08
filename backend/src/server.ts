@@ -1,4 +1,7 @@
-// Initialize Sentry FIRST (before other imports)
+// Load environment variables FIRST
+import 'dotenv/config';
+
+// Initialize Sentry (before other imports)
 import * as Sentry from '@sentry/node';
 import { initializeSentry } from './config/sentry';
 initializeSentry();
@@ -10,7 +13,6 @@ const isProduction = process.env.NODE_ENV === 'production';
 if (amplitudeKey && isProduction) {
 	analyticsService.init(amplitudeKey);
 	console.log('✅ Amplitude analytics enabled (production mode)');
-	console.log('🚀 Sequential deployment workflow active');
 } else if (!isProduction) {
 	console.log('ℹ️  Amplitude analytics disabled (not in production)');
 }
@@ -19,7 +21,6 @@ import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import compression from 'compression';
 import cors from 'cors';
-import 'dotenv/config';
 import express from 'express';
 import expressPlayground from 'graphql-playground-middleware-express';
 import path from 'path';

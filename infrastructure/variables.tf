@@ -91,3 +91,10 @@ variable "amplitude_api_key" {
   sensitive   = true
   default     = ""
 }
+
+variable "amplitude_secret_key" {
+  description = "Amplitude secret key for reading analytics data (optional, for admin dashboard)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}

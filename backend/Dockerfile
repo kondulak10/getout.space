@@ -3,20 +3,6 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Install build dependencies for canvas
-RUN apk add --no-cache \
-    build-base \
-    cairo-dev \
-    pango-dev \
-    jpeg-dev \
-    giflib-dev \
-    pixman-dev \
-    python3 \
-    pkgconfig
-
-# Ensure python3 is properly linked for node-gyp
-ENV PYTHON=/usr/bin/python3
-
 # Copy package files
 COPY package*.json ./
 COPY tsconfig.json ./
@@ -40,34 +26,14 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install build and runtime dependencies for canvas + curl for health checks
-RUN apk add --no-cache \
-    build-base \
-    cairo-dev \
-    pango-dev \
-    jpeg-dev \
-    giflib-dev \
-    pixman-dev \
-    python3 \
-    pkgconfig \
-    cairo \
-    pango \
-    jpeg \
-    giflib \
-    pixman \
-    curl
-
-# Ensure python3 is properly linked for node-gyp
-ENV PYTHON=/usr/bin/python3
+# Install curl for health checks
+RUN apk add --no-cache curl
 
 # Copy package files
 COPY package*.json ./
 
 # Install production dependencies only
 RUN npm ci --only=production
-
-# Remove build dependencies to reduce image size
-RUN apk del build-base cairo-dev pango-dev jpeg-dev giflib-dev pixman-dev python3 pkgconfig
 
 # Copy built files from builder and package.json for module-alias
 COPY --from=builder /app/dist ./dist

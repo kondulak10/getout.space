@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { UpdateEmailDocument, MeDocument } from '@/gql/graphql';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { analytics } from '@/lib/analytics';
 
 // Email validation regex - matches backend validation
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -21,6 +22,7 @@ export function EmailCollectionOverlay({ onComplete }: EmailCollectionOverlayPro
 	const [updateEmail, { loading }] = useMutation(UpdateEmailDocument, {
 		refetchQueries: [{ query: MeDocument }],
 		onCompleted: () => {
+			analytics.track('email_submitted', {});
 			toast.success('Email saved');
 			onComplete();
 		},

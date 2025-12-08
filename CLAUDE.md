@@ -223,6 +223,7 @@ S3_BUCKET_NAME=getout-profile-images
 SLACK_WEBHOOK_URL=  # Optional
 SENTRY_DSN_BACKEND=  # Optional - Sentry error tracking DSN for backend
 AMPLITUDE_API_KEY=  # Optional - Amplitude analytics for backend event tracking
+AMPLITUDE_SECRET_KEY=  # Optional - Amplitude secret key for reading analytics data (admin dashboard)
 ```
 
 **Frontend (.env):**

@@ -8,7 +8,6 @@ import { IUser } from '../models/User';
 import { analyzeRouteAndConvertToHexagons } from '../utils/routeToHexagons';
 import { fetchStravaActivity, getValidAccessToken, isRunningActivity } from './strava.service';
 import { notificationService } from './notification.service';
-import { analyticsService } from './analytics.service';
 
 export interface ProcessActivityResult {
 	activity: {
@@ -59,19 +58,6 @@ export async function processActivity(
 	try {
 		console.log(
 			`🎯 Processing Strava activity ${stravaActivityId} for user: ${user.stravaProfile.firstname}`
-		);
-
-		const startTime = Date.now();
-
-		// Track activity processing started
-		analyticsService.track(
-			'activity_processing_started',
-			{
-				activity_id: '', // Will be set after activity is created
-				strava_activity_id: stravaActivityId,
-				user_id: userId,
-			},
-			userId
 		);
 
 		const accessToken = await getValidAccessToken(userId);
@@ -211,36 +197,6 @@ export async function processActivity(
 			}
 		}
 
-		const processingTime = Date.now() - startTime;
-
-		// Track successful activity processing
-		analyticsService.track(
-			'activity_processing_completed',
-			{
-				activity_id: activity._id.toString(),
-				strava_activity_id: stravaActivityId,
-				user_id: userId,
-				hexagons_captured: hexagons.length,
-				hexagons_stolen: hexagonStats.updated,
-				processing_time_ms: processingTime,
-				route_type: routeType,
-			},
-			userId
-		);
-
-		// Track hexagons captured event
-		analyticsService.track(
-			'hexagons_captured',
-			{
-				user_id: userId,
-				hexagon_count: hexagons.length,
-				activity_id: activity._id.toString(),
-				new_captures: hexagonStats.created,
-				stolen_from_others: hexagonStats.updated,
-			},
-			userId
-		);
-
 		console.log(`✅ Activity ${stravaActivityId} processed successfully!`);
 
 		return {
@@ -268,18 +224,6 @@ export async function processActivity(
 	} catch (error: unknown) {
 		await session.abortTransaction();
 		console.error('❌ Error processing activity:', error);
-
-		// Track failed activity processing
-		analyticsService.track(
-			'activity_processing_failed',
-			{
-				strava_activity_id: stravaActivityId,
-				user_id: userId,
-				error_message: error instanceof Error ? error.message : 'Unknown error',
-				error_type: error instanceof Error ? error.constructor.name : 'UnknownError',
-			},
-			userId
-		);
 
 		// Add extra context to Sentry
 		Sentry.setContext('activity', {

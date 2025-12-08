@@ -1,8 +1,14 @@
 import { StravaSyncBadge } from "@/components/StravaSyncBadge";
 import { useStravaAuth } from "@/hooks/useStravaAuth";
+import { analytics } from "@/lib/analytics";
 
 export function LandingOverlay() {
 	const { loginWithStrava } = useStravaAuth();
+
+	const handleLoginClick = () => {
+		analytics.track('login_started', {});
+		loginWithStrava();
+	};
 
 	return (
 		<div className="absolute inset-0 z-20 flex items-center justify-center p-4">
@@ -30,7 +36,7 @@ export function LandingOverlay() {
 					<img
 						src="/btn_strava_connect_with_orange.svg"
 						alt="Connect with Strava"
-						onClick={loginWithStrava}
+						onClick={handleLoginClick}
 						data-testid="login-button"
 						className="inline-block cursor-pointer hover:opacity-90 transition-opacity h-12 md:h-14"
 					/>

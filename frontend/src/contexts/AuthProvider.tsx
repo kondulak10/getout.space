@@ -93,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		};
 		handleUserData();
 	}, [userData, userError]);
-	const login = (newToken: string, newUser: User) => {
+	const login = (newToken: string, newUser: User, isNewUser: boolean = false) => {
 		setToken(newToken);
 		setUser(newUser);
 		localStorage.setItem(TOKEN_KEY, newToken);
@@ -114,6 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		analytics.track('login_completed', {
 			user_id: newUser.id,
 			strava_id: newUser.stravaId,
+			is_new_user: isNewUser,
 		});
 	};
 	const logout = () => {

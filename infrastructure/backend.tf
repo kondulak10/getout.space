@@ -362,6 +362,7 @@ resource "aws_secretsmanager_secret_version" "backend_env" {
     AWS_REGION                    = var.aws_region
     SENTRY_DSN_BACKEND            = var.sentry_dsn_backend
     AMPLITUDE_API_KEY             = var.amplitude_api_key
+    AMPLITUDE_SECRET_KEY          = var.amplitude_secret_key
   })
 }
 
@@ -454,6 +455,10 @@ resource "aws_ecs_task_definition" "backend" {
         {
           name      = "AMPLITUDE_API_KEY"
           valueFrom = "${aws_secretsmanager_secret.backend_env.arn}:AMPLITUDE_API_KEY::"
+        },
+        {
+          name      = "AMPLITUDE_SECRET_KEY"
+          valueFrom = "${aws_secretsmanager_secret.backend_env.arn}:AMPLITUDE_SECRET_KEY::"
         }
       ]
 

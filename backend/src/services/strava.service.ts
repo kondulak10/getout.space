@@ -1,7 +1,6 @@
 import { User } from '../models/User';
 import { refreshStravaToken } from '../utils/strava';
 import { sendSlackNotification } from './slack.service';
-import { analyticsService } from './analytics.service';
 
 // Strava tokens expire after 6 hours (21600 seconds)
 // We refresh when less than 2 hours remain for a safe buffer
@@ -22,12 +21,6 @@ export async function getValidAccessToken(userId: string): Promise<string> {
 			`🔄 Webhook: Refreshing token for user ${user.stravaProfile.firstname} (expires in ${Math.floor(timeUntilExpiry / 60)} minutes)...`
 		);
 
-		const userIdStr = user._id.toString();
-		const startTime = Date.now();
-
-		// Track token refresh started
-		analyticsService.track('token_refresh_started', { user_id: userIdStr }, userIdStr);
-
 		try {
 			const tokenData = await refreshStravaToken(user);
 
@@ -36,16 +29,6 @@ export async function getValidAccessToken(userId: string): Promise<string> {
 			user.tokenExpiresAt = tokenData.expires_at;
 			await user.save();
 
-			// Track token refresh completed
-			analyticsService.track(
-				'token_refresh_completed',
-				{
-					user_id: userIdStr,
-					refresh_time_ms: Date.now() - startTime,
-				},
-				userIdStr
-			);
-
 			console.log(
 				`✅ Webhook: Token refreshed successfully (new expiry: ${new Date(tokenData.expires_at * 1000).toISOString()})`
 			);
@@ -53,16 +36,6 @@ export async function getValidAccessToken(userId: string): Promise<string> {
 			return user.accessToken;
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-
-			// Track token refresh failed
-			analyticsService.track(
-				'token_refresh_failed',
-				{
-					user_id: userIdStr,
-					error_message: errorMessage,
-				},
-				userIdStr
-			);
 
 			if (errorMessage.includes('401') || errorMessage.includes('revoked access')) {
 				console.error(

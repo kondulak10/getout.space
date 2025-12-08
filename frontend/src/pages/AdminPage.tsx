@@ -285,7 +285,7 @@ export default function AdminPage() {
 							<p className="text-sm text-gray-500 text-center">Export JWT token to console</p>
 						</button>
 						<a
-							href="https://analytics.amplitude.com/"
+							href="https://app.amplitude.com/analytics/getout/dashboard/jyzhiyu8"
 							target="_blank"
 							rel="noopener noreferrer"
 							className="flex flex-col items-center justify-center p-6 rounded-lg border-2 border-gray-300 bg-white hover:border-indigo-500 hover:bg-indigo-50 cursor-pointer transition-all"

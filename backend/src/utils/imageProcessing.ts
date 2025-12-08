@@ -1,4 +1,4 @@
-import { createCanvas, loadImage } from 'canvas';
+import sharp from 'sharp';
 import axios from 'axios';
 import { uploadImageToS3, getProfileImageKey } from './s3Upload';
 
@@ -19,38 +19,49 @@ async function downloadImage(url: string): Promise<Buffer> {
 	}
 }
 
-async function createHexagonImageBuffer(imageBuffer: Buffer, size: number = 400): Promise<Buffer> {
-	const img = await loadImage(imageBuffer);
-
-	console.log('✅ Image loaded, dimensions:', img.width, 'x', img.height);
-
-	const canvas = createCanvas(size, size);
-	const ctx = canvas.getContext('2d');
-
+function createHexagonSvgMask(size: number): Buffer {
 	const centerX = size / 2;
 	const centerY = size / 2;
 	const radius = size / 2;
 
-	const hexagonPoints: [number, number][] = [];
+	// Generate hexagon points (flat-top hexagon) - same formula as original canvas implementation
+	const points: string[] = [];
 	for (let i = 0; i < 6; i++) {
 		const angle = (Math.PI / 3) * i - Math.PI / 6;
 		const x = centerX + radius * Math.cos(angle);
 		const y = centerY + radius * Math.sin(angle);
-		hexagonPoints.push([x, y]);
+		points.push(`${x},${y}`);
 	}
 
-	ctx.beginPath();
-	ctx.moveTo(hexagonPoints[0][0], hexagonPoints[0][1]);
-	for (let i = 1; i < hexagonPoints.length; i++) {
-		ctx.lineTo(hexagonPoints[i][0], hexagonPoints[i][1]);
-	}
-	ctx.closePath();
+	// SVG with white hexagon on transparent background (no extra whitespace)
+	const svg = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg"><polygon points="${points.join(' ')}" fill="#ffffff"/></svg>`;
 
-	ctx.clip();
+	return Buffer.from(svg);
+}
 
-	ctx.drawImage(img, 0, 0, size, size);
+async function createHexagonImageBuffer(imageBuffer: Buffer, size: number = 400): Promise<Buffer> {
+	// Create hexagon mask
+	const hexagonMask = createHexagonSvgMask(size);
 
-	return canvas.toBuffer('image/png');
+	// Process image:
+	// 1. Resize with 'fill' to stretch to exact dimensions (matches original canvas drawImage behavior)
+	// 2. ensureAlpha() adds alpha channel (required for dest-in blend with JPEG inputs)
+	// 3. Composite with hexagon mask using dest-in (shows image only where mask is opaque)
+	const hexagonImage = await sharp(imageBuffer)
+		.resize(size, size, { fit: 'fill' })
+		.ensureAlpha()
+		.composite([
+			{
+				input: hexagonMask,
+				blend: 'dest-in',
+			},
+		])
+		.png()
+		.toBuffer();
+
+	console.log('✅ Hexagon image created');
+
+	return hexagonImage;
 }
 
 export async function processAndUploadProfileImage(

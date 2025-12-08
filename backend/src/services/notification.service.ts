@@ -1,6 +1,5 @@
 import Notification from '../models/Notification';
 import mongoose from 'mongoose';
-import { analyticsService } from './analytics.service';
 
 export const notificationService = {
 	async createActivityNotification(
@@ -33,14 +32,6 @@ export const notificationService = {
 			read: false,
 		});
 
-		// Track notification sent
-		const userIdStr = typeof userId === 'string' ? userId : userId.toString();
-		analyticsService.track(
-			'notification_sent',
-			{ user_id: userIdStr, notification_type: 'activity_positive' },
-			userIdStr
-		);
-
 		return notification;
 	},
 
@@ -61,15 +52,6 @@ export const notificationService = {
 			relatedActivityId: activityId,
 			read: false,
 		});
-
-		// Track notification sent
-		const userIdStr =
-			typeof affectedUserId === 'string' ? affectedUserId : affectedUserId.toString();
-		analyticsService.track(
-			'notification_sent',
-			{ user_id: userIdStr, notification_type: 'hexagon_stolen' },
-			userIdStr
-		);
 
 		return notification;
 	},

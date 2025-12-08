@@ -27,12 +27,10 @@ export function UserProfileCard({
 	const navigate = useNavigate();
 
 	const handleActivitiesClick = () => {
-		track('activities_modal_opened', {});
 		onOpenActivities();
 	};
 
 	const handleLeaderboardClick = () => {
-		track('leaderboard_opened', {});
 		onOpenLeaderboard();
 	};
 
@@ -43,7 +41,6 @@ export function UserProfileCard({
 	};
 
 	const handleNotificationsClick = () => {
-		track('notifications_opened', {});
 		setShowNotifications(true);
 	};
 

@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useState } from 'react';
+import { useMemo, useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useLazyQuery } from '@apollo/client/react';
 import {
@@ -11,6 +11,7 @@ import {
 	UserRecordStatsDocument
 } from '@/gql/graphql';
 import { useAuth } from '@/contexts/useAuth';
+import { analytics } from '@/lib/analytics';
 import { ActivitiesModal } from '@/components/ActivitiesModal';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { ProfileHexStats } from '@/components/profile/ProfileHexStats';
@@ -115,6 +116,18 @@ export function ProfilePage() {
 
 	// Lazy query for rival user details
 	const [fetchRivalUsers, { data: rivalUsersData }] = useLazyQuery(UsersByIdsDocument);
+
+	// Track profile view (only once per profile)
+	const trackedProfileRef = useRef<string | null>(null);
+	useEffect(() => {
+		if (profileUserId && profileUserId !== trackedProfileRef.current) {
+			trackedProfileRef.current = profileUserId;
+			analytics.track('profile_viewed', {
+				viewed_user_id: profileUserId,
+				is_own_profile: isOwnProfile,
+			});
+		}
+	}, [profileUserId, isOwnProfile]);
 
 	const user = userPublicStatsData?.userPublicStats;
 	const userProfile = user?.stravaProfile || null;
