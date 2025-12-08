@@ -385,6 +385,91 @@ export const hexagonResolvers = {
 				throw new GraphQLError('Failed to fetch versus stats');
 			}
 		},
+
+		userBattleStats: async (
+			_: unknown,
+			{ userId }: { userId: string },
+			context: GraphQLContext
+		) => {
+			requireAuth(context);
+
+			try {
+				// Run all count queries in parallel for efficiency
+				const [ogHexagons, conqueredHexagons, cleanTerritory, totalHexagons] = await Promise.all([
+					// OG: hexagons where user was the first to discover AND still owns
+					Hexagon.countDocuments({
+						currentOwnerId: userId,
+						firstCapturedBy: userId,
+					}),
+					// Conquered: hexagons where someone else discovered first but user now owns
+					Hexagon.countDocuments({
+						currentOwnerId: userId,
+						firstCapturedBy: { $ne: userId },
+					}),
+					// Clean territory: hexagons that have never been contested (captureCount = 1)
+					Hexagon.countDocuments({
+						currentOwnerId: userId,
+						captureCount: 1,
+					}),
+					// Total hexagons owned by user
+					Hexagon.countDocuments({
+						currentOwnerId: userId,
+					}),
+				]);
+
+				return {
+					ogHexagons,
+					conqueredHexagons,
+					cleanTerritory,
+					totalHexagons,
+				};
+			} catch (error) {
+				throw new GraphQLError('Failed to fetch user battle stats');
+			}
+		},
+
+		userRecordStats: async (
+			_: unknown,
+			{ userId }: { userId: string },
+			context: GraphQLContext
+		) => {
+			requireAuth(context);
+
+			try {
+				// Run both queries in parallel
+				const [mostContested, longestHeld] = await Promise.all([
+					// Most contested: hexagon with highest captureCount
+					Hexagon.findOne({ currentOwnerId: userId })
+						.sort({ captureCount: -1 })
+						.select('hexagonId captureCount lastCapturedAt')
+						.lean(),
+					// Longest held: hexagon with oldest lastCapturedAt (held the longest)
+					Hexagon.findOne({ currentOwnerId: userId })
+						.sort({ lastCapturedAt: 1 })
+						.select('hexagonId captureCount lastCapturedAt')
+						.lean(),
+				]);
+
+				return {
+					mostContested: mostContested
+						? {
+								hexagonId: mostContested.hexagonId,
+								captureCount: mostContested.captureCount,
+								lastCapturedAt: mostContested.lastCapturedAt,
+							}
+						: null,
+					longestHeld: longestHeld
+						? {
+								hexagonId: longestHeld.hexagonId,
+								captureCount: longestHeld.captureCount,
+								lastCapturedAt: longestHeld.lastCapturedAt,
+							}
+						: null,
+				};
+			} catch (error) {
+				throw new GraphQLError('Failed to fetch user record stats');
+			}
+		},
 	},
 
 	Mutation: {

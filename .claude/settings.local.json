@@ -80,7 +80,8 @@
       "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\components\\EmailCollectionOverlay.css\")",
       "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\components\\MapStats.module.css\")",
       "Bash(npm run test:e2e:*)",
-      "Bash(del:*)"
+      "Bash(del:*)",
+      "WebFetch(domain:amplitude.com)"
     ],
     "deny": [
       "Bash(npm run build:*)",

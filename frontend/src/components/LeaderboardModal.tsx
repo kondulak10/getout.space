@@ -2,7 +2,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrophy, faSpinner, faCrown, faSparkles } from '@fortawesome/pro-solid-svg-icons';
 import { useQuery } from '@apollo/client/react';
 import { RegionalActiveLeadersDocument, RegionalOgDiscoverersDocument } from '@/gql/graphql';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from '@/components/ui/dialog';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { useNavigate } from 'react-router-dom';
@@ -19,6 +19,11 @@ export function LeaderboardModal({ parentHexagonIds, onClose }: LeaderboardModal
 	const [activeTab, setActiveTab] = useState<TabType>('active');
 	const { track } = useAnalytics();
 	const navigate = useNavigate();
+
+	// Track modal opened on mount
+	useEffect(() => {
+		track('leaderboard_opened', {});
+	}, [track]);
 
 	const handleClose = () => {
 		track('leaderboard_closed', {});

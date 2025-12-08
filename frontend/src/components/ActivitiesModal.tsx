@@ -60,12 +60,13 @@ export function ActivitiesModal({
 		removeActivity: deleteStoredActivity,
 	} = useStoredActivities();
 
-	
+
 	useEffect(() => {
 		if (isOpen) {
 			setHasSynced(false);
+			track('activities_modal_opened', {});
 		}
-	}, [isOpen]);
+	}, [isOpen, track]);
 
 	const handleFetchActivities = async () => {
 		await loadStravaActivities();
@@ -110,6 +111,13 @@ export function ActivitiesModal({
 			} else {
 				await deleteStoredActivity(activityToDelete.id);
 			}
+
+			// Track activity deletion
+			track('activity_deleted', {
+				activity_id: String(activityToDelete.id),
+				hexagon_count: 0, // We don't have hex count here, but event is still valuable
+			});
+
 			toast.success('Activity deleted', {
 				description: 'Hexagons restored',
 			});

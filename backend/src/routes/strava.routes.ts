@@ -7,6 +7,7 @@ import {
 	deleteActivityAndRestoreHexagons,
 	processActivity,
 } from '../services/activityProcessing.service';
+import { analyticsService } from '../services/analytics.service';
 import {
 	sendActivityProcessedNotification,
 	sendActivityProcessingErrorNotification,
@@ -205,6 +206,17 @@ router.post('/api/strava/callback', authLimiter, async (req: Request, res: Respo
 		}
 
 		if (isNewUser) {
+			// Track new user registration
+			analyticsService.track(
+				'user_registered',
+				{
+					user_id: tempUserId,
+					strava_id: user.stravaId,
+					is_admin: user.isAdmin,
+				},
+				tempUserId
+			);
+
 			await sendNewUserSignupNotification({
 				userName: `${user.stravaProfile.firstname} ${user.stravaProfile.lastname}`,
 				userStravaId: user.stravaId,

@@ -1,5 +1,6 @@
 import Notification from '../models/Notification';
 import mongoose from 'mongoose';
+import { analyticsService } from './analytics.service';
 
 export const notificationService = {
 	async createActivityNotification(
@@ -23,7 +24,7 @@ export const notificationService = {
 			message = `Your activity captured ${stolenCount} hex${stolenCount > 1 ? 'es' : ''} from other users!`;
 		}
 
-		return await Notification.create({
+		const notification = await Notification.create({
 			ownerId: userId,
 			triggeredById: userId,
 			type: 'positive',
@@ -31,6 +32,16 @@ export const notificationService = {
 			relatedActivityId: activityId,
 			read: false,
 		});
+
+		// Track notification sent
+		const userIdStr = typeof userId === 'string' ? userId : userId.toString();
+		analyticsService.track(
+			'notification_sent',
+			{ user_id: userIdStr, notification_type: 'activity_positive' },
+			userIdStr
+		);
+
+		return notification;
 	},
 
 	async createStolenNotification(
@@ -42,7 +53,7 @@ export const notificationService = {
 	) {
 		const message = `${thiefName} just stole ${stolenCount} hex${stolenCount > 1 ? 'es' : ''} from you!`;
 
-		return await Notification.create({
+		const notification = await Notification.create({
 			ownerId: affectedUserId,
 			triggeredById: thiefId,
 			type: 'negative',
@@ -50,6 +61,17 @@ export const notificationService = {
 			relatedActivityId: activityId,
 			read: false,
 		});
+
+		// Track notification sent
+		const userIdStr =
+			typeof affectedUserId === 'string' ? affectedUserId : affectedUserId.toString();
+		analyticsService.track(
+			'notification_sent',
+			{ user_id: userIdStr, notification_type: 'hexagon_stolen' },
+			userIdStr
+		);
+
+		return notification;
 	},
 
 	async getNotifications(

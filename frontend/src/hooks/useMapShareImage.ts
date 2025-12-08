@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { useMap } from '@/contexts/useMap';
 import { useAuth } from '@/contexts/useAuth';
+import { useAnalytics } from '@/hooks/useAnalytics';
 import { getRankTier } from '@/utils/calculateLocalStats';
 import type { LocalStats } from '@/utils/calculateLocalStats';
 
@@ -22,6 +23,7 @@ export function useMapShareImage() {
 	const [isGenerating, setIsGenerating] = useState(false);
 	const { mapRef } = useMap();
 	const { user } = useAuth();
+	const { track } = useAnalytics();
 
 	/**
 	 * Generate and share/download map image with stats overlay
@@ -37,6 +39,7 @@ export function useMapShareImage() {
 
 		setIsGenerating(true);
 		toast.loading('Generating image...', { id: 'share-image' });
+		const startTime = performance.now();
 
 		try {
 			// Load both font weights explicitly
@@ -324,6 +327,13 @@ export function useMapShareImage() {
 			});
 			const file = new File([blob], `getout-${firstName}-${Date.now()}.png`, { type: 'image/png' });
 
+			// Track image generation completed
+			const generationTime = Math.round(performance.now() - startTime);
+			track('share_image_generated', {
+				hexagon_count: totalHexagons,
+				generation_time_ms: generationTime,
+			});
+
 			// Try native share on mobile
 			const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 			if (isMobile && navigator.share && navigator.canShare?.({ files: [file] })) {
@@ -354,6 +364,7 @@ export function useMapShareImage() {
 			link.click();
 			document.body.removeChild(link);
 			URL.revokeObjectURL(url);
+			track('share_image_downloaded', {});
 			toast.success('Image downloaded!');
 		} catch {
 			toast.dismiss('share-image');

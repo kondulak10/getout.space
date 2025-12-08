@@ -121,37 +121,54 @@ class Analytics {
   ): void {
     if (!this.initialized) return;
 
-    amplitude.track(eventName, properties as Record<string, unknown>);
+    try {
+      amplitude.track(eventName, properties as Record<string, unknown>);
+    } catch (error) {
+      // Analytics failure should never break the app
+      console.warn('Analytics track error:', error);
+    }
   }
 
   identify(userId: string, properties?: Record<string, unknown>): void {
     if (!this.initialized) return;
 
-    const identifyEvent = new amplitude.Identify();
+    try {
+      const identifyEvent = new amplitude.Identify();
 
-    if (properties) {
-      Object.entries(properties).forEach(([key, value]) => {
-        identifyEvent.set(key, value as string | number | boolean | string[] | number[]);
-      });
+      if (properties) {
+        Object.entries(properties).forEach(([key, value]) => {
+          identifyEvent.set(key, value as string | number | boolean | string[] | number[]);
+        });
+      }
+
+      amplitude.setUserId(userId);
+      amplitude.identify(identifyEvent);
+    } catch (error) {
+      console.warn('Analytics identify error:', error);
     }
-
-    amplitude.setUserId(userId);
-    amplitude.identify(identifyEvent);
   }
 
   setUserProperties(properties: Record<string, unknown>): void {
     if (!this.initialized) return;
 
-    const identifyEvent = new amplitude.Identify();
-    Object.entries(properties).forEach(([key, value]) => {
-      identifyEvent.set(key, value as string | number | boolean | string[] | number[]);
-    });
-    amplitude.identify(identifyEvent);
+    try {
+      const identifyEvent = new amplitude.Identify();
+      Object.entries(properties).forEach(([key, value]) => {
+        identifyEvent.set(key, value as string | number | boolean | string[] | number[]);
+      });
+      amplitude.identify(identifyEvent);
+    } catch (error) {
+      console.warn('Analytics setUserProperties error:', error);
+    }
   }
 
   reset(): void {
     if (!this.initialized) return;
-    amplitude.reset();
+    try {
+      amplitude.reset();
+    } catch (error) {
+      console.warn('Analytics reset error:', error);
+    }
   }
 }
 

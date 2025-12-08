@@ -45,6 +45,33 @@ export const hexagonSchema = gql`
 		user2StolenFromUser1: Int!
 	}
 
+	"""
+	Battle statistics for a user's hexagons (counts only, no hexagon data)
+	"""
+	type UserBattleStats {
+		ogHexagons: Int!
+		conqueredHexagons: Int!
+		cleanTerritory: Int!
+		totalHexagons: Int!
+	}
+
+	"""
+	Record hexagon data (minimal fields for display)
+	"""
+	type RecordHexagon {
+		hexagonId: String!
+		captureCount: Int!
+		lastCapturedAt: Date!
+	}
+
+	"""
+	Record statistics for a user (most contested and longest held hexagons)
+	"""
+	type UserRecordStats {
+		mostContested: RecordHexagon
+		longestHeld: RecordHexagon
+	}
+
 	extend type Query {
 		"""
 		Get all hexagons owned by current user
@@ -129,6 +156,20 @@ export const hexagonSchema = gql`
 		Requires: Authentication
 		"""
 		versusStats(userId1: ID!, userId2: ID!): VersusStats!
+
+		"""
+		Get battle statistics for a user (OG discoveries, conquered, clean territory)
+		Returns only counts, no hexagon data - optimized for profile page
+		Requires: Authentication
+		"""
+		userBattleStats(userId: ID!): UserBattleStats!
+
+		"""
+		Get record statistics for a user (most contested and longest held hexagons)
+		Returns minimal hexagon data for display
+		Requires: Authentication
+		"""
+		userRecordStats(userId: ID!): UserRecordStats!
 	}
 
 	extend type Mutation {

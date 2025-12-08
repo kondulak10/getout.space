@@ -11,9 +11,35 @@ interface ProfileRecordsProps {
 	mostContested: HexagonData | null;
 	longestHeld: HexagonData | null;
 	daysHeld: number;
+	loading?: boolean;
 }
 
-export function ProfileRecords({ mostContested, longestHeld, daysHeld }: ProfileRecordsProps) {
+export function ProfileRecords({ mostContested, longestHeld, daysHeld, loading }: ProfileRecordsProps) {
+	if (loading) {
+		return (
+			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+				{[1, 2].map((i) => (
+					<div key={i} className="rounded-xl bg-white/5 border border-white/10 p-5 animate-pulse">
+						<div className="flex items-center gap-2 mb-3">
+							<div className="w-5 h-5 bg-gray-700 rounded"></div>
+							<div className="h-4 w-32 bg-gray-700 rounded"></div>
+						</div>
+						<div className="flex items-center justify-between">
+							<div>
+								<div className="w-16 h-3 bg-gray-700 rounded mb-2"></div>
+								<div className="w-12 h-8 bg-gray-700 rounded"></div>
+							</div>
+							<div className="text-right">
+								<div className="w-16 h-3 bg-gray-700 rounded mb-2"></div>
+								<div className="w-24 h-3 bg-gray-700 rounded"></div>
+							</div>
+						</div>
+					</div>
+				))}
+			</div>
+		);
+	}
+
 	return (
 		<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 			{/* Most Contested Hex */}

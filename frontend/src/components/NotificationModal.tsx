@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBell, faSpinner, faChevronLeft, faChevronRight } from '@fortawesome/pro-solid-svg-icons';
 import { NotificationItem } from './NotificationItem';
 import { useNotifications } from '@/contexts/useNotifications';
+import { useAnalytics } from '@/hooks/useAnalytics';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from '@/components/ui/dialog';
 
 interface NotificationModalProps {
@@ -13,12 +14,14 @@ const NOTIFICATIONS_PER_PAGE = 5;
 
 export function NotificationModal({ onClose }: NotificationModalProps) {
 	const { notifications, loading, unreadCount, markAllAsRead, refetch } = useNotifications();
+	const { track } = useAnalytics();
 	const [currentPage, setCurrentPage] = useState(1);
 
-	// Refetch notifications when modal opens
+	// Track modal opened and refetch notifications when modal opens
 	useEffect(() => {
+		track('notifications_opened', {});
 		refetch();
-	}, [refetch]);
+	}, [refetch, track]);
 
 	// Auto-mark all notifications as read when modal opens
 	useEffect(() => {
@@ -40,6 +43,7 @@ export function NotificationModal({ onClose }: NotificationModalProps) {
 	}, [currentPage, totalPages]);
 
 	const handleClose = () => {
+		track('notifications_closed', {});
 		onClose();
 	};
 

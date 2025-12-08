@@ -210,3 +210,18 @@ startApolloServer().catch((error) => {
 	console.error('Failed to start Apollo Server:', error);
 	process.exit(1);
 });
+
+// Graceful shutdown handler - flush analytics before exit
+const gracefulShutdown = async (signal: string) => {
+	console.log(`\n${signal} received. Flushing analytics and shutting down...`);
+	try {
+		await analyticsService.flush();
+		console.log('✅ Analytics flushed successfully');
+	} catch (error) {
+		console.error('❌ Error flushing analytics:', error);
+	}
+	process.exit(0);
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));

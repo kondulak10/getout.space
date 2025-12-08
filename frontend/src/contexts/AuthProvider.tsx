@@ -41,14 +41,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				};
 				setUser(newUser);
 
-				// Identify user in analytics
+				// Identify user in analytics with all relevant properties
 				analytics.identify(newUser.id, {
 					stravaId: newUser.stravaId,
+					firstname: newUser.profile.firstname,
 					username: newUser.profile.username,
 					city: newUser.profile.city,
 					state: newUser.profile.state,
 					country: newUser.profile.country,
 					isAdmin: newUser.isAdmin,
+					signup_date: newUser.createdAt,
 				});
 
 				// Check if we should show email collection overlay
@@ -96,17 +98,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		setUser(newUser);
 		localStorage.setItem(TOKEN_KEY, newToken);
 
-		// Track login and identify user in analytics
+		// Track login and identify user in analytics with all relevant properties
 		analytics.identify(newUser.id, {
 			stravaId: newUser.stravaId,
+			firstname: newUser.profile.firstname,
 			username: newUser.profile.username,
 			city: newUser.profile.city,
 			state: newUser.profile.state,
 			country: newUser.profile.country,
 			isAdmin: newUser.isAdmin,
+			signup_date: newUser.createdAt,
+		});
+
+		// Track login completed event
+		analytics.track('login_completed', {
+			user_id: newUser.id,
+			strava_id: newUser.stravaId,
 		});
 	};
 	const logout = () => {
+		// Track logout event BEFORE resetting analytics (so user is still identified)
+		analytics.track('logout', {});
+
 		setToken(null);
 		setUser(null);
 		localStorage.removeItem(TOKEN_KEY);

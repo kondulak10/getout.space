@@ -383,6 +383,30 @@ query VersusStats($userId1: ID!, $userId2: ID!) {
 	}
 }
 
+query UserBattleStats($userId: ID!) {
+	userBattleStats(userId: $userId) {
+		ogHexagons
+		conqueredHexagons
+		cleanTerritory
+		totalHexagons
+	}
+}
+
+query UserRecordStats($userId: ID!) {
+	userRecordStats(userId: $userId) {
+		mostContested {
+			hexagonId
+			captureCount
+			lastCapturedAt
+		}
+		longestHeld {
+			hexagonId
+			captureCount
+			lastCapturedAt
+		}
+	}
+}
+
 query GlobalLeaderboard {
 	globalLeaderboard {
 		userId
