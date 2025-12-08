@@ -81,7 +81,9 @@
       "Bash(del \"C:\\Users\\janko\\Desktop\\getout.space\\frontend\\src\\components\\MapStats.module.css\")",
       "Bash(npm run test:e2e:*)",
       "Bash(del:*)",
-      "WebFetch(domain:amplitude.com)"
+      "WebFetch(domain:amplitude.com)",
+      "Bash(gh secret list:*)",
+      "Bash(gh secret set:*)"
     ],
     "deny": [
       "Bash(npm run build:*)",
