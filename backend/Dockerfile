@@ -11,7 +11,11 @@ RUN apk add --no-cache \
     jpeg-dev \
     giflib-dev \
     pixman-dev \
-    python3
+    python3 \
+    pkgconfig
+
+# Ensure python3 is properly linked for node-gyp
+ENV PYTHON=/usr/bin/python3
 
 # Copy package files
 COPY package*.json ./
@@ -45,12 +49,16 @@ RUN apk add --no-cache \
     giflib-dev \
     pixman-dev \
     python3 \
+    pkgconfig \
     cairo \
     pango \
     jpeg \
     giflib \
     pixman \
     curl
+
+# Ensure python3 is properly linked for node-gyp
+ENV PYTHON=/usr/bin/python3
 
 # Copy package files
 COPY package*.json ./
@@ -59,7 +67,7 @@ COPY package*.json ./
 RUN npm ci --only=production
 
 # Remove build dependencies to reduce image size
-RUN apk del build-base cairo-dev pango-dev jpeg-dev giflib-dev pixman-dev python3
+RUN apk del build-base cairo-dev pango-dev jpeg-dev giflib-dev pixman-dev python3 pkgconfig
 
 # Copy built files from builder and package.json for module-alias
 COPY --from=builder /app/dist ./dist
